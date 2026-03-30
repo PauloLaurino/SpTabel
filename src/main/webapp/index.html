@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selador - Redirecionando...</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        p {
+            margin-bottom: 30px;
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        // Redirecionar para a página principal do Selador
+        setTimeout(function() {
+            window.location.href = 'views/selador.html';
+        }, 2000);
+        
+        // Ou redirecionar imediatamente se já carregou
+        window.onload = function() {
+            // Adicionar parâmetros da URL se existirem
+            const urlParams = new URLSearchParams(window.location.search);
+            const usuario = urlParams.get('usuario');
+            const origem = urlParams.get('origem');
+            const embedded = urlParams.get('embedded');
+            
+            let redirectUrl = 'views/selador.html';
+            let params = [];
+            
+            if (usuario) params.push('usuario=' + encodeURIComponent(usuario));
+            if (origem) params.push('origem=' + encodeURIComponent(origem));
+            if (embedded) params.push('embedded=' + encodeURIComponent(embedded));
+            
+            if (params.length > 0) {
+                redirectUrl += '?' + params.join('&');
+            }
+            
+            window.location.href = redirectUrl;
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="loader"></div>
+        <h1>🚀 Selador</h1>
+        <p>Inicializando sistema de selagem...</p>
+        <p><small>Se o redirecionamento não funcionar automaticamente, <a href="views/selador.html" style="color: #fff; text-decoration: underline;">clique aqui</a></small></p>
+    </div>
+</body>
+</html>

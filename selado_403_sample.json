@@ -1,0 +1,32 @@
+{\
+  "ambiente": "|ambiente|",\
+  "documentoResponsavel": "0",\
+  "codigoEmpresa": "|codigoEmpresa|",\
+  "codigoOficio": |codoficio|,\
+  "selo": {\
+    "seloDigital": "SFTN1.2G2Yb.3W3r5-3EJI6.1196q",\
+    "codigoPedido": 94859.2,\
+    "tipoGratuidade": 0,\
+    "codigoTipoAto": 403,\
+    "tipoEmissaoAto": 1,\
+    "idap": "0000000000025005909R00000000000000000000",\
+    "versao": 11.12,\
+    "dataSeloEmitido": "2026-03-04T15:21:52.735",\
+    "dataAtoPraticado": "|dataato|",\
+    "seloRetificado": "",\
+    "propriedades": {\
+      ...\
+    },\
+    "verbas": {\
+      "emolumentos": 1207,\
+      "vrcExt": 0,\
+      "funrejus": 302,\
+      "iss": 60,\
+      "fundep": 60,\
+      "funarpen": 100,\
+      "distribuidor": 0,\
+      "valorAdicional": 0\
+    }\
+  }\
+}{"NomePropriedade":"envolvidos.tipo_envolvido","ValorPropriedade":"Nome"},{"NomePropriedade":"envolvidos.nome_razao","ValorPropriedade":"CARLOS ALBERTO BUENO"},{"NomePropriedade":"emvolvidos.CPF_CNPJ","ValorPropriedade":"37483331968"},{"NomePropriedade":"envolvidos.doc_emissor_uf","ValorPropriedade":"PR"},{"NomePropriedade":"envolvidos.doc_pessoa","ValorPropriedade":"01460764385 e RG3047427-9"},{"NomePropriedade":"detalhes_selo.data_registro","ValorPropriedade":"04/03/2026"},{"NomePropriedade":"detalhes_selo.isento","ValorPropriedade":""},{"NomePropriedade":"codoficio","ValorPropriedade":"181196"}]}\
+ 

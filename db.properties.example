@@ -1,0 +1,5 @@
+# Exemplo de db.properties para projeto Notas (sptabel)
+DB_URL=jdbc:mysql://localhost:3306/sptabel?serverTimezone=UTC&useSSL=false
+DB_USER=root
+# Substitua DB_PASS pela string ENC(...) gerada no dev, ou use a senha em texto (não recomendado)
+DB_PASS=ENC(<COLE_AQUI_O_CIPHER>)

@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Selagem de Atos - Tabelionato de Notas</title>
+
+    <!-- CSS Modularizado -->
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/header.css">
+    <link rel="stylesheet" href="../assets/css/opcoes.css">
+    <link rel="stylesheet" href="../assets/css/data-apontamentos.css">
+    <link rel="stylesheet" href="../assets/css/opcao-selecionada.css">
+    <link rel="stylesheet" href="../assets/css/selos.css">
+    <link rel="stylesheet" href="../assets/css/botoes.css">
+    <link rel="stylesheet" href="../assets/css/footer.css">
+    <link rel="stylesheet" href="../assets/css/modais.css">
+    <link rel="stylesheet" href="../assets/css/cleanup.css">
+    <link rel="stylesheet" href="../assets/css/embedded.css">
+    <link rel="stylesheet" href="../assets/css/floating-totalizer.css">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ESTILOS ESPECÍFICOS PARA NOTAS */
+        .hidden {
+            display: none !important;
+        }
+
+        body,
+        html {
+            overflow: hidden !important;
+            height: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Layout do cabeçalho */
+        .header-container {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 12px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Container principal */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 50px);
+            padding: 20px;
+            background: #f5f7fa;
+            overflow: hidden;
+        }
+
+        /* Formulário de consulta */
+        .consulta-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .consulta-form {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+
+        /* Botões */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2a5298;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        /* Container do JSON */
+        .json-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .json-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .json-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #1e3c72;
+        }
+
+        /* Totalizador de selos */
+        .selos-resumo {
+            display: flex;
+            gap: 10px;
+            padding: 12px 20px;
+            background: #e7f3ff;
+            border-bottom: 1px solid #b3d7ff;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .selos-resumo-label {
+            font-weight: 600;
+            color: #1e3c72;
+            font-size: 13px;
+        }
+
+        .selo-resumo-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .selo-resumo-item.principal {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+
+        .selo-resumo-item.acessorio {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+        }
+
+        .selo-resumo-qtd {
+            font-weight: 700;
+            font-size: 14px;
+            color: #1e3c72;
+        }
+
+        .selo-resumo-tipo {
+            color: #666;
+        }
+
+        .selo-resumo-codigo {
+            background: #1e3c72;
+            color: white;
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+        }
+
+        .total-selos-badge {
+            background: #1e3c72;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: auto;
+        }
+
+        .json-textarea {
+            flex: 1;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            resize: none;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            box-sizing: border-box;
+        }
+
+        .json-textarea:focus {
+            outline: none;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1e3c72;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Mensagens */
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        /* Info bar */
+        .info-bar {
+            padding: 10px 20px;
+            background: #e7f3ff;
+            border-bottom: 1px solid #b3d7ff;
+            font-size: 13px;
+            color: #004085;
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .status-dot.success {
+            background: #28a745;
+        }
+
+        .status-dot.error {
+            background: #dc3545;
+        }
+
+        .status-dot.processing {
+            background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header-container">
+        <h1 class="header-title">
+            <i class="fas fa-file-signature"></i>
+            Selagem de Atos - Tabelionato de Notas (FUNARPEN V11.12 Plus)
+        </h1>
+    </header>
+
+    <!-- Info Bar -->
+    <div class="info-bar">
+        <i class="fas fa-info-circle"></i>
+        Digite o número do protocolo para gerar o JSON de selagem. O sistema consultará automaticamente todas as
+        informações necessárias.
+    </div>
+
+    <!-- Container Principal -->
+    <div class="main-container">
+        <!-- Formulário de Consulta -->
+        <div class="consulta-container">
+            <form class="consulta-form" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="numeroProtocolo">
+                        <i class="fas fa-hashtag"></i> Número do Protocolo
+                    </label>
+                    <input type="text" id="numeroProtocolo" placeholder="Digite o número do protocolo (ex: 12345)"
+                        onkeypress="if(event.key === 'Enter') consultarProtocolo();" />
+                </div>
+                <button class="btn btn-primary" onclick="consultarProtocolo()">
+                    <i class="fas fa-search"></i> Consultar
+                </button>
+                <button class="btn btn-success" id="btnProcessar" onclick="processarSelagem()" disabled>
+                    <i class="fas fa-check"></i> Processar Selagem
+                </button>
+            </form>
+
+            <!-- Status -->
+            <div id="statusContainer" class="hidden" style="margin-top: 15px;">
+                <span class="status-indicator">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Aguardando...</span>
+                </span>
+            </div>
+
+            <!-- Loading -->
+            <div id="loadingContainer" class="loading hidden">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- Mensagem de erro -->
+            <div id="erroContainer" class="alert alert-error hidden" style="margin-top: 15px;"></div>
+        </div>
+
+        <!-- Container do JSON -->
+        <div class="json-container">
+            <div class="json-header">
+                <h3>
+                    <i class="fas fa-code"></i> JSON de Recepção - FUNARPEN V11.12 Plus
+                </h3>
+                <span class="status-indicator">
+                    <span class="status-dot" id="jsonStatusDot"></span>
+                    <span id="jsonStatusText">Aguardando protocolo</span>
+                </span>
+            </div>
+
+            <!-- Totalizador de Selos -->
+            <div id="selosResumo" class="selos-resumo hidden">
+                <span class="selos-resumo-label"><i class="fas fa-tags"></i> Selos necessários:</span>
+                <!-- Itens serão inseridos via JS -->
+                <span class="total-selos-badge" id="totalSelosBadge">
+                    <i class="fas fa-calculator"></i> Total: <span id="totalSelosQtd">0</span>
+                </span>
+            </div>
+
+            <textarea id="jsonOutput" class="json-textarea" readonly placeholder="// O JSON será gerado aqui após a consulta do protocolo...
+
+// Estrutura esperada:
+{
+  " ambiente": "dev" , "documentoResponsavel" : "12345678900" , "codigoEmpresa" : "eyJ..." , "codigoOficio" : "12345"
+                , "selo" : { "seloDigital" : "F2A1B3..." , "codigoPedido" : "PEDIDO001" , "tipoGratuidade" :
+                0, "codigoTipoAto" : 459, "tipoEmissaoAto" : 1, "idap" : "20240215TN00000001" , "versao" : "11.12" , ...
+                } }"></textarea>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Variáveis globais
+        let dadosProtocolo = null;
+        let jsonGerado = null;
+
+        /**
+         * Consulta os dados do protocolo e gera o JSON
+         */
+        async function consultarProtocolo() {
+            const numeroProtocolo = document.getElementById('numeroProtocolo').value.trim();
+
+            if (!numeroProtocolo) {
+                mostrarErro('Por favor, informe o número do protocolo.');
+                return;
+            }
+
+            // Limpar estado anterior
+            limparEstado();
+
+            // Mostrar loading
+            setStatus('processando', 'Consultando protocolo...');
+            document.getElementById('loadingContainer').classList.remove('hidden');
+
+            try {
+                // ============================================
+                // 1. CONSULTAR DADOS DO PROTOCOLO
+                // ============================================
+                setStatus('processando', 'Consultando dados do protocolo...');
+
+                const protocoloResponse = await fetch(`/api/selagem-notas/consultar?protocolo=${numeroProtocolo}`);
+
+                if (!protocoloResponse.ok) {
+                    throw new Error('Protocolo não encontrado');
+                }
+
+                dadosProtocolo = await protocoloResponse.json();
+
+                // ============================================
+                // 2. CONSULTAR PARTES
+                // ============================================
+                setStatus('processando', 'Consultando partes...');
+
+                const partesResponse = await fetch(`/api/selagem-notas/partes?protocolo=${numeroProtocolo}`);
+                const partes = await partesResponse.json();
+                dadosProtocolo.partes = partes;
+
+                // ============================================
+                // 3. CONSULTAR VERBAS
+                // ============================================
+                setStatus('processando', 'Consultando verbas...');
+
+                const verbasResponse = await fetch(`/api/selagem-notas/verbas?protocolo=${numeroProtocolo}`);
+                const verbas = await verbasResponse.json();
+                dadosProtocolo.verbas = verbas;
+
+                // ============================================
+                // 4. CONSULTAR IMÓVEIS
+                // ============================================
+                setStatus('processando', 'Consultando imóveis...');
+
+                const imoveisResponse = await fetch(`/api/selagem-notas/imoveis?protocolo=${numeroProtocolo}`);
+                const imoveis = await imoveisResponse.json();
+                dadosProtocolo.imoveis = imoveis;
+
+                // ============================================
+                // 5. CONSULTAR TIPO DE ATO
+                // ============================================
+                setStatus('processando', 'Consultando tipo de ato...');
+
+                const tipoAtoResponse = await fetch(`/api/selagem-notas/tipo-ato?cod=${dadosProtocolo.codTipoAto}`);
+                const tipoAto = await tipoAtoResponse.json();
+                dadosProtocolo.tipoAtoInfo = tipoAto;
+
+                // ============================================
+                // 6. CALCULAR SELOS NECESSÁRIOS
+                // ============================================
+                setStatus('processando', 'Calculando selos necessários...');
+
+                const selosResponse = await fetch(`/api/selagem-notas/calcular-selos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dadosProtocolo)
+                });
+                const selosCalculados = await selosResponse.json();
+                dadosProtocolo.selosCalculados = selosCalculados;
+
+                // ============================================
+                // 7. GERAR JSON
+                // ============================================
+                setStatus('processando', 'Gerando JSON...');
+
+                jsonGerado = gerarJson(dadosProtocolo);
+
+                // Exibir JSON
+                document.getElementById('jsonOutput').value = JSON.stringify(jsonGerado, null, 2);
+
+                // Exibir resumo dos selos
+                exibirResumoSelos(selosCalculados);
+
+                // Atualizar status
+                setStatus('sucesso', 'JSON gerado com sucesso!');
+                document.getElementById('jsonStatusDot').className = 'status-dot success';
+                document.getElementById('jsonStatusText').textContent = 'Pronto para processamento';
+
+                // Habilitar botão de processar
+                document.getElementById('btnProcessar').disabled = false;
+
+            } catch (error) {
+                setStatus('erro', error.message);
+                mostrarErro(error.message);
+            } finally {
+                document.getElementById('loadingContainer').classList.add('hidden');
+            }
+        }
+
+        /**
+         * Gera o JSON para o FUNARPEN
+         */
+        function gerarJson(dados) {
+            const selos = dados.selosCalculados || [];
+            const seloPrincipal = selos.find(s => s.principal) || selos[0] || {};
+
+            // Construir JSON
+            const json = {
+                ambiente: "dev",
+                documentoResponsavel: dados.partes && dados.partes.length > 0 ?
+                    dados.partes[0].numeroDoc : null,
+                codigoEmpresa: dados.codigoEmpresa || "eyJ...",
+                codigoOficio: dados.codigoServentia || "00000",
+                selo: {
+                    seloDigital: "",
+                    codigoPedido: "",
+                    tipoGratuidade: 0,
+                    codigoTipoAto: dados.codTipoAto,
+                    tipoEmissaoAto: 1,
+                    idap: gerarIdap(dados),
+                    versao: "11.12",
+                    seloRetificado: null,
+                    dataSeloEmitido: formatarDataBR(new Date()),
+                    dataAtoPraticado: formatarDataBR(new Date(dados.dataAto)),
+
+                    // Propriedades específicas
+                    propriedades: gerarPropriedades(dados),
+
+                    // Verbas
+                    verbas: dados.verbas || {}
+                }
+            };
+
+            // Adicionar vínculos se houver selos acessórios
+            if (selos.length > 1) {
+                json.selo.vinculos = selos
+                    .filter(s => s.acessorio)
+                    .map(s => ({
+                        tipoSelo: s.tipo,
+                        codigoTipoAto: s.codigo,
+                        descricao: s.descricao,
+                        quantidade: s.quantidade
+                    }));
+            }
+
+            return json;
+        }
+
+        /**
+         * Gera as propriedades do ato
+         */
+        function gerarPropriedades(dados) {
+            const propriedades = {};
+            const tipoAto = dados.codTipoAto;
+
+            // Dados do solicitante (primeira parte)
+            if (dados.partes && dados.partes.length > 0) {
+                const solicitante = dados.partes[0];
+                propriedades.solicitante = {
+                    nome: solicitante.nome,
+                    tipoDocumento: solicitante.tipoDoc,
+                    numeroDocumento: solicitante.numeroDoc
+                };
+            }
+
+            // Dados do ato
+            propriedades.ato = {
+                protocolo: dados.codigo,
+                livro: dados.livro,
+                folha: dados.folha,
+                termo: dados.termo,
+                data: formatarDataBR(new Date(dados.dataAto))
+            };
+
+            // Dados específicos por tipo de ato
+            switch (tipoAto) {
+                case 459: // Escritura
+                    propriedades.escritura = {
+                        tipo: dados.tipoEscritura || 1,
+                        especie: dados.especie || 1,
+                        valorDeclarado: dados.valorDeclarado,
+                        valorAvaliado: dados.valorAvaliado
+                    };
+                    break;
+
+                case 452: // Procuração
+                    propriedades.procuracao = {
+                        tipo: dados.tipoProcuração || 1,
+                        quantidadeOutorgantes: dados.partes ? dados.partes.filter(p => p.tipo === 'O').length : 0,
+                        quantidadeOutorgados: dados.partes ? dados.partes.filter(p => p.tipo === 'G').length : 0
+                    };
+                    break;
+
+                case 454: // Certidão
+                    propriedades.certidao = {
+                        tipo: dados.tipoCertidao || 1,
+                        quantidadePaginasExtras: dados.paginasExtras || 0
+                    };
+                    break;
+
+                case 456: // Ata Notarial
+                    propriedades.ata = {
+                        tipo: dados.tipoAta || 1,
+                        especie: dados.especieAta || 1,
+                        quantidadePaginasExtras: dados.paginasExtras || 0
+                    };
+                    break;
+
+                case 437: // Apostilamento
+                    propriedades.apostilamento = {
+                        data: formatarDataBR(new Date(dados.dataAto)),
+                        tipoDocumento: dados.tipoDocApostilado,
+                        numeroApostila: dados.numeroApostila
+                    };
+                    break;
+            }
+
+            // Partes
+            if (dados.partes && dados.partes.length > 0) {
+                propriedades.outorgantes = dados.partes
+                    .filter(p => p.tipo === 'O')
+                    .map(p => ({
+                        nome: p.nome,
+                        tipoDocumento: p.tipoDoc,
+                        numeroDocumento: p.numeroDoc
+                    }));
+
+                propriedades.outorgados = dados.partes
+                    .filter(p => p.tipo === 'G')
+                    .map(p => ({
+                        nome: p.nome,
+                        tipoDocumento: p.tipoDoc,
+                        numeroDocumento: p.numeroDoc
+                    }));
+            }
+
+            // Imóveis
+            if (dados.imoveis && dados.imoveis.length > 0) {
+                propriedades.bens = dados.imoveis.map(i => ({
+                    tipo: i.tipo,
+                    descricao: i.descricao,
+                    valor: i.valor,
+                    matricula: i.matricula,
+                    endereco: i.endereco
+                }));
+            }
+
+            return propriedades;
+        }
+
+        /**
+         * Gera o IDAP
+         */
+        function gerarIdap(dados) {
+            const data = new Date();
+            const ano = data.getFullYear();
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const dia = String(data.getDate()).padStart(2, '0');
+
+            // Formato: AAAAMMDD + TN + sequencial
+            return `${ano}${mes}${dia}TN${String(dados.codigo || 0).padStart(8, '0')}`;
+        }
+
+        /**
+         * Exibe o resumo dos selos necessários
+         */
+        function exibirResumoSelos(selos) {
+            const container = document.getElementById('selosResumo');
+            const totalQtdEl = document.getElementById('totalSelosQtd');
+
+            // Calcular total
+            const total = selos.reduce((acc, s) => acc + s.quantidade, 0);
+            totalQtdEl.textContent = total;
+
+            // Criar HTML dos itens
+            let html = '<span class="selos-resumo-label"><i class="fas fa-tags"></i> Selos necessários:</span>';
+
+            selos.forEach(selo => {
+                const tipoClasse = selo.principal ? 'principal' : 'acessorio';
+                html += `
+                    <div class="selo-resumo-item ${tipoClasse}">
+                        <span class="selo-resumo-qtd">${selo.quantidade}x</span>
+                        <span class="selo-resumo-tipo">${selo.tipo}</span>
+                        <span class="selo-resumo-codigo">${selo.codigo}</span>
+                        <span>${selo.descricao}</span>
+                    </div>
+                `;
+            });
+
+            html += `<span class="total-selos-badge"><i class="fas fa-calculator"></i> Total: ${total}</span>`;
+
+            container.innerHTML = html;
+            container.classList.remove('hidden');
+        }
+
+        /**
+         * Formata data para BR
+         */
+        function formatarDataBR(data) {
+            if (!data) return null;
+            const d = new Date(data);
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const ano = d.getFullYear();
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        /**
+         * Processa a selagem (envia para API FUNARPEN)
+         */
+        async function processarSelagem() {
+            if (!jsonGerado || !dadosProtocolo) {
+                mostrarErro('Nenhum JSON gerado para processar.');
+                return;
+            }
+
+            // Mostrar loading
+            setStatus('processando', 'Processando selagem...');
+            document.getElementById('loadingContainer').classList.remove('hidden');
+            document.getElementById('btnProcessar').disabled = true;
+
+            try {
+                const response = await fetch('/api/selagem-notas/processar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        protocolo: dadosProtocolo.codigo,
+                        json: jsonGerado,
+                        selos: dadosProtocolo.selosCalculados
+                    })
+                });
+
+                const resultado = await response.json();
+
+                if (resultado.sucesso) {
+                    setStatus('sucesso', 'Selagem processada com sucesso!');
+
+                    // Atualizar JSON com os dados de retorno
+                    document.getElementById('jsonOutput').value = JSON.stringify({
+                        ...jsonGerado,
+                        resultado: resultado
+                    }, null, 2);
+                } else {
+                    throw new Error(resultado.mensagem || 'Erro ao processar selagem');
+                }
+            } catch (error) {
+                setStatus('erro', error.message);
+                mostrarErro(error.message);
+            } finally {
+                document.getElementById('loadingContainer').classList.add('hidden');
+                document.getElementById('btnProcessar').disabled = false;
+            }
+        }
+
+        /**
+         * Define o status
+         */
+        function setStatus(tipo, texto) {
+            document.getElementById('statusContainer').classList.remove('hidden');
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+
+            dot.className = 'status-dot';
+            if (tipo === 'sucesso') dot.classList.add('success');
+            else if (tipo === 'erro') dot.classList.add('error');
+            else if (tipo === 'processando') dot.classList.add('processing');
+
+            text.textContent = texto;
+        }
+
+        /**
+         * Limpa o estado
+         */
+        function limparEstado() {
+            dadosProtocolo = null;
+            jsonGerado = null;
+
+            document.getElementById('erroContainer').classList.add('hidden');
+            document.getElementById('statusContainer').classList.add('hidden');
+            document.getElementById('btnProcessar').disabled = true;
+            document.getElementById('selosResumo').classList.add('hidden');
+
+            document.getElementById('jsonStatusDot').className = 'status-dot';
+            document.getElementById('jsonStatusText').textContent = 'Aguardando protocolo';
+        }
+
+        /**
+         * Exibe mensagem de erro
+         */
+        function mostrarErro(mensagem) {
+            const el = document.getElementById('erroContainer');
+            el.textContent = mensagem;
+            el.classList.remove('hidden');
+        }
+
+        // Focar no campo de protocolo ao carregar
+        window.onload = function () {
+            document.getElementById('numeroProtocolo').focus();
+        };
+    </script>
+</body>
+
+</html>

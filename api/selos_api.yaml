@@ -1,0 +1,84 @@
+# Validação Técnica para Envio ao FUNARPEN
+configuracao:
+  versao_manual: 11.12
+  encoding: "UTF-8" # Obrigatório [4, 5]
+
+validacao_raiz:
+  ambiente: { tipo: string, opcoes: ["dev", "prod"], obrigatorio: true } # [5]
+  documentoResponsavel: { tipo: string, descricao: "CPF/CNPJ do Oficial", obrigatorio: true } # [5]
+  codigoEmpresa: { tipo: string, descricao: "Token JWT", obrigatorio: true } # [5]
+  codigoOficio: { tipo: integer, obrigatorio: true } # [5]
+
+validacao_selo:
+  seloDigital: 
+    tipo: string
+    pattern: "^SF[A-Z0-9]{3}\\.[A-Z0-9]{5}\\.[A-Z0-9]{5}\\.[A-Z0-9]{5}\\.[A-Z0-9]{5}$" # [6]
+    obrigatorio: true
+  codigoPedido: { tipo: integer, obrigatorio: true } # [6]
+  tipoGratuidade: { tipo: integer, min: 0, max: 12, obrigatorio: true } # [6]
+  codigoTipoAto: { tipo: integer, descricao: "Conforme tabelas de serventias", obrigatorio: true } # [6]
+  tipoEmissaoAto: { tipo: integer, opcoes: [7, 8], descricao: "1-Física, 2-Eletrônica", obrigatorio: true } # [6]
+  idap: 
+    tipo: string
+    tamanho_fixo: 20 # [1, 2]
+    exemplo: "AAAAMMDDNNSNNNNNNNNN" # [1]
+  versao: { tipo: float, valor_fixo: 11.12, obrigatorio: true } # [3]
+  dataSeloEmitido: { tipo: string, formato: "DD/MM/AAAA", obrigatorio: true } # [3]
+  dataAtoPraticado: { tipo: string, formato: "DD/MM/AAAA", obrigatorio: true } # [3]
+
+validacao_verbas: # Todos os valores em bigDecimal/number [9, 10]
+  emolumentos: { tipo: decimal, min: 0, obrigatorio: true }
+  vrcExt: { tipo: decimal, min: 0, obrigatorio: true }
+  funrejus: { tipo: decimal, min: 0, obrigatorio: true }
+  iss: { tipo: decimal, min: 0, obrigatorio: true }
+  fundep: { tipo: decimal, min: 0, obrigatorio: true }
+  funarpen: { tipo: decimal, opcoes: [0.0, 0.25, 1.0, 8.0], obrigatorio: true }
+  distribuidor: { tipo: decimal, min: 0, obrigatorio: true }
+  valorAdicional: { tipo: decimal, min: 0, obrigatorio: true }
+
+validacao_propriedades_por_ato:
+  # --- NATUREZA 4: TABELIONATO DE NOTAS --- [11-37]
+  notas_campos_comuns:
+    atos: 
+    campos:
+      solicitanteAto.nomeRazao: { tipo: string, obrigatorio: true }
+      solicitanteAto.documentoTipo: { tipo: integer, obrigatorio: true } # 1-CPF, 2-CNPJ... [12]
+      solicitanteAto.documentoNumero: { tipo: string, obrigatorio: true }
+      solicitanteAto.endereco: { tipo: string, obrigatorio: true }
+
+  ato_459_escritura:
+    especifico:
+      escritura.data: { formato: "DD/MM/AAAA", obrigatorio: true } # [15]
+      escritura.totalPaginas: { tipo: integer, obrigatorio: true } # [15]
+      escritura.tipo: { tipo: string, obrigatorio: true } # [16]
+      bens.valorTotal: { tipo: decimal, obrigatorio: true } # [23]
+      outorgantes: { tipo: array, obrigatorio: true } # [17]
+
+  # --- NATUREZA 7: PROTESTO --- [38-50]
+  ato_701_anotacao:
+    especifico:
+      titulo.numero: { tipo: string, obrigatorio: true } # [39]
+      titulo.valorTotal: { tipo: decimal, obrigatorio: true } # [39]
+      distribuicao.custas: { tipo: integer, opcoes: [7, 8], descricao: "1-Diferido, 2-Pago" } # [38]
+      devedores: { tipo: array, campos: [nomeRazao, documentoTipo, documentoNumero], obrigatorio: true } # [39-41]
+
+  # --- NATUREZA 5: REGISTRO DE IMÓVEIS --- [51-68]
+  ato_512_registro_valor:
+    especifico:
+      registro.data: { formato: "DD/MM/AAAA", obrigatorio: true } # [53]
+      registro.matricula: { tipo: integer, obrigatorio: true } # [61]
+      descricaoFunrejus.fundamento: { tipo: integer, opcoes: [7, 8], obrigatorio: true } # [53]
+
+  # --- NATUREZA 1: REGISTRO CIVIL --- [4, 69-103]
+  ato_101_nascimento:
+    especifico:
+      declarante.nome: { tipo: string, obrigatorio: true } # [4]
+      envolvido.nome: { tipo: string, obrigatorio: true } # [72]
+      envolvido.sexo: { tipo: char, opcoes: ["M", "F", "I"], obrigatorio: true } # [72]
+      genitores: { tipo: array, min_items: 1, obrigatorio: true } # [74]
+Regras de Negócio e Críticas:
+• Campos Vazios: Se a serventia não possuir a informação, o valor deve ser enviado como null, e não deixado em branco.
+• IDAP: Deve possuir obrigatoriamente 20 caracteres. Tamanhos diferentes resultam no Erro 7.
+• Datas: Se o campo de data estiver vazio, a API retornará o Erro 8.
+• Selo e Ato: Se o tipo do selo não corresponder ao código do ato (ex: usar selo TN1 em ato de Protesto), a API retornará o Erro 14.
+• DOI: Para escrituras (459) e registros de imóveis (512), o campo escritura.doiIncidencia ou imoveis.urbanos.doi (booleano) deve ser validado para identificar obrigatoriedade de informe fiscal

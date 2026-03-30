@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Selador - v1.26.1</title>
+
+    <!-- AG Grid CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-alpine.css">
+
+    <!-- CSS Modularizado -->
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/header.css">
+    <link rel="stylesheet" href="../assets/css/opcoes.css">
+    <link rel="stylesheet" href="../assets/css/data-apontamentos.css">
+    <link rel="stylesheet" href="../assets/css/opcao-selecionada.css">
+    <link rel="stylesheet" href="../assets/css/selos.css">
+    <link rel="stylesheet" href="../assets/css/botoes.css">
+    <link rel="stylesheet" href="../assets/css/footer.css">
+    <link rel="stylesheet" href="../assets/css/modais.css">
+    <link rel="stylesheet" href="../assets/css/cleanup.css">
+    <link rel="stylesheet" href="../assets/css/embedded.css">
+    <link rel="stylesheet" href="../assets/css/floating-totalizer.css">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ESTILOS ESPECÍFICOS PARA VERSÃO FINAL */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Layout geral sem scroll */
+        body,
+        html {
+            overflow: hidden !important;
+            height: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Garantir que os inputs apareçam corretamente */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        /* Melhorar a aparência dos selos */
+        .selo-quantidade {
+            text-align: center;
+        }
+
+        /* Ajuste para os valores preenchidos dos apontamentos */
+        .apontamento-input {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* Estilos para alertas de selos zerados */
+        .alerta-zerado {
+            animation: pulse-alerta 2s infinite;
+            position: relative;
+        }
+
+        @keyframes pulse-alerta {
+            0% {
+                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+            }
+        }
+
+        /* Melhorar a aparência dos selos */
+        .selo-quantidade {
+            text-align: center;
+        }
+
+        .quantidade-disponivel.alerta-zerado {
+            background-color: #ffebee !important;
+            color: #c62828 !important;
+            border: 2px solid #f44336;
+            font-weight: bold;
+        }
+
+        /* Estilos para inputs de selos ocultos */
+        .selo-input-hidden {
+            display: none !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            opacity: 0 !important;
+        }
+
+        /* Estilos para modais */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+        }
+
+        .modal-sm {
+            width: 400px;
+        }
+
+        .modal-md {
+            width: 600px;
+        }
+
+        .modal-lg {
+            width: 800px;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            text-align: right;
+        }
+
+        .loading-spinner-large {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="selador-app" data-embedded="false">
+    <!-- ============================================
+         MODAL DE LOADING INICIAL
+         ============================================ -->
+    <div id="loadingScreen" class="loading-overlay">
+        <div class="loading-container">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+            <div class="loading-content">
+                <h2><i class="fas fa-stamp"></i>Selador</h2>
+                <p class="loading-text">Inicializando sistema...</p>
+                <div class="loading-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="loadingProgress"></div>
+                    </div>
+                    <div class="progress-text">Carregando módulos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         CONTAINER PRINCIPAL DA APLICAÇÃO
+         ============================================ -->
+    <div id="appContainer" class="app-container hidden">
+        <!-- ========== HEADER COMPACTO ========== -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <i class="fas fa-stamp"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1 class="system-name">SELADOR</h1>
+                        <p class="system-description">Controle de Selagem</p>
+                    </div>
+                </div>
+
+                <div class="version-container">
+                    <span class="version-badge">v1.26.1</span>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <div class="status-container">
+                    <div class="status-item online">
+                        <i class="fas fa-circle status-icon"></i>
+                        <span class="status-text">Online</span>
+                    </div>
+                    <span class="status-separator">|</span>
+                    <div class="status-item db">
+                        <i class="fas fa-database status-icon"></i>
+                        <span class="status-text" id="dbStatus">spprot</span>
+                    </div>
+                    <span class="status-separator">|</span>
+                    <div class="status-item time">
+                        <i class="fas fa-clock status-icon"></i>
+                        <span class="status-text" id="currentTime">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="user-container">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name" id="currentUser">CONVIDADO</div>
+                        <div class="user-role" id="currentRole">Operador</div>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <button class="btn-header" id="btnRefresh" title="Atualizar">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="btn-header btn-danger" id="btnLogout" title="Sair">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========== MAIN CONTENT - 3 COLUNAS ========== -->
+        <main class="main-content">
+            <!-- ========== COLUNA 1: OPÇÕES ========== -->
+            <section class="left-panel" id="leftPanel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-list-check"></i> MARQUE UMA OPÇÃO</h2>
+                </div>
+
+                <div class="panel-body">
+                    <div class="options-container" id="opcoesLista">
+                        <!-- Opções serão carregadas dinamicamente pelo JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== COLUNA 2: DATA + APONTAMENTOS ========== -->
+            <section class="center-panel">
+                <!-- CONTAINER ÚNICO: Data + Apontamentos + Opção Selecionada -->
+                <div class="data-apontamentos-opcao-container">
+                    <!-- Data do Ato -->
+                    <div class="data-section">
+                        <div class="data-header">
+                            <h3><i class="fas fa-calendar-alt"></i> Data do Ato</h3>
+                        </div>
+
+                        <div class="data-content">
+                            <div class="data-group">
+                                <label for="dataAto">
+                                    <i class="fas fa-calendar-day"></i> Selecione a Data
+                                </label>
+                                <!-- 🔥 REMOVA O VALUE FIXO -->
+                                <input type="date" id="dataAto" class="data-input" placeholder="DD/MM/AAAA">
+                                <span id="searchIndicator" class="search-indicator" style="display:none;">Buscando
+                                    apontamentos para o Ato selecionado<span class="dots">...</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intervalo de Apontamentos -->
+                    <div class="apontamentos-section">
+                        <div class="apontamentos-header">
+                            <h3><i class="fas fa-sliders-h"></i> Intervalo de Apontamentos</h3>
+                        </div>
+
+                        <div class="apontamentos-grid">
+                            <div class="apontamento-group">
+                                <label class="apontamento-label">Ano/Mês Inicial</label>
+                                <!-- 🔥 REMOVA O VALUE E PLACEHOLDER GENÉRICO -->
+                                <input type="text" id="anoMesInicial" class="apontamento-input" maxlength="6"
+                                    pattern="\d{6}" title="Formato: AAAAMM">
+                            </div>
+
+                            <div class="apontamento-group">
+                                <label class="apontamento-label">Apon. Inicial</label>
+                                <!-- 🔥 REMOVA O VALUE E PLACEHOLDER GENÉRICO -->
+                                <input type="text" id="aponInicial" class="apontamento-input" maxlength="6"
+                                    pattern="\d{6}" title="1 a 999999">
+                            </div>
+
+                            <div class="apontamento-group">
+                                <label class="apontamento-label">Ano/Mês Final</label>
+                                <!-- 🔥 REMOVA O VALUE E PLACEHOLDER GENÉRICO -->
+                                <input type="text" id="anoMesFinal" class="apontamento-input" maxlength="6"
+                                    pattern="\d{6}" title="Formato: AAAAMM">
+                            </div>
+
+                            <div class="apontamento-group">
+                                <label class="apontamento-label">Apon. Final</label>
+                                <!-- 🔥 REMOVA O VALUE E PLACEHOLDER GENÉRICO -->
+                                <input type="text" id="aponFinal" class="apontamento-input" maxlength="6"
+                                    pattern="\d{6}" title="1 a 999999">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SEÇÃO DA OPÇÃO SELECIONADA -->
+                    <div class="opcao-selecionada-section" id="opcaoSelecionadaSection" style="display: none;">
+                        <div class="opcao-selecionada-header">
+                            <h4><i class="fas fa-check-circle"></i> Opção Selecionada</h4>
+                        </div>
+                        <div class="opcao-selecionada-content" id="opcaoSelecionadaContent">
+                            <div class="opcao-selecionada-texto" id="opcaoSelecionadaTexto">
+                                Nenhuma opção selecionada
+                            </div>
+                            <div class="opcao-selecionada-detalhes" id="opcaoDetalhes">
+                                Selecione uma opção na lista
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== COLUNA 3: SELOS ========== -->
+            <section class="right-panel">
+                <div class="selos-botoes-container">
+                    <div class="selos-col">
+                        <div class="selos-header">
+                            <h3><i class="fas fa-tags"></i> TIPOS DE SELOS</h3>
+                        </div>
+
+                        <!-- LISTA DE SELOS MODIFICADA -->
+                        <div class="selos-list">
+                            <!-- SELO TP1 -->
+                            <div class="selo-item" data-tipo="TP1" id="seloItemTP1">
+                                <div class="selo-info">
+                                    <span class="selo-label">Pago TP1</span>
+                                </div>
+
+                                <!-- INPUT OCULTO PARA TP1 -->
+                                <input type="number" id="inputTP1" class="selo-input-hidden" min="0" max="9999"
+                                    value="0" data-tipo="TP1">
+
+                                <div class="selo-quantidades">
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Disponível</div>
+                                        <div class="quantidade-valor quantidade-disponivel" id="qtdDisponivelTP1">0
+                                        </div>
+                                    </div>
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Solicitado</div>
+                                        <div class="quantidade-valor quantidade-solicitada" id="qtdSolicitadoTP1">0
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SELO TP3 -->
+                            <div class="selo-item" data-tipo="TP3" id="seloItemTP3">
+                                <div class="selo-info">
+                                    <span class="selo-label">Pago TP3</span>
+                                </div>
+
+                                <!-- INPUT OCULTO PARA TP3 -->
+                                <input type="number" id="inputTP3" class="selo-input-hidden" min="0" max="9999"
+                                    value="0" data-tipo="TP3">
+
+                                <div class="selo-quantidades">
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Disponível</div>
+                                        <div class="quantidade-valor quantidade-disponivel" id="qtdDisponivelTP3">0
+                                        </div>
+                                    </div>
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Solicitado</div>
+                                        <div class="quantidade-valor quantidade-solicitada" id="qtdSolicitadoTP3">0
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SELO TP4 -->
+                            <div class="selo-item" data-tipo="TP4" id="seloItemTP4">
+                                <div class="selo-info">
+                                    <span class="selo-label">Pago TP4</span>
+                                </div>
+
+                                <!-- INPUT OCULTO PARA TP4 -->
+                                <input type="number" id="inputTP4" class="selo-input-hidden" min="0" max="9999"
+                                    value="0" data-tipo="TP4">
+
+                                <div class="selo-quantidades">
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Disponível</div>
+                                        <div class="quantidade-valor quantidade-disponivel" id="qtdDisponivelTP4">0
+                                        </div>
+                                    </div>
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Solicitado</div>
+                                        <div class="quantidade-valor quantidade-solicitada" id="qtdSolicitadoTP4">0
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SELO TPD -->
+                            <div class="selo-item" data-tipo="TPD" id="seloItemTPD">
+                                <div class="selo-info">
+                                    <span class="selo-label">Difer. TPD</span>
+                                </div>
+
+                                <!-- INPUT OCULTO PARA TPD -->
+                                <input type="number" id="inputTPD" class="selo-input-hidden" min="0" max="9999"
+                                    value="0" data-tipo="TPD">
+
+                                <div class="selo-quantidades">
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Disponível</div>
+                                        <div class="quantidade-valor quantidade-disponivel" id="qtdDisponivelTPD">0
+                                        </div>
+                                    </div>
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Solicitado</div>
+                                        <div class="quantidade-valor quantidade-solicitada" id="qtdSolicitadoTPD">0
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SELO TPI -->
+                            <div class="selo-item" data-tipo="TPI" id="seloItemTPI">
+                                <div class="selo-info">
+                                    <span class="selo-label">Isento TPI</span>
+                                </div>
+
+                                <!-- INPUT OCULTO PARA TPI -->
+                                <input type="number" id="inputTPI" class="selo-input-hidden" min="0" max="9999"
+                                    value="0" data-tipo="TPI">
+
+                                <div class="selo-quantidades">
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Disponível</div>
+                                        <div class="quantidade-valor quantidade-disponivel" id="qtdDisponivelTPI">0
+                                        </div>
+                                    </div>
+                                    <div class="selo-quantidade">
+                                        <div class="selo-quantidade-label">Solicitado</div>
+                                        <div class="quantidade-valor quantidade-solicitada" id="qtdSolicitadoTPI">0
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUNA DE BOTÕES -->
+                    <div class="botoes-col">
+                        <div class="botoes-container">
+                            <div class="botoes-grid">
+                                <button class="btn-acao btn-acao-solicitar" id="btnSolicitarSelos">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    Solicitar Selos
+                                </button>
+                                <button class="btn-acao btn-acao-selar" id="btnSelarApontamentos">
+                                    <i class="fas fa-stamp"></i>
+                                    Selar os Atos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== CONTAINER FLUTUANTE DE TOTALIZADOR ========== -->
+                <div id="floatingTotalizer" class="floating-totalizer">
+                    <div class="floating-totalizer-header">
+                        <h4 class="floating-totalizer-title">
+                            <i class="fas fa-tags"></i> Total de Selos Solicitados
+                        </h4>
+                        <button class="floating-totalizer-close" id="closeFloatingTotalizer">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="floating-totalizer-content">
+                        <div class="floating-totalizer-selos" id="floatingSelosList">
+                            <!-- Selos serão inseridos dinamicamente aqui -->
+                        </div>
+                        <div class="floating-totalizer-summary">
+                            <div class="floating-total-label">Total Geral</div>
+                            <div class="floating-total-value" id="floatingTotalValue">0</div>
+                            <div class="floating-total-details" id="floatingTotalDetails">Nenhum selo solicitado</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ========== FOOTER COMPACTO ========== -->
+        <footer class="app-footer">
+            <div class="footer-left">
+                <div class="breadcrumb">
+                    <span class="breadcrumb-item active">
+                        <i class="fas fa-stamp"></i> Selador - v1.26.1
+                    </span>
+                    <span class="breadcrumb-divider">•</span>
+                    <span class="breadcrumb-item" id="currentAction">Pronto</span>
+                </div>
+            </div>
+
+            <div class="footer-center">
+                <div class="footer-status">
+                    <span class="status-text">
+                        <i class="fas fa-database"></i> spprot
+                    </span>
+                    <span class="status-divider">•</span>
+                    <span class="status-text" id="connectionStatus">
+                        <i class="fas fa-wifi"></i> Conectado
+                    </span>
+                </div>
+            </div>
+
+            <div class="footer-right">
+                <button class="btn-footer" id="btnHelp" title="Ajuda">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+                <button class="btn-footer btn-danger" id="btnFechar" title="Fechar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ============================================
+         MODAIS
+         ============================================ -->
+
+    <!-- MODAL DE LOADING (para operações em andamento) -->
+    <div id="modalLoading" class="modal-overlay hidden">
+        <div class="modal-container modal-sm">
+            <div class="modal-header">
+                <h3><i class="fas fa-spinner fa-spin"></i> Processando...</h3>
+            </div>
+            <div class="modal-body">
+                <div class="loading-spinner-large"></div>
+                <p class="loading-message" id="modalLoadingMessage">Aguarde, processando sua solicitação...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RESULTADO (para mostrar resultado das operações) -->
+    <div id="modalResultado" class="modal-overlay hidden">
+        <div class="modal-container modal-md">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-check-circle"></i> Resultado</h3>
+                <button class="modal-close" id="closeResultado">&times;</button>
+            </div>
+            <div class="modal-body" id="modalResultadoBody">
+                <!-- Conteúdo dinâmico -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="closeResultadoBtn">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO -->
+    <div id="modalConfirmacao" class="modal-overlay hidden">
+        <div class="modal-container modal-sm">
+            <div class="modal-header">
+                <h3><i class="fas fa-question-circle"></i> Confirmação</h3>
+                <button class="modal-close" id="closeConfirmacao">&times;</button>
+            </div>
+            <div class="modal-body" id="modalConfirmacaoBody">
+                <!-- Conteúdo dinâmico -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelConfirmacao">
+                    Cancelar
+                </button>
+                <button class="btn btn-primary" id="btnConfirmarSim">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ERRO -->
+    <div id="modalErro" class="modal-overlay hidden">
+        <div class="modal-container modal-sm">
+            <div class="modal-header error">
+                <h3><i class="fas fa-exclamation-triangle"></i> Erro</h3>
+                <button class="modal-close" id="closeErro">&times;</button>
+            </div>
+            <div class="modal-body" id="modalErroBody">
+                <!-- Conteúdo dinâmico -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="closeErroBtn">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RESULTADO DE SELAGEM -->
+    <div id="modalResultadoSelagem" class="modal-overlay hidden">
+        <div class="modal-container modal-lg">
+            <div class="modal-header success">
+                <h3><i class="fas fa-stamp"></i> Selagem Concluída</h3>
+                <button class="modal-close" id="closeResultadoSelagem">&times;</button>
+            </div>
+            <div class="modal-body" id="modalResultadoSelagemBody">
+                <div class="resultado-summary">
+                    <div class="summary-item">
+                        <div class="summary-label">Apontamentos Selados</div>
+                        <div class="summary-value" id="totalApontamentosSelados">0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Selos Utilizados</div>
+                        <div class="summary-value" id="totalSelosUtilizados">0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Tipo de Selo</div>
+                        <div class="summary-value" id="tipoSeloUtilizado">-</div>
+                    </div>
+                </div>
+
+                <div class="grid-container">
+                    <div id="gridResultadoSelagem" style="height: 300px; width: 100%;" class="ag-theme-alpine"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnExportarResultado">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+                <button class="btn btn-primary" id="btnFecharResultadoSelagem">
+                    <i class="fas fa-check"></i> Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+            SCRIPTS EXTERNOS - ORDEM ATUALIZADA FASE 3
+            ============================================ -->
+
+    <!-- AG Grid Script -->
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.js"></script>
+
+    <!-- ============================================
+            ETAPA 1: UTILITÁRIOS BÁSICOS (sem dependências)
+            ============================================ -->
+    <script src="../assets/js/utils/helpers.js"></script>
+    <!-- <script src="../assets/js/utils/validation.js"></script> -- depreciado -->
+    <script src="../assets/js/utils/loader-utils.js"></script>
+
+    <!-- ============================================
+            ETAPA 1.5: UTILITÁRIOS DE PERFORMANCE (FASE 3)
+            ============================================ -->
+    <script src="../assets/js/utils/debounce-utils.js"></script>
+    <script src="../assets/js/utils/performance-monitor.js"></script>
+
+    <!-- ============================================
+            ETAPA 2: CORE (sem dependências externas)
+            ============================================ -->
+    <script src="../assets/js/modules/app-state.js"></script>
+    <script src="../assets/js/modules/event-bus.js"></script>
+    <script src="../assets/js/modules/dom-manager.js"></script>
+
+    <!-- ============================================
+            ETAPA 2.5: CACHE MANAGER (FASE 3)
+            ============================================ -->
+    <script src="../assets/js/modules/cache-manager.js"></script>
+
+    <!-- ============================================
+            ETAPA 3: COMUNICAÇÃO (depende de helpers)
+            ============================================ -->
+    <script src="../assets/js/api-client.js"></script>
+
+    <!-- ============================================
+     ETAPA 4: MÓDULOS DE DOMÍNIO (dependem de API e estado)
+     ============================================ -->
+    <script src="../assets/js/modules/selos-manager.js"></script>
+    <script src="../assets/js/modules/apontamento-service.js"></script>
+    <script src="../assets/js/modules/opcoes-manager.js"></script>
+    <script src="../assets/js/modules/selagem-manager.js"></script>
+
+    <!-- ============================================
+            ETAPA 5: UI COMPONENTS (dependem de DOM)
+            ============================================ -->
+    <script src="../assets/js/modules/ui-components.js"></script>
+    <script src="../assets/js/modules/button-loader.js"></script>
+    <script src="../assets/js/modules/floating-totalizer.js"></script>
+
+    <!-- ============================================
+    ETAPA 5.5: RESULTADO SELAGEM (novo módulo)
+    ============================================ -->
+    <script src="../assets/js/modules/resultado-selagem-manager.js"></script>
+
+    <!-- ============================================
+            ETAPA 6: CONTROLLERS (dependem de tudo)
+            ============================================ -->
+    <script src="../assets/js/modules/app-controller.js"></script>
+    <script src="../assets/js/modules/validation-controller.js"></script>
+    <script src="../assets/js/modules/button-controller.js"></script>
+    <script src="../assets/js/modules/button-controller-simplificado.js"></script>
+    <script src="../assets/js/modules/input-controller.js"></script>
+
+    <!-- ============================================
+            ETAPA 7: ORQUESTRAÇÃO (usa controllers)
+            ============================================ -->
+    <script src="../assets/js/selador-app.js"></script>
+
+    <!-- ============================================
+            ETAPA 8: INICIALIZAÇÃO (tudo carregado)
+            ============================================ -->
+    <script src="../assets/js/init.js"></script>
+
+    <!-- ============================================
+            ETAPA 9: INTEGRAÇÃO (usa tudo)
+            ============================================ -->
+    <script src="../assets/js/maker-integration.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Cálculo de Custas - Tabelionato de Notas</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="assets/css/header.css">
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/custas-form.css">
+    <link rel="stylesheet" href="assets/css/seal-table.css">
+</head>
+<body>
+    <!-- Header -->
+    <div id="header-container"></div>
+    
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Formulário de Cálculo de Custas -->
+            <div id="custas-form-container"></div>
+            
+            <!-- Tabela de Imóveis Registrados -->
+            <div id="seal-table-imoveis-container"></div>
+            
+            <!-- Tabela de Partes -->
+            <div id="seal-table-partes-container"></div>
+            
+            <!-- Tabela de Resultados -->
+            <div id="seal-table-resultados-container"></div>
+        </div>
+    </main>
+    
+    <!-- Scripts -->
+    <script src="components/Header.js"></script>
+    <script src="components/CustasForm.js"></script>
+    <script src="components/SealTableImoveis.js"></script>
+    <script src="components/SealTablePartes.js"></script>
+    <script src="components/SealTableResultados.js"></script>
+    
+    <script>
+        // Inicializar componentes
+        document.addEventListener('DOMContentLoaded', function() {
+            // Header
+            const header = new Header({
+                systemName: 'SISTEMA CUSTAS',
+                systemDescription: 'Cálculo de Emolumentos',
+                version: '1.0.0',
+                userName: 'Usuário',
+                userRole: 'Tabelião',
+                isOnline: true,
+                isDatabaseConnected: true
+            });
+            header.mount('#header-container');
+            
+            // Formulário de Custas
+            const custasForm = new CustasForm({
+                atos: [
+                    { codigo: 409, modulo: 'N', tipoato: 409, descricao: 'Escrita Pública' },
+                    { codigo: 413, modulo: 'N', tipoato: 413, descricao: 'Inventário' },
+                    { codigo: 422, modulo: 'N', tipoato: 422, descricao: 'Procuração' },
+                    { codigo: 411, modulo: 'N', tipoato: 411, descricao: 'Divórcio' },
+                    { codigo: 410, modulo: 'N', tipoato: 410, descricao: 'Testamento' },
+                    { codigo: 414, modulo: 'N', tipoato: 414, descricao: 'Pacto Antenupcial' },
+                    { codigo: 415, modulo: 'N', tipoato: 415, descricao: 'Escritura de União Estável' },
+                    { codigo: 416, modulo: 'N', tipoato: 416, descricao: 'Escritura de União com Conversão' },
+                    { codigo: 417, modulo: 'N', tipoato: 417, descricao: 'Escritura de Divórcio' },
+                    { codigo: 418, modulo: 'N', tipoato: 418, descricao: 'Escritura de Inventário e Partilha' },
+                    { codigo: 419, modulo: 'N', tipoato: 419, descricao: 'Escritura de Inventário Extrajudicial' },
+                    { codigo: 420, modulo: 'N', tipoato: 420, descricao: 'Reconhecimento de Firma' },
+                    { codigo: 421, modulo: 'N', tipoato: 421, descricao: 'Autenticação de Firma' },
+                    { codigo: 423, modulo: 'N', tipoato: 423, descricao: 'Procuração em Causa Própria' },
+                    { codigo: 424, modulo: 'N', tipoato: 424, descricao: 'Substabelecimento' },
+                    { codigo: 425, modulo: 'N', tipoato: 425, descricao: 'Ata Notarial' },
+                    { codigo: 426, modulo: 'N', tipoato: 426, descricao: 'Escritura de Pacto Antenupcial' },
+                    { codigo: 427, modulo: 'N', tipoato: 427, descricao: 'Escritura de Divórcio Consensual' }
+                ],
+                imoveis: [
+                    { id: 1, matricula: '12345', localizacao: 'Rua das Flores, 123 - Centro', area: 120, valor: 150000, cpf_cnpj: '123.456.789-00' },
+                    { id: 2, matricula: '12346', localizacao: 'Rua das Rosas, 456 - Centro', area: 85, valor: 95000, cpf_cnpj: '987.654.321-00' },
+                    { id: 3, matricula: '12347', localizacao: 'Rua das Palmeiras, 789 - Centro', area: 200, valor: 250000, cpf_cnpj: '456.789.123-00' }
+                ],
+                onAtoChange: function(ato) {
+                    console.log('Ato selecionado:', ato);
+                    // Carregar imóveis do ato selecionado
+                    loadImoveisForAto(ato);
+                },
+                onImovelSelect: function(imoveis) {
+                    console.log('Imóveis selecionados:', imoveis);
+                    // Atualizar tabelas
+                    updateSealTables(imoveis);
+                },
+                onCalculate: function(requestData) {
+                    console.log('Calculando custas:', requestData);
+                    // Chamar API de cálculo
+                    calcularCustas(requestData);
+                }
+            });
+            custasForm.mount('#custas-form-container');
+            
+            // Tabela de Imóveis Registrados
+            const sealTableImoveis = new SealTableImoveis({
+                imoveis: [],
+                onRemove: function(id) {
+                    console.log('Remover imóvel:', id);
+                },
+                onEdit: function(id) {
+                    console.log('Editar imóvel:', id);
+                }
+            });
+            sealTableImoveis.mount('#seal-table-imoveis-container');
+            
+            // Tabela de Partes
+            const sealTablePartes = new SealTablePartes({
+                partes: [],
+                tipoAto: 'COMPRA_VENDA',
+                onRemove: function(id) {
+                    console.log('Remover parte:', id);
+                },
+                onEdit: function(id) {
+                    console.log('Editar parte:', id);
+                }
+            });
+            sealTablePartes.mount('#seal-table-partes-container');
+            
+            // Tabela de Resultados
+            const sealTableResultados = new SealTableResultados({
+                resultado: null,
+                onPrint: function() {
+                    console.log('Imprimindo resultados');
+                },
+                onExport: function() {
+                    console.log('Exportando resultados');
+                }
+            });
+            sealTableResultados.mount('#seal-table-resultados-container');
+        });
+        
+        // Funções auxiliares
+        function loadImoveisForAto(ato) {
+            // Simular carregamento de imóveis do ato
+            console.log('Carregando imóveis para o ato:', ato.descricao);
+            // Aqui você faria uma chamada à API para buscar imóveis do ato
+        }
+        
+        function updateSealTables(imoveis) {
+            // Atualizar tabelas com os imóveis selecionados
+            console.log('Atualizando tabelas com imóveis:', imoveis);
+        }
+        
+        function calcularCustas(requestData) {
+            // Simular cálculo de custas
+            console.log('Enviando requisição de cálculo:', requestData);
+            
+            // Simular resultado
+            const resultadoSimulado = {
+                emolumento: requestData.valorTotal * 0.01,
+                fundep: requestData.valorTotal * 0.0005,
+                iss: requestData.valorTotal * 0.0005,
+                funrejus: requestData.valorTotal * 0.0025,
+                selo: 50.00,
+                tipoSelo: 'TN1',
+                distribuicao: requestData.valorTotal * 0.002,
+                total: requestData.valorTotal * 0.0135
+            };
+            
+            // Atualizar tabela de resultados
+            const sealTableResultados = window.SealTableResultados;
+            sealTableResultados.updateProps({ resultado: resultadoSimulado });
+        }
+    </script>
+</body>
+</html>

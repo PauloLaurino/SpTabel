@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo de Custas Cartoriais</title>
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/custas.css">
+</head>
+<body>
+    <div id="loadingScreen">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Carregando...</p>
+        </div>
+    </div>
+    
+    <div id="appContainer" style="display: none;">
+        <header class="app-header">
+            <h1>🧮 Cálculo de Custas Cartoriais</h1>
+            <p class="subtitle">Código de Normas da Corregedoria do Paraná</p>
+        </header>
+        
+        <main class="app-main">
+            <!-- Seção 1: Módulo e Tipo de Ato -->
+            <section class="card">
+                <h2>1. Selecione o Módulo e Tipo de Ato</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="moduloSelect">Módulo:</label>
+                        <select id="moduloSelect" class="form-control">
+                            <option value="">-- Selecione --</option>
+                            <option value="N">N - Tabelionato de Notas</option>
+                            <option value="R">R - Registro</option>
+                            <option value="O">O - Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipoAtoSelect">Tipo de Ato:</label>
+                        <select id="tipoAtoSelect" class="form-control">
+                            <option value="">-- Selecione primeiro o módulo --</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="atoInfo" class="ato-info" style="display: none;">
+                    <p><strong>Descrição:</strong> <span id="atoDescricao"></span></p>
+                    <p><strong>Módulo:</strong> <span id="atoModulo"></span></p>
+                    <p><strong>Valor Base:</strong> R$ <span id="atoValorBase"></span></p>
+                    <p><strong>VRC Máximo:</strong> R$ <span id="atoVrcMaximo"></span></p>
+                </div>
+            </section>
+            
+            <!-- Seção 2: Protocolo e Base de Cálculo -->
+            <section class="card">
+                <h2>2. Protocolo e Base de Cálculo</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="protocoloSelect">Protocolo (Opcional):</label>
+                        <select id="protocoloSelect" class="form-control">
+                            <option value="">-- Sem protocolo --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="baseCalculo">Valor do Imóvel / ITCD / Base de Cálculo (R$):</label>
+                        <input type="text" id="baseCalculo" class="form-control" 
+                               placeholder="0,00" step="0.01" min="0">
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Seção 3: Seleção de Imóveis -->
+            <section class="card">
+                <h2>3. Selecione os Imóveis (Opcional)</h2>
+                <p class="info-text">Se não houver protocolo, os imóveis serão usados apenas para consulta.</p>
+                <div class="form-group">
+                    <input type="text" id="imovelSearch" class="form-control" 
+                           placeholder="Buscar por matrícula, registro ou descrição...">
+                </div>
+                <div class="table-container">
+                    <table id="imoveisTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllImoveis"></th>
+                                <th>Matrícula</th>
+                                <th>Registro</th>
+                                <th>Descrição</th>
+                                <th>Valor ITBI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="imoveisTableBody">
+                            <!-- Preenchido via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="selected-count">
+                    Imóveis selecionados: <span id="selectedImoveisCount">0</span>
+                </div>
+            </section>
+            
+            <!-- Seção 4: Botão de Cálculo -->
+            <section class="card actions-card">
+                <button id="btnCalcular" class="btn btn-primary" disabled>
+                    🧮 Calcular Custas
+                </button>
+                <button id="btnLimpar" class="btn btn-secondary">
+                    🔄 Limpar
+                </button>
+            </section>
+            
+            <!-- Seção 5: Resultado do Cálculo -->
+            <section id="resultadoSection" class="card result-card" style="display: none;">
+                <h2>📊 Resultado do Cálculo</h2>
+                
+                <div class="result-summary">
+                    <div class="total-display">
+                        <span class="total-label">TOTAL GERAL:</span>
+                        <span class="total-value" id="totalGeral">R$ 0,00</span>
+                    </div>
+                </div>
+                
+                <div class="result-details">
+                    <h3>Detalhamento das Custas</h3>
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Descrição</th>
+                                <th class="text-right">Valor (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultTableBody">
+                            <!-- Preenchido via JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="subtotal-row">
+                                <td colspan="2">Emolumentos</td>
+                                <td class="text-right" id="resEmolumentos">0,00</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td colspan="2">FUNDEP (5%)</td>
+                                <td class="text-right" id="resFUNDEP">0,00</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td colspan="2">ISS (5%)</td>
+                                <td class="text-right" id="resISS">0,00</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td colspan="2">FUNREJUS (0,25% + 0,002%)</td>
+                                <td class="text-right" id="resFUNREJUS">0,00</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td colspan="2">Selos</td>
+                                <td class="text-right" id="resSelos">0,00</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td colspan="2">Distribuição</td>
+                                <td class="text-right" id="resDistribuicao">0,00</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2"><strong>TOTAL</strong></td>
+                                <td class="text-right" id="resTotal"><strong>0,00</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="result-actions">
+                    <button id="btnImprimir" class="btn btn-secondary">
+                        🖨️ Imprimir
+                    </button>
+                    <button id="btnSalvar" class="btn btn-primary">
+                        💾 Salvar
+                    </button>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="app-footer">
+            <p>Sistema de Cálculo de Custas Cartoriais - CNCP Paraná</p>
+        </footer>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="assets/js/frame-bridge-child-snippet.js"></script>
+    <script src="assets/js/custas-api-client.js"></script>
+    <script src="assets/js/custas-app.js"></script>
+</body>
+</html>

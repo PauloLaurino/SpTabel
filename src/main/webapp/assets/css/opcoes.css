@@ -1,0 +1,234 @@
+/* ============================================
+   PAINEL DE OPÇÕES - COM BORDA VISÍVEL
+   ============================================ */
+
+/* HEADER DO PAINEL ESQUERDO */
+.panel-header {
+    padding: 8px !important;
+    height: 35px !important;
+    min-height: 35px !important;
+    background: #2c3e50;
+    border-bottom: 2px solid #3498db !important; /* BORDA AZUL FORTE */
+}
+
+.panel-header h2 {
+    font-size: 14px !important; /* UM POUCO MAIOR */
+    font-weight: 700 !important; /* MAIS NEGRITO */
+    color: white;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.panel-header h2 i {
+    color: #3498db;
+    font-size: 14px;
+}
+
+.panel-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: min-content;
+}
+
+/* CONTAINER PRINCIPAL COM BORDA VISÍVEL */
+.options-container {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 8px !important; /* MAIS ESPAÇO INTERNO */
+    background: #ffffff;
+    max-height: calc(100vh - 120px);
+    border: 1px solid #dee2e6 !important; /* BORDA INTERNA VISÍVEL */
+    border-top: none !important; /* REMOVER BORDA DUPLICADA NO TOPO */
+    margin: 0 !important;
+}
+
+/* ========== OPÇÕES COM BORDAS DEFINIDAS ========== */
+.opcao-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px !important; /* MAIS ESPAÇO */
+    background: white;
+    border: 1px solid #ced4da !important; /* BORDA MAIS VISÍVEL */
+    border-radius: 4px;
+    margin-bottom: 6px !important; /* MAIS ESPAÇO ENTRE ITENS */
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px !important; /* TEXTO UM POUCO MAIOR */
+    animation: fadeIn 0.2s ease-out;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* SOMBRA SUAVE */
+}
+
+.opcao-item:hover {
+    background: linear-gradient(to right, #f1f3f5 95%, #e9ecef 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-color: #3498db !important; /* BORDA AZUL NO HOVER */
+}
+
+.opcao-item.selecionada {
+    border-left: 4px solid #3498db !important; /* BORDA ESQUERDA AZUL FORTE */
+    border-right: 1px solid #3498db !important;
+    border-top: 1px solid #3498db !important;
+    border-bottom: 1px solid #3498db !important;
+    background: linear-gradient(to right, #f8f9fa 95%, #e3f2fd 100%);
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.2);
+}
+
+.opcao-radio {
+    margin-right: 8px;
+    accent-color: #3498db;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.opcao-label {
+    flex: 1;
+    font-size: 12px !important;
+    font-weight: 500;
+    color: #2c3e50;
+    cursor: pointer;
+    padding: 2px 0;
+}
+
+.opcao-codigo {
+    display: inline-block !important;
+    margin-left: 12px !important;
+    padding: 4px 8px !important;
+    border-radius: 12px !important;
+    color: #495057 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    flex-shrink: 0;
+    margin-left: auto; /* push to the extreme right */
+    text-align: right;
+}
+
+/* ANIMAÇÃO PARA OPÇÕES */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* CORES ESPECÍFICAS PARA CADA OPÇÃO - COM BORDAS COLORIDAS */
+.opcao-item.opcao-amarelo {
+    background: #fff9e6;
+    border-color: #ffd54f !important;
+}
+
+.opcao-item.opcao-amarelo.selecionada {
+    border-left-color: #ff9800 !important;
+    background: #fff3cd;
+    border-color: #ff9800 !important;
+}
+
+.opcao-item.opcao-verde-escuro {
+    background: #e8f5e9;
+    border-color: #81c784 !important;
+}
+
+.opcao-item.opcao-verde-escuro.selecionada {
+    border-left-color: #2e7d32 !important;
+    background: #d4edda;
+    border-color: #2e7d32 !important;
+}
+
+.opcao-item.opcao-azul-escuro {
+    background: #e3f2fd;
+    border-color: #64b5f6 !important;
+}
+
+.opcao-item.opcao-azul-escuro.selecionada {
+    border-left-color: #1565c0 !important;
+    background: #d1ecf1;
+    border-color: #1565c0 !important;
+}
+
+.opcao-item.opcao-vermelho {
+    background: #ffebee;
+    border-color: #e57373 !important;
+}
+
+.opcao-item.opcao-vermelho.selecionada {
+    border-left-color: #c62828 !important;
+    background: #f8d7da;
+    border-color: #c62828 !important;
+}
+
+.opcao-item.opcao-roxo {
+    background: #f3e5f5;
+    border-color: #ba68c8 !important;
+}
+
+.opcao-item.opcao-roxo.selecionada {
+    border-left-color: #7b1fa2 !important;
+    background: #e9d8fd;
+    border-color: #7b1fa2 !important;
+}
+
+.opcao-item.opcao-azul-ciano {
+    background: #e0f7fa;
+    border-color: #4dd0e1 !important;
+}
+
+.opcao-item.opcao-azul-ciano.selecionada {
+    border-left-color: #00838f !important;
+    background: #d1f2eb;
+    border-color: #00838f !important;
+}
+
+.opcao-item.opcao-bege {
+    background: #fff8e1;
+    border-color: #ffd54f !important;
+}
+
+.opcao-item.opcao-bege.selecionada {
+    border-left-color: #ff8f00 !important;
+    background: #ffeaa7;
+    border-color: #ff8f00 !important;
+}
+
+/* SCROLLBAR PERSONALIZADA */
+.options-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.options-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.options-container::-webkit-scrollbar-thumb {
+    background: #bdc3c7;
+    border-radius: 3px;
+}
+
+.options-container::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6;
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 768px) {
+    .panel-header h2 {
+        font-size: 12px !important;
+    }
+    
+    .opcao-item {
+        padding: 6px 8px !important;
+        font-size: 11px !important;
+    }
+    
+    .opcao-label {
+        font-size: 11px !important;
+    }
+    
+    .opcao-codigo {
+        font-size: 9px !important;
+        padding: 2px 6px !important;
+    }
+}

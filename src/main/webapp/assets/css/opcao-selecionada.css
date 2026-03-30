@@ -1,0 +1,109 @@
+/* ============================================
+   OPÇÃO SELECIONADA
+   ============================================ */
+
+.opcao-selecionada-section {
+    margin-top: 0 !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #e0e0e0;
+}
+
+.opcao-selecionada-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 6px;
+}
+
+.opcao-selecionada-header h4 {
+    font-size: 11px !important;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.opcao-selecionada-content {
+    background: #f8f9fa;
+    border-radius: 3px;
+    padding: 4px !important;
+    border: 1px solid #dee2e6;
+}
+
+.opcao-selecionada-texto {
+    font-size: 10px !important;
+    font-weight: 600;
+    margin-bottom: 2px;
+    color: #2c3e50;
+}
+
+.opcao-selecionada-detalhes {
+    font-size: 9px !important;
+    color: #6c757d;
+}
+
+/* CORES PARA OPÇÃO SELECIONADA */
+.opcao-selecionada-content.amarelo {
+    background: #fff9e6 !important;
+    border-left: 3px solid #ff9800 !important;
+}
+
+.opcao-selecionada-content.amarelo .opcao-selecionada-texto {
+    color: #e65100 !important;
+}
+
+.opcao-selecionada-content.verde-escuro {
+    background: #e8f5e9 !important;
+    border-left: 3px solid #2e7d32 !important;
+}
+
+.opcao-selecionada-content.verde-escuro .opcao-selecionada-texto {
+    color: #1b5e20 !important;
+}
+
+.opcao-selecionada-content.azul-escuro {
+    background: #e3f2fd !important;
+    border-left: 3px solid #1565c0 !important;
+}
+
+.opcao-selecionada-content.azul-escuro .opcao-selecionada-texto {
+    color: #0d47a1 !important;
+}
+
+.opcao-selecionada-content.vermelho {
+    background: #ffebee !important;
+    border-left: 3px solid #c62828 !important;
+}
+
+.opcao-selecionada-content.vermelho .opcao-selecionada-texto {
+    color: #b71c1c !important;
+}
+
+.opcao-selecionada-content.roxo {
+    background: #f3e5f5 !important;
+    border-left: 3px solid #7b1fa2 !important;
+}
+
+.opcao-selecionada-content.roxo .opcao-selecionada-texto {
+    color: #4a148c !important;
+}
+
+.opcao-selecionada-content.azul-ciano {
+    background: #e0f7fa !important;
+    border-left: 3px solid #00838f !important;
+}
+
+.opcao-selecionada-content.azul-ciano .opcao-selecionada-texto {
+    color: #006064 !important;
+}
+
+.opcao-selecionada-content.bege {
+    background: #fff8e1 !important;
+    border-left: 3px solid #ff8f00 !important;
+}
+
+.opcao-selecionada-content.bege .opcao-selecionada-texto {
+    color: #e65100 !important;
+}

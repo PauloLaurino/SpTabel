@@ -1,0 +1,11 @@
+{
+  "name": "selador-frontend-dev",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "browser-sync": "^2.27.11"
+  },
+  "scripts": {
+    "dev": "browser-sync start --server 'src/main/webapp' --files 'src/main/webapp/assets/css/**/*.css,src/main/webapp/views/**/*.html,src/main/webapp/assets/js/**/*.js' --startPath 'views/selador.html' --no-notify --reload-delay 200"
+  }
+}

@@ -1,0 +1,789 @@
+﻿229
+
+34.PROPRIEDADES – TABELIONATO DE NOTAS
+
+Tipo de 
+Propriedades Código Tipo Ato Descrição
+
+Dado
+
+401, 406, 407, 416, 428, 
+Preencher Nome completo ou Ra-
+
+solicitanteAto.nomeRazao string 437, 445, 452, 453, 454, 
+zão social do Solicitante do ato
+
+455, 456, 457, 458, 459
+Tipo de Documento válido: 1 - CPF, 
+2 - CNPJ, 3 - CNH, 4 - RG, 5 - Pas-
+
+saporte, 6 - CTPS, 7 - Título de 
+401, 406, 407, 416, 428, Eleitor, 8 - Certificado de Reser-
+
+solicitanteAto.documentoTipo int 437, 445, 452, 453, 454, vista, 9 - Documento Estrangeiro, 
+455, 456, 457, 458, 459 10 - Documento de Identificação 
+
+Profissional (Ex.CRM / OAB e 
+CREA), 11 - Outro, 12 - Não Infor-
+
+mado
+401, 406, 407, 416, 428, 
+
+solicitanteAto.documentoNu-
+string 437, 445, 452, 453, 454, Ex: "123.456.789-10"
+
+mero
+455, 456, 457, 458, 459
+
+
+
+230
+
+401, 406, 407, 416, 428, 
+solicitanteAto.endereco string 437, 445, 452, 453, 454, Preencher Endereço do Solicitante
+
+455, 456, 457, 458, 459
+autenticacao.totalPaginas int 401 Ex: 20 - Total de Páginas do ato
+autenticacao.data string 401 Formato: "DD/MM/AAAA"
+
+Preencher Descrição da autentica-
+ção. Campo destinado à descrição 
+
+autenticacao.descricao string 401
+detalhada do documento que se 
+
+busca autenticar.
+comunicadoVenda.data string 406 Formato: "DD/MM/AAAA"
+
+Preencher a Descrição Descrição 
+comunicadoVenda.descricao string 406 do veículo Exemplo "Fiat 147 azul 
+
+1990"
+Preencher a Placa do Veículo 
+
+comunicadoVenda.placa string 406
+Exemplo "498AAAAA"
+
+bigDeci- Ex: 80000 - Informar o Valor da 
+comunicadoVenda.valor 406
+
+mal venda.
+envolvidos (array) - 406, 407, 428, 445, 454 Array dos Envolvidos [{},{},{}...]
+
+Preencher Nome completo do En-
+envolvidos.nomeRazao string 406, 407, 428, 445, 454
+
+volvido
+Tipo de Documento válido: 1 - CPF, 
+2 - CNPJ, 3 - CNH, 4 - RG, 5 - Pas-
+
+saporte, 6 - CTPS, 7 - Título de 
+Eleitor, 8 - Certificado de Reser-
+
+envolvidos.documentoTipo int 406, 407, 428, 454 vista, 9 - Documento Estrangeiro, 
+10 - Documento de Identificação 
+Profissional (Ex.CRM / OAB e 
+
+CREA), 11 - Outro, 12 - Não Infor-
+mado
+
+envolvidos.documentoNumero string 406, 407, 428, 454 Ex: "123.456.789-10"
+Preencher Nome completo do Ad-
+
+envolvidos.nomeAdvogado string 445
+vogado
+
+Formato: "DD/MM/AAAA" - Data 
+cartaSentenca.data string 407
+
+do registro da Carta de Sentença.
+cartaSentenca.numeroPro-
+
+int 407 Ex: 1234567890
+cessoJudicial
+
+Preencher a Descrição Descrição
+do ato Exemplo Decisões judiciais, 
+dentre as quais, os formais de parti-
+
+cartaSentenca.descricao string 407 lha, as cartas de adjudicação e de 
+arrematação, os mandados de re-
+gistro, de averbação e de retifica-
+
+ção
+cartaSentenca.totalPaginas int 407 Ex: 20 - Total de Páginas do ato
+
+
+
+231
+
+Opções: 1 - Constituição de Condo-
+tipo int 416 mínio, 2 - Divisão, 3 - Partilha Ami-
+
+gável
+escritura.data string 416, 459 Formato: "DD/MM/AAAA"
+
+escritura.totalPaginas int 416, 459 Ex: 20 - Total de Páginas do ato
+escritura.unidades.quantida- Ex: 10 - Quantidade Total de Unida-
+
+int 416
+deTotal des na Escritura
+escritura.unidades.quantida-
+
+int 416 Ex: 2 - Quntidade de Partes dividida
+dePartes
+escritura.quantidadeFolhaAdi- Ex: 2 - Quntidade de Folhas Adicio-
+
+int 454
+cional nais no ato
+
+Preencher Informações sobre o 
+Tipo da Escritura. Exemplos Escri-
+
+tura Compra e Venda, Escritura De-
+claratória, Escritura Divisão Amigá-
+vel, Escritura Divórcio, Escritura Se-
+paração, Escritura Doação, Escri-
+
+escritura.tipo string 459
+tura Inventário, Escritura Permuta, 
+
+Escritura Revogação de Man-
+dado,Escritura Emancipação, Escri-
+
+tura Pacto Antenupcial, Escritura 
+Cessão de Direitos, Escritura Vaga 
+
+de Garagem, etc.
+Opções: true OU false (Possui De-
+
+boole-
+escritura.doiIncidencia 459 claração sobre Operações Imobiliá-
+
+ano
+rias: Sim ou Não?)
+
+descricaoFunrejus.funda-
+int 416, 452, 459 Opções: 1 - Legal, 2 - Normativo
+
+mento
+boole- Opções: true OU false (Possui 
+
+descricaoFunrejus.isencao 416, 452, 459
+ano Isenção: Sim ou Não?)
+
+Opções: true OU false (Houve re-
+descricaoFunrejus.recolhi- boole-
+
+416, 452, 459 colhimento da taxa na alíquota 
+mento.aliquota02 ano
+
+0,2%: Sim ou Não?)
+Opções: true OU false (Houve re-
+
+descricaoFunrejus.recolhi- boole-
+416, 452, 459 colhimento da taxa na alíquota 
+
+mento.aliquota25 ano
+25%: Sim ou Não?)
+
+descricaoFunrejus.guias (ar-
+- 416, 452, 459 Array das Guias [{},{},{}...]
+
+ray)
+descricaoFunrejus.guias.nu- Ex: “12345678910111213141-6” -
+
+string 416, 452, 459
+mero Informar o número da Guia
+descricaoFunrejus.guias.data string 416, 452, 459 Formato: "DD/MM/AAAA"
+descricaoFunrejus.guias.ba- bigDeci- Ex: 456.00  Base de Cálculo utili-
+
+416, 452, 459
+seCalculo mal zada
+
+bigDeci-
+descricaoFunrejus.guias.valor 416, 452, 459 Ex: 56.95  Valor Recolhido
+
+mal
+
+
+
+232
+
+outorgantes (array) - 416, 452, 456, 459 Array dos Outorgantes [{},{},{}...]
+Preencher Nome completo do Ou-
+
+outorgantes.nome string 416, 452, 456, 459
+torgante
+
+outorgantes.cpf - REMOVIDO - 416, 452, 456, 459 REMOVIDO
+Tipo de Documento válido: 1 - CPF, 
+2 - CNPJ, 3 - CNH, 4 - RG, 5 - Pas-
+
+saporte, 6 - CTPS, 7 - Título de 
+Eleitor, 8 - Certificado de Reser-
+
+outorgantes.documentoTipo int 416, 452, 456, 459 vista, 9 - Documento Estrangeiro, 
+10 - Documento de Identificação 
+Profissional (Ex.CRM / OAB e 
+
+CREA), 11 - Outro, 12 - Não Infor-
+mado
+
+outorgantes.documentoNu-
+string 416, 452, 456, 459 Ex: "123.456.789-10"
+
+mero
+outorgantes.dataNascimento string 416, 452, 456, 459 Formato: "DD/MM/AAAA"
+
+Preencher Nacionalidade do Outor-
+outorgantes.nacionalidade string 416, 452, 456, 459
+
+gante
+Opções: "solteiro", "solteira", 
+
+"casado", "casada", "separado", 
+outorgantes.estadoCivil string 416, 452, 456, 459 "separada", "viúvo", "viúva", "di-
+
+vorciado", "divorciada", "união 
+estável"
+
+outorgantes.endereco string 416, 452, 456, 459 Preencher Endereço do Outorgante
+outorgados (array) - 416, 452, 459 Array dos Outorgados [{},{},{}...]
+
+Preencher Nome completo do Ou-
+outorgados.nome string 416, 452, 459
+
+torgado
+outorgados.cpf - REMOVIDO - 416, 452, 459 REMOVIDO
+
+Tipo de Documento válido: 1 - CPF, 
+2 - CNPJ, 3 - CNH, 4 - RG, 5 - Pas-
+
+saporte, 6 - CTPS, 7 - Título de 
+Eleitor, 8 - Certificado de Reser-
+
+outorgados.documentoTipo int 416, 452, 459 vista, 9 - Documento Estrangeiro, 
+10 - Documento de Identificação 
+Profissional (Ex.CRM / OAB e 
+
+CREA), 11 - Outro, 12 - Não Infor-
+mado
+
+outorgados.documentoNu-
+string 416, 452, 459 Ex: "123.456.789-10"
+
+mero
+outorgados.dataNascimento string 416, 452, 459 Formato: "DD/MM/AAAA"
+
+Preencher Nacionalidade do Outor-
+outorgados.nacionalidade string 416, 452, 459
+
+gado
+Opções: "solteiro", "solteira", 
+
+outorgados.estadoCivil string 416, 452, 459 "casado", "casada", "separado", 
+"separada", "viúvo", "viúva", 
+
+
+
+233
+
+"divorciado", "divorciada", 
+"união estável"
+
+outorgados.endereco string 416, 452, 459 Preencher Endereço do Outorgado
+protocoloGeral.numero int 416, 452, 453, 456, 459 Ex: 123456
+
+protocoloGeral.data string 416, 452, 453, 456, 459 Formato: "DD/MM/AAAA"
+416, 417, 418, 421, 424, 
+429, 430, 433, 436, 443, 
+
+livro int Ex: 2
+446, 450, 452, 453, 454, 
+
+456, 457, 459
+416, 417, 418, 421, 424, 
+429, 430, 433, 436, 443, 
+
+folha int Ex: 7
+446, 450, 452, 453, 454, 
+
+456, 457, 459
+416, 417, 418, 421, 424, 
+429, 430, 433, 436, 443, 
+
+termo int Ex: 24
+446, 450, 452, 453, 454, 
+
+456, 457, 459
+publicaForma.descricao string 428 Preencher Descrição do ato
+publicaForma.quantidadeFo- Ex: 20 - Quantidade de Páginas 
+
+int 428
+lhaAdicional Adicionais no ato
+publicaForma.data string 428 Formato: "DD/MM/AAAA"
+
+publicaForma.hora string 428 Formato: "HH:MM:SS"
+Formato: "DD/MM/AAAA" - Data 
+
+apostila.data string 437
+da Apostila
+
+Preencher Tipo de Documento. 
+Exemplos: Diploma, Contratos, Es-
+crituras, Certidão de Nascimento, 
+
+apostila.tipoDocumento string 437
+Certidão Óbito, Certidão Casa-
+
+mento, CNH, RG, CTPS, Passa-
+porte, etc
+
+apostila.numero int 437 Ex: 12345
+Opções: 1 - Conciliação, 2 - Media-
+
+conciliacaoMediacao.tipo int 445
+ção
+
+Formato: "DD/MM/AAAA" - Data 
+conciliacaoMediacao.data string 445 da Sessão de Conciliação / Media-
+
+ção
+conciliacaoMediacao.media- Preencher Nome completo Media-
+
+string 445
+dor.nome dor/Conciliador
+conciliacaoMediacao.media- Preenche com o cargo Media-
+
+string 445
+dor.cargo dor/Conciliador
+conciliacaoMediacao.nature- Preenche com a descrição da Natu-
+
+string 445
+zaConflito reza do Conflito
+conciliacaoMediacao.resul- Opções: 1 - Acordo, 2 - Acordo Par-
+
+int 445
+tado cial, 3 - Sem Acordo
+
+
+
+234
+
+Opções: "Presencial" OU "On-
+conciliacaoMediacao.formato string 445
+
+line"
+conciliacaoMediacao.periodo string 445 Formato: "HH:MM:SS"
+conciliacaoMediacao.tempoA- Ex: 2  Informar a quantidade de 
+
+int 445
+dicional cada fração adicional de 15 minutos
+
+Opções: 1 - Procuração, 2 - Procu-
+tipo int 452 ração Causa Própria, 3 - Substabe-
+
+lecimento de Procuração
+procuracao.data string 452 Formato: "DD/MM/AAAA"
+
+Preencher Descrição Exemplo: 
+"Procuração"; "Procuração ad judi-
+
+procuracao.descricao string 452
+cia"; "Procuração plenos poderes" 
+
+etc
+procuracao.quantidadeOutor-
+
+int 452 Ex: 2
+gantes
+procuracao.quantidadeOutor-
+
+int 452 Ex: 4
+gados
+bens.quantidadeUnidadesAdi- Ex: 10 - Quantidade de Unidades 
+
+int 452, 456, 459
+cionais ou Bens Adicionais.
+bens.quantidadeVagasGara- Ex: 1 - Quantidade de Vaga de Ga-
+
+int 452, 456, 459
+gem ragem com matrícula autônoma
+
+Ex: 4 - Quantidade Total geral de 
+bens.quantidadeTotal int 452, 456, 459
+
+Unidades e Bens da Escrutura.
+bigDeci-
+
+bens.valorTotal 452, 456, 459 Ex: 106000
+mal
+
+Array dos bens Imóveis Urbanos 
+bens.imoveis.urbanos (array) - 452, 456, 459
+
+[{},{},{}...]
+bens.imoveis.urbanos.descri- Preencher com a Descrição do bem 
+
+string 452, 456, 459
+cao Imóvel Exemplo: "Casa"
+
+bigDeci-
+bens.imoveis.urbanos.valor 452, 456, 459 Ex: 1000000.00
+
+mal
+bens.imoveis.urbanos.matri- boole- Opções: true OU false (Possui ma-
+
+452, 456, 459
+culaAutonoma ano trícula autônoma: Sim ou Não?)
+bens.imoveis.urbanos.matri-
+
+string 452, 456, 459 Ex: "123456789012"
+cula
+bens.imoveis.urbanos.areaTo- bigDeci- Em relação ao metro quadrado (m²) 
+
+452, 456, 459
+tal mal Ex: 20000
+bens.imoveis.urbanos.logra- Preencher com Endereço completo 
+
+string 452, 456, 459
+douro do imóvel 
+
+Array dos bens Imóveis Rurais 
+bens.imoveis.rurais (array) - 452, 456, 459
+
+[{},{},{}...]
+Preencher com a Descrição do bem 
+
+bens.imoveis.rurais.descricao string 452, 456, 459
+Imóvel Exemplo: "Lote"
+
+bigDeci-
+bens.imoveis.rurais.valor 452, 456, 459 Ex: 1000000.00
+
+mal
+
+
+
+235
+
+bens.imoveis.rurais.ccirIncra string 452, 456, 459 Ex: "12323"
+
+bens.imoveis.rurais.nirfIncra string 452, 456, 459 Ex: "23234422"
+bens.imoveis.rurais.matricu- boole- Opções: true OU false (Possui ma-
+
+452, 456, 459
+laAutonoma ano trícula autônoma: Sim ou Não?)
+bens.imoveis.rurais.matricula string 452, 456, 459 Ex: "123456789012"
+
+bigDeci- Ex: 20000 Em relação ao metro 
+bens.imoveis.rurais.areaTotal 452, 456, 459
+
+mal quadrado (m²).
+bens.imoveis.rurais.logra- Preencher com Endereço completo 
+
+string 452, 456, 459
+douro do imóvel
+bens.moveis (array) - 452, 459 Array dos bens Móveis [{},{},{}...]
+
+Preencher com a Tipo do bem Mó-
+bens.moveis.tipo string 452, 459
+
+vel. Exemplo: "Carro"
+Preencher com a Descrição do bem 
+
+bens.moveis.descricao string 452, 459 Móvel. Exemplo: "Ferrari f40 ano 
+1990"
+
+bigDeci-
+bens.moveis.valor 452, 459 Ex: 1000000.00
+
+mal
+bens.outros (array) - 452, 459 Array dos bens Outros [{},{},{}...]
+
+Preencher com a Tipo do bem Ou-
+bens.outros.tipo string 452, 459
+
+tro. Exemplo: "Conta Bancária"
+Preencher com a Descrição do bem 
+
+bens.outros.descricao string 452, 459 Outro. Exemplo: "Conta corrente n. 
+1234564-8"
+
+bigDeci-
+bens.outros.valor 452, 459 Ex: 1000000.00
+
+mal
+testamento.data string 453 Formato: "DD/MM/AAAA"
+
+Opções: 1 - Testamento Público, 2
+– Testamento Particular, 3 - Testa-
+
+testamento.tipo int 453
+mento Cerrado, 4 - Revogação de 
+
+Testamento
+Preencher Nome completo do Ou-
+
+outorgante.nome string 453
+torgante
+
+outorgante.cpf - REMOVIDO - 453 REMOVIDO
+Tipo de Documento válido: 1 - CPF, 
+2 - CNPJ, 3 - CNH, 4 - RG, 5 - Pas-
+
+saporte, 6 - CTPS, 7 - Título de 
+Eleitor, 8 - Certificado de Reser-
+
+outorgante.documentoTipo int 453 vista, 9 - Documento Estrangeiro, 
+10 - Documento de Identificação 
+Profissional (Ex.CRM / OAB e 
+
+CREA), 11 - Outro, 12 - Não Infor-
+mado
+
+outorgante.documentoNu-
+string 453 Ex: "123.456.789-10"
+
+mero
+
+
+
+236
+
+outorgante.dataNascimento string 453 Formato: "DD/MM/AAAA"
+Preencher Nacionalidade do Outor-
+
+outorgante.nacionalidade string 453
+gante
+
+Opções: "solteiro", "solteira", 
+"casado", "casada", "separado", 
+
+outorgante.estadoCivil string 453 "separada", "viúvo", "viúva", "di-
+vorciado", "divorciada", "união 
+
+estável"
+outorgante.endereco string 453 Preencher Endereço do Outorgante
+testemunhas (array) - 453 Array das Testemunhas [{},{},{}...]
+
+Preencher Nome completo da Tes-
+testemunhas.nome string 453
+
+temunha
+Tipo de Documento válido: 1 - CPF, 
+2 - CNPJ, 3 - CNH, 4 - RG, 5 - Pas-
+
+saporte, 6 - CTPS, 7 - Título de 
+Eleitor, 8 - Certificado de Reser-
+
+testemunhas.documentoTipo int 453 vista, 9 - Documento Estrangeiro, 
+10 - Documento de Identificação 
+Profissional (Ex.CRM / OAB e 
+
+CREA), 11 - Outro, 12 - Não Infor-
+mado
+
+testemunhas.documentoNu-
+string 453 Ex: "123.456.789-10"
+
+mero
+testemunhas.dataNascimento string 453 Formato: "DD/MM/AAAA"
+
+Preencher Profissão da Testemu-
+testemunhas.profissao string 453
+
+nha
+Preencher Nacionalidade da Teste-
+
+testemunhas.nacionalidade string 453
+munha
+
+Opções: "solteiro", "solteira", 
+"casado", "casada", "separado", 
+
+testemunhas.estadoCivil string 453 "separada", "viúvo", "viúva", "di-
+vorciado", "divorciada", "união 
+
+estável"
+Preencher Endereço da Testemu-
+
+testemunhas.endereco string 453
+nha
+
+Opções: 1 - Certidão de Procura-
+ção, 2 - Certidão de Escritura, 3 -
+
+certidao.tipo int 454
+Certidão de Termo de Reconheci-
+
+mento de Firma
+Formato: "DD/MM/AAAA" - Infor-
+
+certidao.data string 454, 458
+mar Data da Certidão
+
+Formato: "DD/MM/AAAA" - Infor-
+certidao.dataRegistro string 454
+
+mar Data do Registro da Escritura
+Preencher com as informações utili-
+
+certidao.consulta string 458
+zadas na Consulta do Registro. 
+
+
+
+237
+
+Exemplos Nome, CPF, CNPJ, Nú-
+mero do Termo, etc.
+
+buscas.quantidade int 454 Ex: 4 - Quntidade de Buscas no ato
+Opções: 1 - Com Valor Declarado; 
+
+tipo int 455 2 - Sem Valor Declarado; 3 - Sinal 
+Público
+
+Opções: 1 - Por Verdadeira ou Au-
+reconhecimento.especie int 455
+
+têntica, 2 - Por Semelhança
+reconhecimento.quantidadeP- Ex: 20 - Quantidade de Páginas no 
+
+int 455
+aginasAto ato
+reconhecimento.quantidadeP- Ex: 2 - Quantidade de Partes envol-
+
+int 455
+artesEnvolvidasAto vidas no ato
+reconhecimento.data string 455 Formato: "DD/MM/AAAA"
+
+Preencher Descrição Exemplos: 
+reconhecimento.descricao string 455 Contratos, Transferência de Veí-
+
+culo, etc.
+signatarios (array) - 455 Array dos Signatários [{},{},{}...]
+
+Preencher Nome completo ou Ra-
+signatarios.nomeRazao string 455
+
+zão social do Signatário
+Tipo de Documento válido: 1 - CPF, 
+2 - CNPJ, 3 - CNH, 4 - RG, 5 - Pas-
+
+saporte, 6 - CTPS, 7 - Título de 
+Eleitor, 8 - Certificado de Reser-
+
+signatarios.documentoTipo int 455 vista, 9 - Documento Estrangeiro, 
+10 - Documento de Identificação 
+Profissional (Ex.CRM / OAB e 
+
+CREA), 11 - Outro, 12 - Não Infor-
+mado
+
+signatarios.documentoNu-
+string 455 Ex: "123.456.789-10"
+
+mero
+Opções: 1 - Ata Notarial (em geral), 
+2 - Ata Notarial de Usucapião e 3 -
+
+ataNotarial.tipo int 456
+Ata Notarial Adjudicação Extrajudi-
+
+cial
+ataNotarial.especie int 456 Opções: 1 - Interna OU 2 - Externa
+ataNotarial.data string 456 Formato: "DD/MM/AAAA"
+ataNotarial.quantidadePagina- Ex: 20 - Quantidade de Páginas no 
+
+int 456
+sAto ato
+
+Preencher Descrição da Ata Exem-
+plos: Conteúdo digital, Prova de 
+
+ataNotarial.descricao string 456
+Vida, declarações, Reuniões e As-
+
+sembleias, etc.
+materializacao.data string 457 Formato: "DD/MM/AAAA"
+
+
+
+238
+
+Preencher Descrição Exemplos: 
+materializacao.descricao string 457 Certidões, Traslados e Cópias de 
+
+Documentos Originais, etc.
+Preencher Nome completo do En-
+
+envolvido.nomeRazao string 457
+volvido
+
+Tipo de Documento válido: 1 - CPF, 
+2 - CNPJ, 3 - CNH, 4 - RG, 5 - Pas-
+
+saporte, 6 - CTPS, 7 - Título de 
+Eleitor, 8 - Certificado de Reser-
+
+envolvido.documentoTipo int 457 vista, 9 - Documento Estrangeiro, 
+10 - Documento de Identificação 
+Profissional (Ex.CRM / OAB e 
+
+CREA), 11 - Outro, 12 - Não Infor-
+mado
+
+envolvido.documentoNumero string 457 Ex: "123.456.789-10"
+Opções: 1 - Com Valor, 2 - Sem 
+
+tipo int 459
+Valor
+
+impostos.itcmd.numeroDocu-
+string 459 Ex: "12323"
+
+mento
+impostos.itcmd.dataPaga-
+
+string 459 Formato: "DD/MM/AAAA"
+mento
+
+bigDeci-
+impostos.itcmd.valorPago 459 Ex: 662622
+
+mal
+impostos.itbi.numeroDocu-
+
+string 459 Ex: "12323"
+mento
+impostos.itbi.dataPagamento string 459 Formato: "DD/MM/AAAA"
+
+bigDeci-
+impostos.itbi.valorPago 459 Ex: 662622
+
+mal
+Preencher com a Descrição da 
+
+Anulação. Exemplo: Descrever o 
+anulacaoDescricao string 439
+
+erro material "Erro no cadastra-
+mento dos dados"
+
+processoJudicial.numeroPro-
+int 440 Ex: 1234567890
+
+cessoJudicial
+processoJudicial.varaCivel string 440 Preencher com nome da Vara Cívil
+
+Preencher com nome do Juiz res-
+processoJudicial.nomeJuiz string 440
+
+ponsável
+processoJudicial.dataSen- Formato: "DD/MM/AAAA" - Data 
+
+string 440
+tenca da Sentença

@@ -1,0 +1,1240 @@
+﻿89
+
+TIPO 401 – AUTENTICAÇÃO
+
+01 (um) SELO DE DIGITAL (TN1) – por documento auten-
+ticado;
+
+ATENÇÃO: O SELO FÍSICO NOTARIAL AMARELO FOI 
+DESCONTINUADO. PARA SUBSTITUÍ-LO, DEVERÃO 
+SER UTILIZADAS AS ETIQUETAS ADESIVAS JÁ EMPRE-
+GADAS EM ATOS DE RECONHECIMENTO DE FIRMA.
+
+Referência: Tabela XI Item II
+
+Vínculos de selos: 
+Sem vínculos 
+
+PROPRIEDADES DO ATO:
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Autenticação do Documento:
+Total de páginas do documento autenticado.
+Data do ato de autenticação 
+Descrição detalhada do documento autenticado.
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+Art. 9º da Lei Estadual nº 13.228/2021
+
+§ 2º: A autenticação de cópias frente e verso do CIC, do título 
+de eleitor ou da cédula de identidade exige apenas um selo.
+
+§ 3º: Quando o documento for utilizado em mais de um ato, 
+cada ato corresponderá a um selo. Caso o documento se des-
+dobre em mais de uma folha, mas constitua um único docu-
+mento, será exigido apenas um selo na página final que con-
+tenha a assinatura do titular da serventia.
+
+
+
+90
+
+TIPO 406 - TRANSFERÊNCIA DE VEÍCULO
+
+01 (um) SELO DE FISCALIZAÇÃO (TN1) – por transferên-
+cia de veículo;
+
+Referência: Código de Normas Art. 457
+
+Vínculos de selos: 
+Sem vínculos 
+
+PROPRIEDADES DO ATO
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados do Comunicado de Venda:
+Data do comunicado de venda 
+Descrição do bem
+Placa do veículo
+Valor da venda do veículo
+
+Dados dos Envolvidos:
+Nome completo ou razão social de cada envolvido.
+Tipo documento 
+Número documento
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 407 - CARTA DE SENTENÇA
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por Carta de 
+Sentença;
+
+Referência: Código de Normas Art. 743-A
+
+Vínculos de selos: 
+Sem vínculos 
+
+
+
+91
+
+PROPRIEDADES DO ATO
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Carta de Sentença:
+Data do registro da carta de sentença
+Número do Processo Judicial
+Descrição (ex.: decisões judiciais)
+Total de Páginas
+
+Dados dos Envolvidos:
+Nome completo ou razão social de cada envolvido.
+Tipo documento 
+Número documento
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 416 - CONSTITUIÇÃO DE CONDOMÍNIO, DIVISÃO OU PARTILHA AMIGÁVEL 
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por escritura;
+
+Referência: Tabela XI Item VI
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por traslado utilizando 
+o selo Tipo 430; 
+01 SELO DE FISCALIZAÇÃO (TN1) – por unidade adicional 
+utilizando o selo Tipo 417;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Tipo da escritura:
+1 - Constituição de Condomínio
+2 - Divisão
+3 - Partilha amigável
+
+
+
+92
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Escritura:
+Data da Escritura
+Total de Página
+
+Unidades da Escritura:
+Quantidade Total de Unidades 
+Quantidade de Partes Divididas
+
+Dados do FUNREJUS:
+Fundamento: Legal ou Normativo
+Isenção: Sim ou Não
+
+Dados Recolhimento da Taxa:
+Alíquota de 0,2%: Sim ou Não
+Alíquota de 25%: Sim ou Não
+
+Dados das Guias:
+Número
+Data
+Base de Cálculo
+Valor Recolhido
+
+Dados dos Outorgantes:
+Nome
+Tipo de Documento 
+Número do Documento
+Data de Nascimento
+Nacionalidade
+Estado Civil
+Endereço completo (Logradouro, Número, Bairro, Cidade/UF 
+e CEP)
+
+Dados dos Outorgados:
+Nome
+Tipo de Documento 
+Número do Documento
+Data de Nascimento
+Nacionalidade
+Estado Civil
+Endereço completo (Logradouro, Número, Bairro, Cidade/UF 
+e CEP)
+
+
+
+93
+
+Protocolo Geral:
+Número
+Data do Protocolo
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 417 - POR UNIDADE, MAIS (CONSTITUIÇÃO DE CONDOMÍNIO, DIVISÃO OU PARTI-
+LHA AMIGÁVEL)
+
+01 (um) SELO DE FISCALIZAÇÃO (TN1) – por unidade 
+adicional.
+
+Referência: Tabela XI Item VI
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por traslado utilizando 
+o selo Tipo 430; 
+01 SELO DE FISCALIZAÇÃO (TN2) – por escritura utilizando 
+o selo Tipo 416;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+
+
+94
+
+TIPO 418 - UNIDADE OU BEM ADICIONAL (ESCRITURAS, ATAS NOTARIAIS, PROCURA-
+ÇÕES E TESTAMENTOS)
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por unidade ou 
+bem adicional (até 9 unidades ou bens)
+
+Referência: Tabela XI Item X (b)
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por escritura utilizando 
+o selo Tipo 416, 452, 453 456 E 459;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 421 - POR PÁGINA QUE ACRESCER - (ATA NOTARIAL)
+
+01 (um) SELO DE FISCALIZAÇÃO (TN1) – por página que 
+acrescer
+
+Referência: Tabela XI Item XI (c)
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por traslado utilizando 
+o selo Tipo 430; 
+01 SELO DE FISCALIZAÇÃO (TN2) – por escritura utilizando 
+o selo Tipo 456;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+Obs: Não se aplica as Atas Notariais de Usucapião e Atas 
+Notariais Adjudicação Extrajudicial.
+
+
+
+95
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 424 - POR OUTORGANTE OU OUTORGADO QUE ACRESCER - (PROCURAÇÃO)
+
+01 (um) SELO DE FISCALIZAÇÃO (TN3) – por outorgante 
+ou outorgado que acrescer
+
+Referência: Tabela XI Item III
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por traslado utilizando 
+o selo Tipo 430; 
+01 SELO DE FISCALIZAÇÃO (TN2) – por procuração utili-
+zando o selo Tipo 452;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+Obs: Não se aplica as Procurações em Causa Própria.
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+
+
+96
+
+TIPO 428 - PÚBLICA FORMA
+
+01 (um) SELO DE FISCALIZAÇÃO (TN1) – por pública 
+forma;
+
+Referência: Tabela XI, Item VIII, (a)
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN1) – por página que acres-
+cer utilizando o selo Tipo 429;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+Propriedades do Ato
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Pública Forma:
+Data
+Hora 
+Descrição
+Quantidade Página que acrescer
+
+Dados dos envolvidos:
+Nome
+Tipo documento
+Número documento
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+
+
+97
+
+TIPO 429 - PÁGINA QUE ACRESCER - (PÚBLICA FORMA)
+
+01 (um) SELO DE FISCALIZAÇÃO (TN1) – por página que 
+acrescer
+
+Referência: Tabela XI, Item VIII, (b)
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN1) – por publica forma uti-
+lizando o selo Tipo 428;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 430: TRASLADO 
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) - por traslado;
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por procuração utili-
+zando o selo Tipo 452;
+01 SELO DE FISCALIZAÇÃO (TN2) – por testamento utili-
+zando o selo Tipo 453;
+01 SELO DE FISCALIZAÇÃO (TN2) – por ata notarial utili-
+zando o selo Tipo 456;
+01 SELO DE FISCALIZAÇÃO (TN2) – por escritura utilizando 
+o selo Tipo 459;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+
+
+98
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 433 - POR PÁGINA QUE ACRESCER - (CERTIDÃO DE ESCRITURA)
+
+01 (um) SELO DE FISCALIZAÇÃO (TN3) – por página que 
+acrescer
+
+Referência: Tabela XI, Item VII, (b)
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN1) – por certidão de escri-
+tura utilizando o selo Tipo 454;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+Obs: Não se aplica as Certidões de Procuração.
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+
+
+99
+
+TIPO 436: BUSCAS POR 10 (DEZ) ANOS OU FRAÇÃO
+
+01 (um) SELO DE FISCALIZAÇÃO (TN3) – por busca (de-
+cênio).
+
+Referência: Tabela XI, Item IX
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN1) – por certidão de escri-
+tura utilizando o selo Tipo 454;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 437 – APOSTILAMENTO DE HAIA
+
+01 (um) SELO DE FISCALIZAÇÃO (TN5) – por Apostila-
+mento.
+
+Referência: Provimento n° 62/2017 – CNJ
+
+Vínculos de selos: 
+Sem vínculos 
+
+PROPRIEDADES DO ATO
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da apostila:
+Data do apostilamento 
+
+
+
+100
+
+Tipo documento apostilado
+Número da apostila 
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+RETIFICAÇÃO DE SELO
+
+01 (um) SELO DE FISCALIZAÇÃO (TNI) – por retificação 
+
+A retificação de selos pode ser realizada para corrigir ou atu-
+alizar informações de um ato já emitido para o usuário.
+
+Referência: Instrução Normativa nº 028/2020 - CGJ
+
+Para a retificação de um selo, deve-se emitir um novo 
+selo com as informações atualizadas do ato principal, in-
+dicando o número do selo que necessita de retificação.
+
+TIPOS 439 - ANULAÇÃO DE SELO
+
+01 (um) SELO DE FISCALIZAÇÃO (TNI) – por anulação
+
+O Selo de Anulação deve ser utilizado para anular um Selo 
+de Fiscalização que tenha sido: (i) emitido incorretamente; (ii) 
+gerado com problemas; ou (iii) utilizado em atos que foram 
+cancelados devido a erro ou desistência do usuário.
+
+Referência: Instrução Normativa nº 028/2020 - CGJ
+
+Para a anulação de um selo, deve-se emitir o selo de anu-
+lação, indicando o número do selo que necessita de anu-
+lado.
+
+Propriedades do Ato
+
+Dados da anulação:
+Número do selo a ser anulado
+Descrição da anulação
+
+
+
+101
+
+TIPO 440 - CANCELAMENTO DE SELO
+
+01 (um) SELO DE FISCALIZAÇÃO (TNI) – por cancela-
+mento
+
+O cancelamento de um ato depende de ordem judicial.
+
+Referência: Instrução Normativa nº 028/2020 - CGJ
+
+Para o cancelamento de um selo, deve-se emitir o selo de 
+cancelamento, indicando o número do selo que necessita 
+de cancelado.
+
+Propriedades do Ato
+
+Dados do cancelamento:
+Número do selo cancelado
+Número processo judicial
+Vara cível
+Nome juiz
+Data Sentença 
+
+TIPO 443 - VAGA DE GARAGEM - MATRÍCULA AUTÔNOMA 
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por vaga de ga-
+ragem;
+
+Referência: Tabela XI Item X (c)
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por escritura utilizando 
+o selo Tipo 416, 452, 453 456 E 459;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+
+
+102
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 445 - SESSÃO DE CONCILIAÇÃO E MEDIAÇÃO
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por sessão de 
+Conciliação e Mediação
+
+Referência: Tabela XI Item XII (a)
+
+Vínculos de selos: 
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – a cada fração adi-
+cional de quinze minutos utilizando o selo Tipo 446.
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Conciliação e Mediação:
+Data 
+Tipo (Conciliação ou Mediação)
+Nome do mediador
+Cargo do mediador
+Natureza do conflito
+Resultado 
+Formato
+Período da sessão
+Tempo adicional da sessão
+
+Dados dos envolvidos:
+Nome
+Nome do advogado 
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+
+
+103
+
+TIPO 446 - A CADA FRAÇÃO ADICIONAL DE QUINZE MINUTOS - (CONCILIAÇÃO E MEDI-
+AÇÃO)
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – a cada fração 
+adicional de quinze minutos
+
+Referência: Tabela XI Item XII (b)
+
+Vínculos de selos: 
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por sessão de 
+Conciliação e Mediação utilizando o selo Tipo 445.
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 447 - AUTENTICAÇÃO DIGITAL (CENAD)
+
+Obs: usar o código 401 com a tag "tipoEmissaoAto": 2 -
+para Emissão Eletrônica do Registro do ato.
+
+TIPO 449 - RECONHECIMENTO DE ASSINATURA ELETRÔNICA - E-NOT
+
+Obs: usar o código 455 com a tag "tipoEmissaoAto": 2 -
+para Emissão Eletrônica do Registro do ato.
+
+
+
+104
+
+TIPO 450 - UNIDADE OU BEM ADICIONAL - (A PARTIR DA 10ª UNIDADE OU BEM)
+
+01 (um) SELO DE FISCALIZAÇÃO (TNI) – por unidade ou 
+bem adicional. (a partir da 10ª unidade ou bens)
+
+Referência: Tabela XI Item X (b)
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por escritura/ata nota-
+rial/procuração utilizando o selo Tipo 416, 452, 453 456 E 
+459;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 452 – PROCURAÇÃO
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por procuração;
+
+Referência: Tabela XI Item III
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN3) – por outorgante ou ou-
+torgado utilizando o selo Tipo 424;
+01 SELO DE FISCALIZAÇÃO (TN2) – por traslado utilizando 
+o selo Tipo 430;
+01 SELO DE FISCALIZAÇÃO (TN2) – por unidade adicional 
+utilizando o selo Tipo 418;
+01 SELO DE FISCALIZAÇÃO (TNI) – por unidade adicional 
+utilizando o selo Tipo 451 (a partir da 10ª unidade ou bens);
+01 SELO DE FISCALIZAÇÃO (TN2) – por vaga de garagem 
+utilizando o selo Tipo 443;
+
+
+
+105
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Tipo da procuração:
+1 - Procuração (em geral)
+2 - Procuração em Causa Própria
+3 - Procuração de Substabelecimento
+3 – Substabelecimento de Procuração
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante
+
+Dados da Procuração:
+Data 
+Descrição 
+Quantidade de outorgante
+Quantidade de outorgado
+
+Dados do FUNREJUS:
+Fundamento: Legal ou Normativo
+Isenção: Sim ou Não
+
+Dados Recolhimento da Taxa:
+Alíquota de 0,2%: Sim ou Não
+Alíquota de 25%: Sim ou Não
+
+Dados das Guias:
+Número
+Data
+Base de Cálculo
+Valor Recolhido
+
+Dados dos Outorgantes:
+Nome
+Tipo de Documento 
+Número do Documento
+Data de Nascimento
+Nacionalidade
+Estado Civil
+Endereço completo (Logradouro, Número, Bairro, Cidade/UF 
+e CEP)
+
+
+
+106
+
+Dados dos Outorgados:
+Nome
+Tipo de Documento 
+Número do Documento
+Data de Nascimento
+Nacionalidade
+Estado Civil
+Endereço completo (Logradouro, Número, Bairro, Cidade/UF 
+e CEP)
+
+Dados dos bens:
+Obs: Se aplica apenas paras Procurações em Causa Pró-
+pria.
+Quantidade de unidades adicionais 
+Quantidade de vaga de garagem (matrícula autônoma)
+Valor total dos bens
+
+Dados dos bens imóveis: 
+Tipo (urbano ou rural)
+Descrição
+Valor
+Matrícula autônoma (sim ou não)
+Número da matrícula  
+Área total
+Logradouro
+
+Dados dos bens móveis: 
+Tipo 
+Descrição
+Valor
+
+Dados dos bens outros: 
+Tipo
+Descrição
+Valor
+
+Protocolo Geral:
+Número
+Data do Protocolo
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+
+
+107
+
+TIPO 453 - TESTAMENTO
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por testamento;
+
+Referência: Tabela XI Item V
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por traslado utilizando 
+o selo Tipo 430;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dado do Testamento:
+Data
+Tipo: 1 - Testamento público, 2 - Testamento particular, 3 -
+Testamento cerrado, 4 - Revogação de testamento
+
+Dados do Outorgante:
+Nome
+Tipo de Documento 
+Número do Documento
+Data de Nascimento
+Nacionalidade
+Estado Civil
+Endereço completo (Logradouro, Número, Bairro, Cidade/UF 
+e CEP)
+
+Dados das testemunhas:
+Nome
+Tipo de Documento 
+Número do Documento
+Data de Nascimento
+Nacionalidade
+Estado Civil
+Endereço completo (Logradouro, Número, Bairro, Cidade/UF 
+e CEP)
+
+
+
+108
+
+Protocolo Geral:
+Número
+Data do Protocolo
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 454 - CERTIDÃO
+
+01 (um) SELO DE DIGITAL (TN1) – por certidão;
+
+Referência: Tabela XI Item VII
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN3) – por busca (decênio) 
+utilizando o selo Tipo 436;
+01 SELO DE FISCALIZAÇÃO (TN3) – por página adicional 
+utilizando o selo Tipo 433;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Certidão:
+Tipo: 1 - Procuração, 2 - Escritura, 3 - Termo de reconheci-
+mento de firma
+Data da certidão 
+Data do registro 
+Quantidade página que acrescer
+Quantidade de buscas 
+
+
+
+109
+
+Dados dos envolvidos:
+Nome
+Tipo documento
+Número documento
+
+Livro 
+Folha 
+Termo 
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 455 - RECONHECIMENTO DE FIRMA
+
+01 (um) SELO DE FISCALIZAÇÃO (TN1) – por reconheci-
+mento de firma (por signatário);
+
+Referência: Tabela XI Item I
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN1) – por reconhecimento 
+de firma utilizando o selo Tipo 455;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+Propriedades do Ato
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Certidão:
+Tipo: 1 - Com Valor Declarado; 2 - Sem Valor Declarado; 3 -
+Sinal Público
+Espécie: 1 - Por Verdadeira ou Autêntica, 2 - Por Semelhança 
+Quantidade páginas  
+Quantidade pessoas envolvidas
+Data do reconhecimento
+Descrição 
+
+
+
+110
+
+Dados dos signatários:
+Nome completo ou razão social de cada envolvido.
+Tipo documento 
+Número documento
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 456 - ATA NOTARIAL
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por ata;
+
+Referência: Tabela XI Item XI
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN1) – por página adicional 
+utilizando o selo Tipo 421;
+01 SELO DE FISCALIZAÇÃO (TN2) – por traslado utilizando 
+o selo Tipo 430; 
+01 SELO DE FISCALIZAÇÃO (TN2) – por unidade adicional 
+utilizando o selo Tipo 418;
+01 SELO DE FISCALIZAÇÃO (TNI) – por unidade adicional 
+utilizando o selo Tipo 451 (a partir da 10ª unidade ou bens);
+01 SELO DE FISCALIZAÇÃO (TN2) – por vaga de garagem 
+utilizando o selo Tipo 443;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+Propriedades do Ato
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Ata Notarial:
+Tipo: 1 - Ata Notarial (em geral), 2 - Ata Notarial de Usucapião 
+e 3 - Ata Notarial Adjudicação Extrajudicial
+Espécie: 1 - Interna ou 2 - Externa 
+Obs: Não se aplica as Atas de Usucapião e Adjudicação.
+Data 
+Quantidade Páginas 
+Descrição 
+
+
+
+111
+
+Dados dos Outorgantes:
+Nome
+Tipo de Documento 
+Número do Documento
+Data de Nascimento
+Nacionalidade
+Estado Civil
+Endereço completo (Logradouro, Número, Bairro, Cidade/UF 
+e CEP)
+
+Dados dos bens:
+Obs: Se aplica apenas paras as Atas de Usucapião e Ad-
+judicação.
+Quantidade de unidades adicionais 
+Quantidade de vaga de garagem (matrícula autônoma)
+Valor total dos bens
+
+Dados dos bens imóveis: 
+Tipo (urbano ou rural)
+Descrição
+Valor
+Matrícula autônoma (sim ou não)
+Número da matrícula  
+Área total
+Logradouro
+
+Protocolo Geral:
+Número
+Data do Protocolo
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+
+
+112
+
+TIPO 457 - MATERIALIZAÇÃO
+
+01 (um) SELO DE DIGITAL (TN1) – por materialização;
+
+Referência: Código de Normas Art. 730-A
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN3) – por busca (decênio) 
+utilizando o selo Tipo 436;
+01 SELO DE FISCALIZAÇÃO (TN3) – por página adicional 
+utilizando o selo Tipo 433;
+
+Obrigatoriamente os selos precisam utilizar o mesmo número 
+de IDAP para que esse relacionamento apresente na leitura 
+do QRCode e na consulta do selo.
+
+PROPRIEDADES DO ATO:
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Materialização
+Data
+Descrição
+
+Dados dos envolvidos:
+Nome
+Tipo documento
+Número documento
+
+Livro 
+Folha 
+Termo 
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+
+
+113
+
+TIPO 458 - CERTIDÃO NEGATIVA
+
+01 (um) SELO DE DIGITAL (TN1) – por certidão;
+
+Referência: Tabela XI Item VII
+
+Vínculos de selos: 
+Sem vínculos 
+
+PROPRIEDADES DO ATO:
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Certidão:
+Data da certidão 
+Nome do Envolvido
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.
+
+TIPO 459 - ESCRITURA
+
+01 (um) SELO DE FISCALIZAÇÃO (TN2) – por escritura;
+
+Referência: Tabela XI Item IV
+
+Vínculos de selos: 
+01 SELO DE FISCALIZAÇÃO (TN2) – por traslado utilizando 
+o selo Tipo 430; 
+01 SELO DE FISCALIZAÇÃO (TN2) – por unidade adicional 
+utilizando o selo Tipo 418;
+01 SELO DE FISCALIZAÇÃO (TNI) – por unidade adicional 
+utilizando o selo Tipo 451 (a partir da 10ª unidade ou bens);
+01 SELO DE FISCALIZAÇÃO (TN2) – por vaga de garagem 
+utilizando o selo Tipo 443;
+
+PROPRIEDADES DO ATO
+
+
+
+114
+
+Dados do Solicitante do Ato:
+Nome ou Razão Social do solicitante.
+Tipo de Documento 
+Número do Documento
+Endereço do solicitante.
+
+Dados da Escritura:
+Tipo
+Espécie: 1 - Com Valor ou 2 - Sem valor
+Data 
+Incidência da DOI (Sim ou Não)
+Quantidade Páginas
+
+Dados do FUNREJUS:
+Fundamento: Legal ou Normativo
+Isenção: Sim ou Não
+
+Dados Recolhimento da Taxa:
+Alíquota de 0,2%: Sim ou Não
+Alíquota de 25%: Sim ou Não
+
+Dados das Guias:
+Número
+Data
+Base de Cálculo
+Valor Recolhido
+
+Dados dos Outorgantes:
+Nome
+Tipo de Documento 
+Número do Documento
+Data de Nascimento
+Nacionalidade
+Estado Civil
+Endereço completo (Logradouro, Número, Bairro, Cidade/UF 
+e CEP)
+
+Dados dos bens:
+Quantidade de unidades adicionais 
+Quantidade de vaga de garagem (matrícula autônoma)
+Valor total dos bens
+
+Dados dos bens imóveis: 
+Tipo (urbano ou rural)
+Descrição
+Valor
+Matrícula autônoma (sim ou não)
+
+
+
+115
+
+Número da matrícula  
+Área total
+Logradouro
+
+Dados dos bens móveis: 
+Tipo 
+Descrição
+Valor
+
+Dados dos bens outros: 
+Tipo
+Descrição
+Valor
+
+Dados dos Impostos: 
+Tipo: ITCMD ou ITBI
+Número do documento
+Data do pagamento
+Valor pago
+
+Protocolo Geral:
+Número
+Data do Protocolo
+
+Livro
+Folha
+Termo
+
+Verbas: Emolumentos, VRCEXT, FUNREJUS, ISS, FUN-
+DEP, FUNARPEN, Distribuidor e Valor Adicional.

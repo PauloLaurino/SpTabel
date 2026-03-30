@@ -1,0 +1,1555 @@
+package com.selador.util;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import com.selador.dao.ConnectionFactory;
+
+/**
+ * Utilitário para validar e sanitizar JSON de selos para o Tabelionato de Notas.
+ * Implementa as regras de validação específicas para tipos de ato 401-459.
+ * 
+ *用法:
+ * 
+ * // Sanitizar JSON de selo
+ * String jsonSanitizado = SeloJsonSanitizerNotas.sanitizar(jsonString);
+ * 
+ * // Validar e sanitizar com dados do banco
+ * SeloJsonSanitizerNotas.ValidacaoResult result = SeloJsonSanitizerNotas.validarESanitizar(jsonString);
+ * 
+ * // Sanitizar e atualizar JSON12 no banco
+ * SeloJsonSanitizerNotas.sanitizarESalvar(seloDigital);
+ */
+public class SeloJsonSanitizerNotas {
+
+    private static final ObjectMapper M = new ObjectMapper();
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATE_FORMAT_ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(SeloJsonSanitizerNotas.class.getName());
+    
+    // Tipos de ato válidos para o Tabelionato de Notas (TN1, TN2, TN3, TN5)
+    private static final int[] TIPOS_ATO_VALIDOS = {
+        401, 402, 403, 404, 405, // Autenticação e Reconhecimento de Firma
+        406, 407, // Transferência de Veículo, Carta de Sentença
+        408, 409, 410, 411, // Procuração, testamento, etc.
+        412, 413, 414, 415, // Inventário, etc.
+        416, 417, 418, 419, 420, // Constituição de Condomínio, Unidades
+        421, 422, 423, 424, 425, 426, 427, 428, 429, // Páginas extras, Procuração, Pública Forma
+        430, 431, 432, 433, 434, 435, 436, 437, // Traslado, etc.
+        438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, // Diversos
+        450, 451, 452, 453, 454, 455, 456, 457, 458, 459 // Diversos
+    };
+    
+    // Buscar solicitante por num_rec na tabela fin_reccab
+    private static ObjectNode buscarSolicitantePorNumRec(long numRec) {
+        LOGGER.info("[SeloJsonSanitizerNotas] Buscando solicitante por numRec: " + numRec);
+        
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = ConnectionFactory.getConnection();
+            
+            // Buscar dados do solicitante na tabela fin_reccab
+            // O campo num_rec contém o número do registro
+            String sql = "SELECT nomecli_rec, cpfcli_rec, tipodoccli_rec " +
+                "FROM fin_reccab " +
+                "WHERE num_rec = ?";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, numRec);
+            rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                ObjectNode solicitante = M.createObjectNode();
+                
+                String nomeRazao = rs.getString("nomecli_rec");
+                String documentoNumero = rs.getString("cpfcli_rec");
+                int tipoDoc = rs.getInt("tipodoccli_rec");
+                
+                // Se o tipo de documento não estiver definido, detectar pelo número
+                if (tipoDoc == 0) {
+                    tipoDoc = detectarTipoDocumento(documentoNumero);
+                }
+                
+                solicitante.put("nomeRazao", nomeRazao != null ? nomeRazao : "");
+                solicitante.put("documentoTipo", tipoDoc);
+                solicitante.put("documentoNumero", documentoNumero != null ? documentoNumero : "");
+                
+                LOGGER.info("[SeloJsonSanitizerNotas] Solicitante encontrado: " + nomeRazao + ", documento: " + documentoNumero);
+                return solicitante;
+            } else {
+                LOGGER.warning("[SeloJsonSanitizerNotas] Nenhum registro encontrado para numRec: " + numRec);
+            }
+            
+        } catch (SQLException e) {
+            LOGGER.severe("[SeloJsonSanitizerNotas] Erro ao buscar solicitante: " + e.getMessage());
+        } finally {
+            try { if (rs != null) rs.close(); } catch (SQLException e) {}
+            try { if (ps != null) ps.close(); } catch (SQLException e) {}
+            try { if (conn != null) conn.close(); } catch (SQLException e) {}
+        }
+        
+        // Retornar objeto vazio se não encontrou
+        ObjectNode solicitante = M.createObjectNode();
+        solicitante.put("nomeRazao", "");
+        solicitante.put("documentoTipo", 12); // Não Informado
+        solicitante.put("documentoNumero", "");
+        return solicitante;
+    }
+    
+    // Stub: Detectar tipo de documento pelo número
+    private static int detectarTipoDocumento(String numero) {
+        if (numero == null || numero.isEmpty()) {
+            return 12; // Não Informado
+        }
+        String num = numero.replaceAll("[^0-9]", "");
+        if (num.length() == 11) {
+            return 1; // CPF
+        } else if (num.length() == 14) {
+            return 2; // CNPJ
+        }
+        return 12; // Não Informado
+    }
+
+    /**
+     * Extrai signatários do objeto selo procurando em campos comuns:
+     * - propriedades.signatarios (se já existir)
+     * - envolvidos (array)
+     * - ListaPropriedades (mapeando envolvidos.*)
+     */
+    private static ArrayNode extrairSignatarios(ObjectNode seloObj) {
+        ArrayNode signatarios = M.createArrayNode();
+        java.util.Set<String> seen = new java.util.HashSet<>();
+
+        // 1) Se já existe em propriedades.signatarios, retorna cópia
+        if (seloObj.has("propriedades") && seloObj.get("propriedades").isObject()) {
+            ObjectNode props = (ObjectNode) seloObj.get("propriedades");
+            if (props.has("signatarios") && props.get("signatarios").isArray()) {
+                ArrayNode arr = (ArrayNode) props.get("signatarios");
+                for (JsonNode s : arr) {
+                    if (s.isObject()) {
+                        ObjectNode so = (ObjectNode) s;
+                        String num = so.has("documentoNumero") ? so.get("documentoNumero").asText("") : "";
+                        if (!num.isEmpty()) {
+                            String key = num.replaceAll("[^0-9]", "");
+                            if (!seen.contains(key)) {
+                                seen.add(key);
+                                signatarios.add(so);
+                            }
+                        }
+                    }
+                }
+                if (signatarios.size() > 0) return signatarios;
+            }
+        }
+
+        // 2) Extrair de 'envolvidos' quando existir
+        if (seloObj.has("envolvidos") && seloObj.get("envolvidos").isArray()) {
+            ArrayNode env = (ArrayNode) seloObj.get("envolvidos");
+            for (JsonNode en : env) {
+                if (en.isObject()) {
+                    ObjectNode e = (ObjectNode) en;
+                    String nome = null;
+                    String num = null;
+                    if (e.has("nomeRazao")) nome = e.get("nomeRazao").asText(null);
+                    if (nome == null && e.has("nome")) nome = e.get("nome").asText(null);
+                    if (e.has("documentoNumero")) num = e.get("documentoNumero").asText(null);
+                    if (num == null && e.has("documento")) num = e.get("documento").asText(null);
+                    if (num == null && e.has("CPF_CNPJ")) num = e.get("CPF_CNPJ").asText(null);
+                    if (nome != null && num != null) {
+                        String key = num.replaceAll("[^0-9]", "");
+                        if (!seen.contains(key)) {
+                            seen.add(key);
+                            ObjectNode sign = M.createObjectNode();
+                            sign.put("nomeRazao", nome);
+                            sign.put("documentoTipo", detectarTipoDocumento(num));
+                            sign.put("documentoNumero", num);
+                            signatarios.add(sign);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3) Extrair de ListaPropriedades (várias convenções e possíveis erros de digitação)
+        if (seloObj.has("ListaPropriedades") && seloObj.get("ListaPropriedades").isArray()) {
+            ArrayNode listaProp = (ArrayNode) seloObj.get("ListaPropriedades");
+            String ultimoNome = null;
+            String ultimoNum = null;
+            for (int i = 0; i < listaProp.size(); i++) {
+                JsonNode item = listaProp.get(i);
+                if (!item.isObject()) continue;
+                ObjectNode it = (ObjectNode) item;
+                String nomeProp = it.has("NomePropriedade") ? it.get("NomePropriedade").asText(null) : null;
+                String valorProp = it.has("ValorPropriedade") && !it.get("ValorPropriedade").isNull() ? it.get("ValorPropriedade").asText(null) : null;
+                if (nomeProp == null || valorProp == null) continue;
+
+                String npLower = nomeProp.toLowerCase();
+                if (npLower.contains("envolvid") || npLower.contains("envolv") || npLower.contains("emvolv")) {
+                    if (npLower.contains("nome") || npLower.contains("razao") || npLower.contains("nome_razao")) {
+                        ultimoNome = valorProp;
+                    } else if (npLower.contains("cpf") || npLower.contains("cnpj") || npLower.contains("cpf_cnpj") || npLower.contains("documento")) {
+                        ultimoNum = valorProp;
+                    }
+                    if (ultimoNome != null && ultimoNum != null) {
+                        String key = ultimoNum.replaceAll("[^0-9]", "");
+                        if (!seen.contains(key)) {
+                            seen.add(key);
+                            ObjectNode sign = M.createObjectNode();
+                            sign.put("nomeRazao", ultimoNome);
+                            sign.put("documentoTipo", detectarTipoDocumento(ultimoNum));
+                            sign.put("documentoNumero", ultimoNum);
+                            signatarios.add(sign);
+                        }
+                        ultimoNome = null;
+                        ultimoNum = null;
+                    }
+                }
+            }
+        }
+
+        return signatarios;
+    }
+    
+    /**
+     * Resultado da validação de um JSON de selo
+     */
+    public static class ValidacaoResult {
+        public boolean valido;
+        public List<String> erros = new ArrayList<>();
+        public List<String> warnings = new ArrayList<>();
+        public String jsonSanitizado;
+        
+        public static ValidacaoResult ok(String json) {
+            ValidacaoResult r = new ValidacaoResult();
+            r.valido = true;
+            r.jsonSanitizado = json;
+            return r;
+        }
+        
+        public static ValidacaoResult erro(String erro) {
+            ValidacaoResult r = new ValidacaoResult();
+            r.valido = false;
+            r.erros.add(erro);
+            return r;
+        }
+        
+        public static ValidacaoResult erro(List<String> erros) {
+            ValidacaoResult r = new ValidacaoResult();
+            r.valido = false;
+            r.erros = erros;
+            return r;
+        }
+    }
+
+    /**
+     * Sanitiza e salva o JSON12 no banco de dados para um selo específico.
+     * Busca dados das tabelas do projeto e reconstruí o JSON corretamente.
+     * 
+     * @param seloDigital O número do selo digital
+     * @return true se成功了, false caso contrário
+     */
+    public static boolean sanitizarESalvar(String seloDigital) {
+        Connection conn = null;
+        try {
+            conn = ConnectionFactory.getConnection();
+            
+            // 1. Buscar o JSON atual do selados e parâmetros
+            String sqlSelect = "SELECT sel.JSON, sel.JSON12, p.DTVERSAO_FUNARPEN, p.DOC_PAR " +
+                "FROM selados sel " +
+                "INNER JOIN parametros p ON p.CODIGO_PAR = 1 " +
+                "INNER JOIN selos s ON sel.SELO = s.selo_sel " +
+                "WHERE s.selo_sel = ?";
+            
+            String jsonAtual = null;
+            String json12Atual = null;
+            String dtVersaoFunarpen = null;
+            String docPar = null;
+            
+            try (PreparedStatement ps = conn.prepareStatement(sqlSelect)) {
+                ps.setString(1, seloDigital);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        jsonAtual = rs.getString("JSON");
+                        json12Atual = rs.getString("JSON12");
+                        dtVersaoFunarpen = rs.getString("DTVERSAO_FUNARPEN");
+                        docPar = rs.getString("DOC_PAR");
+                    }
+                }
+            }
+            
+            if (jsonAtual == null || jsonAtual.isEmpty()) {
+                LOGGER.warning("[SeloJsonSanitizerNotas] JSON não encontrado para selo: " + seloDigital);
+                return false;
+            }
+            
+            // 2. Se já existe JSON12 válido, não precisa refazer
+            if (json12Atual != null && !json12Atual.isEmpty()) {
+                try {
+                    JsonNode test = M.readTree(json12Atual);
+                    if (test.isObject() && test.has("selo")) {
+                        LOGGER.info("[SeloJsonSanitizerNotas] JSON12 já existe para selo: " + seloDigital);
+                        return true;
+                    }
+                } catch (Exception e) {
+                    // JSON12 inválido, vamos reconstruir
+                }
+            }
+            
+            // 3. Buscar dados complementares das tabelas
+            Map<String, Object> dadosComplementares = buscarDadosComplementares(conn, seloDigital);
+            
+            // Adicionar o DOC_PAR aos dados complementares
+            if (docPar != null && !docPar.isEmpty()) {
+                dadosComplementares.put("DOC_PAR", docPar);
+                LOGGER.info("[SeloJsonSanitizerNotas] DOC_PAR encontrado: " + docPar);
+            }
+            
+            // 4. Sanitizar o JSON com os dados complementares
+            String jsonSanitizado = sanitizarComDados(jsonAtual, dadosComplementares, dtVersaoFunarpen);
+            
+            // 5. Salvar no JSON12
+            String sqlUpdate = "UPDATE selados sel " +
+                "INNER JOIN selos s ON sel.SELO = s.selo_sel " +
+                "SET sel.JSON12 = ? " +
+                "WHERE s.selo_sel = ?";
+            
+            try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
+                ps.setString(1, jsonSanitizado);
+                ps.setString(2, seloDigital);
+                ps.executeUpdate();
+            }
+            
+            LOGGER.info("[SeloJsonSanitizerNotas] JSON sanitizado e salvo para selo: " + seloDigital);
+            return true;
+            
+        } catch (Exception e) {
+            LOGGER.severe("[SeloJsonSanitizerNotas] Erro ao sanitizar e salvar: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    LOGGER.severe("Erro ao fechar conexão: " + e.getMessage());
+                }
+            }
+        }
+    }
+    
+    /**
+     * Busca dados complementares das tabelas do projeto para um selo específico.
+     * Usa a query fornecida pelo usuário para buscar dados de ato, not_1, cliente, etc.
+     */
+    private static Map<String, Object> buscarDadosComplementares(Connection conn, String seloDigital) throws SQLException {
+        // TODO: Implementar a query fornecida pelo usuário
+        // SELECT * FROM selados 
+        // INNER JOIN parametros ON parametros.CODIGO_PAR = 1
+        // INNER JOIN ato ON selados.REGISTRO = ato.PROTOC_LIVRO_ATO
+        // INNER JOIN guiafrj ON ato.PROTOC_LIVRO_ATO = guiafrj.PROTOCOLO_FRJ
+        // INNER JOIN not_1 ON not_1.PROTATO_NOT1 = ato.PROTOC_LIVRO_ATO
+        // INNER JOIN cliente ON cliente.TIPO_CLI = not_1.TIPOPESSOA_NOT1 AND cliente.CODIGO_CLI = not_1.CODCLI_NOT1
+        // LEFT JOIN protimoveis ON ato.PROTOC_LIVRO_ATO = protimoveis.CODIGO_PROI
+        // LEFT JOIN imovpartes ON imovpartes.PROTOCOLO_IMOP = ato.PROTOC_LIVRO_ATO
+        // LEFT JOIN imoveis ON imovpartes.ID_IMO = imoveis.ID_IMO
+        // WHERE ato.DT_ATO >= parametros.DTVERSAO_FUNARPEN
+        
+        // Por enquanto, retorna um mapa vazio para não quebrar a compilação
+        return new java.util.HashMap<>();
+    }
+    
+    /**
+     * Sanitiza o JSON com dados complementares do banco de dados.
+     */
+    private static String sanitizarComDados(String jsonOriginal, Map<String, Object> dadosComplementares, String dtVersaoFunarpen) throws Exception {
+        JsonNode root = M.readTree(jsonOriginal);
+        
+        // Primeiro, aplica a sanitização básica
+        root = corrigirDatasNoJson(root);
+        root = corrigirPlaceholders(root);
+        root = corrigirErrosDigitacao(root);
+        root = converterListaVerbasParaVerbas(root);
+        root = converterListaPropriedades(root);
+        root = corrigirSeloRetificado(root);
+        root = adicionarCamposLivroFolhaTermo(root);
+        
+        // Aplica correções específicas com dados do banco
+        root = corrigirComDadosDoBanco(root, dadosComplementares, dtVersaoFunarpen);
+        
+        return M.writeValueAsString(root);
+    }
+    
+    /**
+     * Aplica correções específicas usando dados do banco de dados.
+     */
+    private static JsonNode corrigirComDadosDoBanco(JsonNode root, Map<String, Object> dadosComplementares, String dtVersaoFunarpen) throws Exception {
+        if (!root.isObject()) {
+            return root;
+        }
+        
+        ObjectNode obj = (ObjectNode) root;
+        
+        // 0. Corrigir documentoResponsavel usando DOC_PAR dos parâmetros
+        String docPar = (String) dadosComplementares.get("DOC_PAR");
+        if (docPar != null && !docPar.isEmpty()) {
+            if (obj.has("documentoResponsavel")) {
+                String docRespAtual = obj.get("documentoResponsavel").asText();
+                if (docRespAtual == null || docRespAtual.isEmpty() || docRespAtual.equals("0") || docRespAtual.equals("|documentoResponsavel|")) {
+                    obj.put("documentoResponsavel", docPar);
+                    LOGGER.info("[SeloJsonSanitizerNotas] Corrigido documentoResponsavel: " + docRespAtual + " -> " + docPar);
+                }
+            }
+        }
+        
+        // Verificar se tem objeto 'selo'
+        if (obj.has("selo") && obj.get("selo").isObject()) {
+            ObjectNode seloObj = (ObjectNode) obj.get("selo");
+            
+            // 0. Verificar se é tipo 455 (402, 403, 404 -> 455)
+            int codigoTipoAtoOriginal = 0;
+            
+            // Primeiro verifica numeroTipoAto no nível superior (para selos novos)
+            if (obj.has("numeroTipoAto") && !obj.get("numeroTipoAto").isNull()) {
+                codigoTipoAtoOriginal = obj.get("numeroTipoAto").asInt();
+                // Também atualizar no objeto selo se necessário
+                if (seloObj.has("codigoTipoAto")) {
+                    seloObj.put("codigoTipoAto", codigoTipoAtoOriginal);
+                }
+            } else if (seloObj.has("codigoTipoAto") && !seloObj.get("codigoTipoAto").isNull()) {
+                codigoTipoAtoOriginal = seloObj.get("codigoTipoAto").asInt();
+            }
+            
+            // Se for 402, 403 ou 404, converter para 455
+            if (codigoTipoAtoOriginal == 402 || codigoTipoAtoOriginal == 403 || codigoTipoAtoOriginal == 404) {
+                // Converter para 455
+                seloObj.put("codigoTipoAto", 455);
+                    LOGGER.info("[SeloJsonSanitizerNotas] Convertido codigoTipoAto de " + codigoTipoAtoOriginal + " para 455");
+                    
+                    // Mapear propriedades.tipo baseado no codigoTipoAto original
+                    // 403 -> tipo 1 (Com Valor Declarado)
+                    // 402 -> tipo 2 (Sem Valor Declarado)
+                    // 404 -> tipo 3 (Sinal Público)
+                    int tipo = 0;
+                    if (codigoTipoAtoOriginal == 403) {
+                        tipo = 1;
+                    } else if (codigoTipoAtoOriginal == 402) {
+                        tipo = 2;
+                    } else if (codigoTipoAtoOriginal == 404) {
+                        tipo = 3;
+                    }
+                    
+                    // Criar ou atualizar propriedades para tipo 455
+                    ObjectNode propriedades = M.createObjectNode();
+                    propriedades.put("tipo", tipo);
+
+                    // Adicionar solicitanteAto (buscar do banco usando IDAP) - extrair dígitos do IDAP de forma robusta
+                    String idap = null;
+                    if (seloObj.has("idap") && !seloObj.get("idap").isNull()) {
+                        idap = seloObj.get("idap").asText();
+                    }
+
+                    if (idap != null && !idap.trim().isEmpty()) {
+                        String digits = idap.replaceAll("[^0-9]", "");
+                        String numRecStr = null;
+                        if (digits.length() >= 10) {
+                            // tenta pegar os 10 últimos dígitos (mais provável conter num_rec preenchido com zeros)
+                            numRecStr = digits.substring(digits.length() - 10);
+                        } else if (!digits.isEmpty()) {
+                            numRecStr = digits;
+                        }
+                        if (numRecStr != null) {
+                            try {
+                                long numRec = Long.parseLong(numRecStr);
+                                ObjectNode solicitanteAto = buscarSolicitantePorNumRec(numRec);
+                                if (solicitanteAto != null) {
+                                    propriedades.set("solicitanteAto", solicitanteAto);
+                                }
+                            } catch (NumberFormatException e) {
+                                LOGGER.warning("[SeloJsonSanitizerNotas] NumRec inválido extraído do IDAP: " + numRecStr);
+                            }
+                        }
+                    }
+
+                    // Criar objeto reconhecimento
+                    ObjectNode reconhecimento = M.createObjectNode();
+                    reconhecimento.put("especie", 1); // Por Verdadeira ou Autêntica
+                    reconhecimento.putNull("quantidadePaginasAto");
+
+                    // Extrair signatários (método robusto)
+                    ArrayNode signatariosArray = extrairSignatarios(seloObj);
+                    int quantidadeSignatarios = signatariosArray == null ? 0 : signatariosArray.size();
+
+                    reconhecimento.put("quantidadePartesEnvolvidasAto", quantidadeSignatarios);
+
+                    // Data do reconhecimento (dataAtoPraticado / dataAto)
+                    if (seloObj.has("dataAtoPraticado") && !seloObj.get("dataAtoPraticado").isNull()) {
+                        reconhecimento.put("data", seloObj.get("dataAtoPraticado").asText());
+                    } else if (seloObj.has("dataAto") && !seloObj.get("dataAto").isNull()) {
+                        reconhecimento.put("data", seloObj.get("dataAto").asText());
+                    }
+
+                    reconhecimento.putNull("descricao");
+
+                    propriedades.set("reconhecimento", reconhecimento);
+                    propriedades.set("signatarios", signatariosArray == null ? M.createArrayNode() : signatariosArray);
+
+                    // Mesclar com propriedades existentes, preservando campos já presentes
+                    ObjectNode targetProps;
+                    if (seloObj.has("propriedades") && seloObj.get("propriedades").isObject()) {
+                        targetProps = (ObjectNode) seloObj.get("propriedades");
+                    } else {
+                        targetProps = M.createObjectNode();
+                    }
+
+                    // Inserir/atualizar campos obrigatórios para 455
+                    targetProps.put("tipo", propriedades.get("tipo").asInt());
+                    if (propriedades.has("solicitanteAto")) targetProps.set("solicitanteAto", propriedades.get("solicitanteAto"));
+                    targetProps.set("reconhecimento", propriedades.get("reconhecimento"));
+                    targetProps.set("signatarios", propriedades.get("signatarios"));
+
+                    seloObj.set("propriedades", targetProps);
+                    LOGGER.info("[SeloJsonSanitizerNotas] Propriedades atualizadas/mescladas para tipo 455 com " + quantidadeSignatarios + " signatários");
+                }
+            }
+            
+            // 1. Corrigir codigoPedido usando numpedido da tabela selos se necessário
+            if (seloObj.has("codigoPedido") && !seloObj.get("codigoPedido").isNull()) {
+                // Verificar se tem ponto decimal (formato incorreto)
+                String codigoPedido = seloObj.get("codigoPedido").asText();
+                if (codigoPedido.contains(".")) {
+                    // Remover o ponto decimal
+                    String codigoCorreto = codigoPedido.replace(".", "");
+                    try {
+                        seloObj.put("codigoPedido", Long.parseLong(codigoCorreto));
+                        LOGGER.info("[SeloJsonSanitizerNotas] Corrigido codigoPedido: " + codigoPedido + " -> " + codigoCorreto);
+                    } catch (NumberFormatException e) {
+                        // Se não conseguir converter, mantém o original
+                    }
+                }
+            }
+            
+            // 2. Garantir que propriedades seja um objeto aninhado (não vazio)
+            if (!seloObj.has("propriedades") || !seloObj.get("propriedades").isObject() || 
+                (seloObj.get("propriedades").isObject() && seloObj.get("propriedades").size() == 0)) {
+                // Se propriedades está vazio ou não existe, verificar se tem ListaPropriedades
+                if (seloObj.has("ListaPropriedades") && seloObj.get("ListaPropriedades").isArray()) {
+                    // Converter ListaPropriedades para propriedades aninhadas
+                    ArrayNode listaProp = (ArrayNode) seloObj.get("ListaPropriedades");
+                    ObjectNode props = M.createObjectNode();
+                    ObjectNode objetos[] = new ObjectNode[10]; // Pool de objetos
+                    int objCount = 0;
+                    
+                    for (int i = 0; i < listaProp.size(); i++) {
+                        JsonNode item = listaProp.get(i);
+                        if (item.isObject()) {
+                            String nomeProp = item.has("NomePropriedade") ? item.get("NomePropriedade").asText() : null;
+                            String valorProp = item.has("ValorPropriedade") && !item.get("ValorPropriedade").isNull() ? 
+                                item.get("ValorPropriedade").asText() : null;
+                            
+                            if (nomeProp != null && valorProp != null && nomeProp.contains(".")) {
+                                int ponto = nomeProp.indexOf('.');
+                                String objetoPai = nomeProp.substring(0, ponto);
+                                String campo = nomeProp.substring(ponto + 1);
+                                
+                                // Encontrar ou criar objeto pai
+                                ObjectNode objetoPaiNode = null;
+                                for (int j = 0; j < objCount; j++) {
+                                    if (objetos[j] != null && objetos[j].has("__nome__") && 
+                                        objetos[j].get("__nome__").asText().equals(objetoPai)) {
+                                        objetoPaiNode = objetos[j];
+                                        break;
+                                    }
+                                }
+                                
+                                if (objetoPaiNode == null) {
+                                    objetoPaiNode = M.createObjectNode();
+                                    objetoPaiNode.put("__nome__", objetoPai);
+                                    if (objCount < objetos.length) {
+                                        objetos[objCount++] = objetoPaiNode;
+                                    }
+                                }
+                                
+                                objetoPaiNode.put(campo, valorProp);
+                            } else if (nomeProp != null && valorProp != null) {
+                                // Campo sem objeto pai
+                                props.put(nomeProp, valorProp);
+                            }
+                        }
+                    }
+                    
+                    // Adicionar objetos criados ao propriedades
+                    for (int i = 0; i < objCount; i++) {
+                        if (objetos[i] != null) {
+                            String nome = objetos[i].get("__nome__").asText();
+                            objetos[i].remove("__nome__");
+                            props.set(nome, objetos[i]);
+                        }
+                    }
+                    
+                    // Substituir propriedades vazio pelo objeto criado
+                    ((ObjectNode) root.at("/selo")).set("propriedades", props);
+                    LOGGER.info("[SeloJsonSanitizerNotas] Propriedades reconstruídas a partir de ListaPropriedades");
+                }
+            }
+            
+            // 3. Remover ListaPropriedades do JSON final (não deve ser enviado para FUNARPEN)
+            if (seloObj.has("ListaPropriedades")) {
+                ((ObjectNode) root.at("/selo")).remove("ListaPropriedades");
+            }
+        }
+        
+        return root;
+    }
+
+    /**
+     * Valida e sanitiza um JSON de selo do Tabelionato de Notas.
+     * @param jsonString O JSON original do selo
+     * @return Resultado da validação com JSON sanitizado
+     */
+    public static ValidacaoResult validarESanitizar(String jsonString) {
+        List<String> erros = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        
+        if (jsonString == null || jsonString.trim().isEmpty()) {
+            return ValidacaoResult.erro("JSON vazio ou nulo");
+        }
+        
+        try {
+            JsonNode root = M.readTree(jsonString);
+            
+            // Verificar estrutura básica
+            if (!root.isObject()) {
+                return ValidacaoResult.erro("JSON deve ser um objeto");
+            }
+            
+            // Obter objeto 'selo' (pode estar no root ou aninhado)
+            ObjectNode seloObj;
+            if (root.has("selo") && root.get("selo").isObject()) {
+                seloObj = (ObjectNode) root.get("selo");
+            } else {
+                // Se não tem 'selo', assume que o próprio root é o objeto do selo
+                if (root.has("seloDigital") || root.has("tipoAto")) {
+                    seloObj = (ObjectNode) root;
+                } else {
+                    return ValidacaoResult.erro("JSON não contém objeto 'selo'");
+                }
+            }
+            
+            // 1. Campo 'seloDigital' - obrigatório
+            if (!seloObj.has("seloDigital") || seloObj.get("seloDigital").isNull() || 
+                seloObj.get("seloDigital").asText().trim().isEmpty()) {
+                erros.add("Falta campo 'seloDigital'");
+            }
+            
+            // 2. Campo 'codigoTipoAto' - obrigatório
+            if (!seloObj.has("codigoTipoAto") || seloObj.get("codigoTipoAto").isNull()) {
+                erros.add("Falta campo 'codigoTipoAto'");
+            }
+            
+            // 3. Campo 'dataAto' - obrigatório
+            if (!seloObj.has("dataAtoPraticado") && !seloObj.has("dataAto")) {
+                erros.add("Falta campo 'dataAto'");
+            } else {
+                // Validar formato de data
+                String dataAto = seloObj.has("dataAtoPraticado") ? 
+                    seloObj.get("dataAtoPraticado").asText() : 
+                    seloObj.get("dataAto").asText();
+                
+                // Aceitar diversos formatos
+                if (dataAto.contains("/")) {
+                    // Garantir formato ISO
+                    String dataISO = converterParaISO(dataAto);
+                    if (dataISO != null) {
+                        if (seloObj.has("dataAtoPraticado")) {
+                            seloObj.put("dataAtoPraticado", dataISO);
+                        } else {
+                            seloObj.put("dataAto", dataISO);
+                        }
+                    }
+                } else {
+                    // Garantir formato ISO
+                    String dataISO = converterParaISO(dataAto);
+                    if (dataISO != null) {
+                        if (seloObj.has("dataAtoPraticado")) {
+                            seloObj.put("dataAtoPraticado", dataISO);
+                        } else {
+                            seloObj.put("dataAto", dataISO);
+                        }
+                    }
+                }
+            }
+            
+            // 4. Campo 'solicitante' - obrigatório para inúmera dos atos
+            if (!seloObj.has("solicitante") || seloObj.get("solicitante").isNull() || 
+                !seloObj.get("solicitante").isObject()) {
+                warnings.add("Falta objeto 'solicitante'");
+            } else {
+                ObjectNode solicitante = (ObjectNode) seloObj.get("solicitante");
+                
+                // Validar campos do solicitante
+                if (!solicitante.has("nomeRazao") || solicitante.get("nomeRazao").isNull() ||
+                    solicitante.get("nomeRazao").asText().trim().isEmpty()) {
+                    erros.add("Falta campo 'solicitante.nomeRazao'");
+                }
+                
+                if (!solicitante.has("tipoDocumento") || solicitante.get("tipoDocumento").isNull()) {
+                    erros.add("Falta campo 'solicitante.tipoDocumento'");
+                }
+                
+                if (!solicitante.has("numeroDocumento") || solicitante.get("numeroDocumento").isNull()) {
+                    erros.add("Falta campo 'solicitante.numeroDocumento'");
+                }
+            }
+            
+            // 5. Campo 'verbas' - obrigatório
+            if (!seloObj.has("verbas") || seloObj.get("verbas").isNull() || 
+                !seloObj.get("verbas").isObject()) {
+                warnings.add("Falta objeto 'verbas'");
+            } else {
+                // Validar campos de verbas
+                ObjectNode verbas = (ObjectNode) seloObj.get("verbas");
+                // Emolumentos é obrigatório
+                if (!verbas.has("emolumentos") || verbas.get("emolumentos").isNull()) {
+                    warnings.add("Falta campo 'verbas.emolumentos'");
+                }
+            }
+            
+            // 6. Validar campos específicos por tipo de ato
+            int tipoAto = 0;
+            if (seloObj.has("codigoTipoAto") && !seloObj.get("codigoTipoAto").isNull()) {
+                tipoAto = seloObj.get("codigoTipoAto").asInt();
+                validarCamposPorTipoAto(seloObj, tipoAto, erros, warnings);
+            }
+            
+            // ===== CORREÇÕES ESPECÍFICAS =====
+            
+            // Garantir que 'idap' seja null se não existir ou vazio
+            if (seloObj.has("idap")) {
+                JsonNode idap = seloObj.get("idap");
+                if (idap == null || idap.isNull() || (idap.isTextual() && idap.asText().trim().isEmpty())) {
+                    seloObj.putNull("idap");
+                }
+            }
+            
+            // Converter 'pedido' para string se for número
+            if (seloObj.has("pedido") && !seloObj.get("pedido").isNull()) {
+                JsonNode pedido = seloObj.get("pedido");
+                if (pedido.isNumber()) {
+                    seloObj.put("pedido", pedido.isIntegralNumber() ? 
+                        pedido.asText() : String.valueOf(pedido.doubleValue()));
+                }
+            }
+            
+            // Converter 'numtipato' para string se for número
+            if (seloObj.has("numtipato") && !seloObj.get("numtipato").isNull()) {
+                JsonNode numtipato = seloObj.get("numtipato");
+                if (numtipato.isIntegralNumber()) {
+                    seloObj.put("numtipato", numtipato.asText());
+                }
+            }
+            
+            // Se o JSON original tinha raiz 'selo', reconstruir
+            String jsonResult;
+            if (root.has("selo")) {
+                ObjectNode rootResult = M.createObjectNode();
+                rootResult.set("selo", seloObj);
+                jsonResult = M.writeValueAsString(rootResult);
+            } else {
+                jsonResult = M.writeValueAsString(seloObj);
+            }
+            
+            if (!erros.isEmpty()) {
+                return ValidacaoResult.erro(erros);
+            }
+            
+            ValidacaoResult result = ValidacaoResult.ok(jsonResult);
+            result.warnings = warnings;
+            return result;
+            
+        } catch (Exception e) {
+            LOGGER.severe("Erro ao sanitizar JSON: " + e.getMessage());
+            return ValidacaoResult.erro("Erro ao processar JSON: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Sanitiza JSON de forma simplificada (apenas correção de datas e placeholders)
+     */
+    public static String sanitizar(String jsonString) {
+        if (jsonString == null || jsonString.trim().isEmpty()) {
+            return jsonString;
+        }
+        
+        try {
+            JsonNode root = M.readTree(jsonString);
+            
+            // Corrigir todas as datas encontradas no JSON
+            root = corrigirDatasNoJson(root);
+            
+            // Corrigir placeholders (|ambiente|, |codigoEmpresa|, |dataato|)
+            root = corrigirPlaceholders(root);
+            
+            // Corrigir erros de digitação comuns
+            root = corrigirErrosDigitacao(root);
+            
+            // Converter ListaVerbas para verbas e corrigir valores
+            root = converterListaVerbasParaVerbas(root);
+            
+            // Converter ListaPropriedades para objetos separados
+            root = converterListaPropriedades(root);
+            
+            // ==========================================
+            // CORREÇÕES ESPECÍFICAS PARA ERROS COMUNS
+            // ==========================================
+            
+            // Garantir que campo seloRetificado seja null (não string vazia, não string "null")
+            // Todos os atos DEVEM ter a tag seloRetificado como null quando não informado
+            root = corrigirSeloRetificado(root);
+            
+            // Adicionar campos livro, folha, termo para tipos de ato que exigem
+            root = adicionarCamposLivroFolhaTermo(root);
+            
+            return M.writeValueAsString(root);
+        } catch (Exception e) {
+            LOGGER.warning("Erro ao sanitizar JSON: " + e.getMessage());
+            return jsonString;
+        }
+    }
+    
+    /**
+     * Corrige placeholders não substituídos no JSON
+     */
+    private static JsonNode corrigirPlaceholders(JsonNode root) {
+        if (root.isObject()) {
+            ObjectNode obj = (ObjectNode) root;
+            
+            Iterator<Map.Entry<String, JsonNode>> fields = obj.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                String key = entry.getKey();
+                JsonNode value = entry.getValue();
+                
+                // Verificar e substituir placeholders nos valores de texto
+                if (value.isTextual()) {
+                    String text = value.asText();
+                    if (text.contains("|ambiente|") || text.contains("|codigoEmpresa|") || 
+                        text.contains("|codoficio|") || text.contains("|dataato|")) {
+                        // TODO: Buscar valores reais do banco de dados
+                        // Por agora, mantém como está se não encontrou valor
+                        LOGGER.info("[SeloJsonSanitizerNotas] Encontrado placeholder não substituído: " + key);
+                    }
+                }
+                
+                // Processar objetos filhos
+                if (value.isObject()) {
+                    obj.set(key, corrigirPlaceholders(value));
+                } else if (value.isArray()) {
+                    ArrayNode arr = (ArrayNode) value;
+                    for (int i = 0; i < arr.size(); i++) {
+                        arr.set(i, corrigirPlaceholders(arr.get(i)));
+                    }
+                }
+            }
+        } else if (root.isArray()) {
+            ArrayNode arr = (ArrayNode) root;
+            for (int i = 0; i < arr.size(); i++) {
+                arr.set(i, corrigirPlaceholders(arr.get(i)));
+            }
+        }
+        return root;
+    }
+    
+    /**
+     * Corrige datas no formato incorreto (dd/MM/yyyy para ISO)
+     */
+    private static JsonNode corrigirDatasNoJson(JsonNode root) {
+        if (root.isObject()) {
+            ObjectNode obj = (ObjectNode) root;
+            
+            // Campos que podem conter datas
+            String[] camposData = {"dataAto", "dataAtoPraticado", "dataSeloEmitido", "dataEnvio", 
+                "dataRegistro", "data", "dataVenda", "dataEscritura"};
+            
+            for (String campo : camposData) {
+                if (obj.has(campo) && !obj.get(campo).isNull()) {
+                    JsonNode node = obj.get(campo);
+                    if (node.isTextual()) {
+                        String data = node.asText();
+                        // Se tem / no formato, converter para ISO
+                        if (data.contains("/")) {
+                            String dataISO = converterParaISO(data);
+                            if (dataISO != null) {
+                                obj.put(campo, dataISO);
+                                LOGGER.info("[SeloJsonSanitizerNotas] Data corrigida: " + campo + " = " + data + " -> " + dataISO);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Processar objetos filhos
+            Iterator<Map.Entry<String, JsonNode>> fields = obj.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                JsonNode value = entry.getValue();
+                
+                if (value.isObject()) {
+                    obj.set(entry.getKey(), corrigirDatasNoJson(value));
+                } else if (value.isArray()) {
+                    ArrayNode arr = (ArrayNode) value;
+                    for (int i = 0; i < arr.size(); i++) {
+                        arr.set(i, corrigirDatasNoJson(arr.get(i)));
+                    }
+                }
+            }
+        } else if (root.isArray()) {
+            ArrayNode arr = (ArrayNode) root;
+            for (int i = 0; i < arr.size(); i++) {
+                arr.set(i, corrigirDatasNoJson(arr.get(i)));
+            }
+        }
+        return root;
+    }
+    
+    /**
+     * Converte data no formato dd/MM/yyyy para ISO-8601
+     */
+    private static String converterParaISO(String data) {
+        if (data == null || data.isEmpty()) {
+            return null;
+        }
+        
+        // Normaliza para apenas dígitos quando possível
+        String digits = data.replaceAll("[^0-9]", "").trim();
+
+        // Se são 8 dígitos, prioriza YYYYMMDD (ex: 20260316), depois tenta DDMMAAAA
+        if (digits.matches("^\\d{8}$")) {
+            try {
+                DateTimeFormatter fmtYmd = DateTimeFormatter.ofPattern("yyyyMMdd");
+                LocalDate d = LocalDate.parse(digits, fmtYmd);
+                return d.format(DATE_FORMAT_ISO);
+            } catch (Exception ignore) {
+                try {
+                    DateTimeFormatter fmtDmy = DateTimeFormatter.ofPattern("ddMMyyyy");
+                    LocalDate d2 = LocalDate.parse(digits, fmtDmy);
+                    return d2.format(DATE_FORMAT_ISO);
+                } catch (Exception ignore2) {
+                    // segue para tentativas com separadores
+                }
+            }
+        }
+
+        // Tentar parsing com formatos comuns que usam separadores
+        String[] formatos = {"dd/MM/yyyy", "d/M/yyyy", "dd-MM-yyyy", "yyyy-MM-dd", "yyyy/MM/dd"};
+        for (String formato : formatos) {
+            try {
+                LocalDate date = LocalDate.parse(data, DateTimeFormatter.ofPattern(formato));
+                return date.format(DATE_FORMAT_ISO);
+            } catch (DateTimeParseException ex) {
+                // Continuar para próximo formato
+            }
+        }
+
+        LOGGER.warning("[SeloJsonSanitizerNotas] Não foi possível converter data: " + data);
+        return null;
+    }
+    
+    /**
+     * Corrige erros de digitação comuns
+     */
+    private static JsonNode corrigirErrosDigitacao(JsonNode root) {
+        if (root.isObject()) {
+            ObjectNode obj = (ObjectNode) root;
+            
+            // Corrigir 'emvolvidos' -> 'envolvidos'
+            if (obj.has("emvolvidos")) {
+                JsonNode emvolvidos = obj.get("emvolvidos");
+                obj.set("envolvidos", emvolvidos);
+                obj.remove("emvolvidos");
+                LOGGER.info("[SeloJsonSanitizerNotas] Corrigido: emvolvidos -> envolvidos");
+            }
+            
+            // Corrigir 'emolumentoss' -> 'emolumentos'
+            if (obj.has("emolumentoss")) {
+                JsonNode emolumentoss = obj.get("emolumentoss");
+                obj.set("emolumentos", emolumentoss);
+                obj.remove("emolumentoss");
+            }
+            
+            // Corrigir 'seloRetificado': string vazia ou "null" -> null
+            if (obj.has("seloRetificado")) {
+                JsonNode sr = obj.get("seloRetificado");
+                if (sr.isTextual()) {
+                    String val = sr.asText();
+                    if (val.isEmpty() || "null".equalsIgnoreCase(val)) {
+                        obj.putNull("seloRetificado");
+                    }
+                }
+            }
+            
+            // Processar objetos filhos
+            Iterator<Map.Entry<String, JsonNode>> fields = obj.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                JsonNode value = entry.getValue();
+                
+                if (value.isObject()) {
+                    obj.set(entry.getKey(), corrigirErrosDigitacao(value));
+                } else if (value.isArray()) {
+                    ArrayNode arr = (ArrayNode) value;
+                    for (int i = 0; i < arr.size(); i++) {
+                        arr.set(i, corrigirErrosDigitacao(arr.get(i)));
+                    }
+                }
+            }
+        } else if (root.isArray()) {
+            ArrayNode arr = (ArrayNode) root;
+            for (int i = 0; i < arr.size(); i++) {
+                arr.set(i, corrigirErrosDigitacao(arr.get(i)));
+            }
+        }
+        return root;
+    }
+    
+    /**
+     * Corrige campo seloRetificado para garantir que seja null (não string vazia, não string "null")
+     * Todos os atos DEVEM ter a tag seloRetificado como null quando não informado
+     */
+    private static JsonNode corrigirSeloRetificado(JsonNode root) {
+        if (root.isObject()) {
+            ObjectNode obj = (ObjectNode) root;
+            
+            // Verificar se tem objeto 'selo' e processar
+            if (obj.has("selo") && obj.get("selo").isObject()) {
+                ObjectNode seloObj = (ObjectNode) obj.get("selo");
+                corrigirSeloRetificadoNoSelo(seloObj);
+            }
+            
+            // Também processar objeto direto (quando o JSON é o objeto selo diretamente)
+            if (obj.has("seloDigital")) {
+                corrigirSeloRetificadoNoSelo(obj);
+            }
+            
+            // Processar campos que são objetos
+            Iterator<Map.Entry<String, JsonNode>> fields = obj.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                JsonNode value = entry.getValue();
+                if (value.isObject()) {
+                    obj.set(entry.getKey(), corrigirSeloRetificado(value));
+                } else if (value.isArray()) {
+                    ArrayNode arr = (ArrayNode) value;
+                    for (int i = 0; i < arr.size(); i++) {
+                        arr.set(i, corrigirSeloRetificado(arr.get(i)));
+                    }
+                }
+            }
+        } else if (root.isArray()) {
+            ArrayNode arr = (ArrayNode) root;
+            for (int i = 0; i < arr.size(); i++) {
+                arr.set(i, corrigirSeloRetificado(arr.get(i)));
+            }
+        }
+        return root;
+    }
+    
+    /**
+     * Corrige campo seloRetificado em um objeto de selo específico
+     */
+    private static void corrigirSeloRetificadoNoSelo(ObjectNode seloObj) {
+        // Garantir que o campo existe e é exatamente null (não string)
+        if (!seloObj.has("seloRetificado") || 
+            seloObj.get("seloRetificado").isNull() || 
+            (seloObj.get("seloRetificado").isTextual() && 
+             (seloObj.get("seloRetificado").asText().trim().isEmpty() || 
+              "null".equalsIgnoreCase(seloObj.get("seloRetificado").asText())))) {
+            seloObj.putNull("seloRetificado");
+        }
+        
+        // Também garantir que propriedades.seloRetificado seja removido (campo legado incorreto)
+        if (seloObj.has("propriedades") && seloObj.get("propriedades").isObject()) {
+            ObjectNode props = (ObjectNode) seloObj.get("propriedades");
+            if (props.has("seloRetificado")) {
+                props.remove("seloRetificado");
+            }
+        }
+    }
+    
+    /**
+     * Converte ListaVerbas para verbas e corrige valores incorretos
+     */
+    private static JsonNode converterListaVerbasParaVerbas(JsonNode root) {
+        if (!root.isObject()) {
+            return root;
+        }
+        
+        ObjectNode obj = (ObjectNode) root;
+        
+        // Verificar se tem objeto 'selo'
+        if (obj.has("selo") && obj.get("selo").isObject()) {
+            ObjectNode seloObj = (ObjectNode) obj.get("selo");
+            return converterListaVerbasParaVerbasEmSelo(obj, seloObj);
+        }
+        
+        // Também processar quando o objeto é o próprio selo
+        if (obj.has("seloDigital") || obj.has("tipoAto")) {
+            return converterListaVerbasParaVerbasEmSelo(obj, obj);
+        }
+        
+        return root;
+    }
+    
+    /**
+     * Converte ListaVerbas para verbas no objeto do selo
+     */
+    private static JsonNode converterListaVerbasParaVerbasEmSelo(ObjectNode root, ObjectNode seloObj) {
+        // Verificar se tem ListaVerbas
+        if (seloObj.has("ListaVerbas") && seloObj.get("ListaVerbas").isArray()) {
+            ArrayNode listaVerbas = (ArrayNode) seloObj.get("ListaVerbas");
+            ObjectNode verbas = M.createObjectNode();
+            
+            for (int i = 0; i < listaVerbas.size(); i++) {
+                JsonNode item = listaVerbas.get(i);
+                if (item.isObject()) {
+                    String nomeVerba = item.has("NomeVerba") ? item.get("NomeVerba").asText() : null;
+                    JsonNode valorNode = item.has("ValorVerba") ? item.get("ValorVerba") : null;
+                    
+                    if (nomeVerba != null && valorNode != null) {
+                        BigDecimal valor = null;
+                        if (valorNode.isNumber()) {
+                            valor = valorNode.decimalValue();
+                            
+                            // CORREÇÃO: Se o valor for maior que 100, provavelmente está em centavos
+                            // Dividir por 100
+                            if (valor.compareTo(new BigDecimal("100")) > 0) {
+                                valor = valor.divide(new BigDecimal("100"));
+                                LOGGER.info("[SeloJsonSanitizerNotas] Valor de verba dividido por 100: " + nomeVerba + " = " + valor);
+                            }
+                        }
+                        
+                        // Normalizar nome da verba
+                        String nomeNormalizado = nomeVerba.toUpperCase().replace(" ", "");
+                        verbas.put(nomeNormalizado, valor);
+                    }
+                }
+            }
+            
+            // Substituir ListaVerbas por verbas
+            ((ObjectNode) root.at("/selo")).set("verbas", verbas);
+            ((ObjectNode) root.at("/selo")).remove("ListaVerbas");
+            LOGGER.info("[SeloJsonSanitizerNotas] ListaVerbas convertida para verbas");
+        }
+        
+        // Verificar se verbas existe e tem valores incorretos (maiores que 100)
+        if (seloObj.has("verbas") && seloObj.get("verbas").isObject()) {
+            ObjectNode verbas = (ObjectNode) seloObj.get("verbas");
+            Iterator<Map.Entry<String, JsonNode>> fields = verbas.fields();
+            boolean modificado = false;
+            
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                if (entry.getValue().isNumber()) {
+                    BigDecimal valor = entry.getValue().decimalValue();
+                    if (valor.compareTo(new BigDecimal("100")) > 0) {
+                        BigDecimal valorCorrigido = valor.divide(new BigDecimal("100"));
+                        verbas.put(entry.getKey(), valorCorrigido);
+                        modificado = true;
+                        LOGGER.info("[SeloJsonSanitizerNotas] Verba corrigida: " + entry.getKey() + " = " + valor + " -> " + valorCorrigido);
+                    }
+                }
+            }
+            
+            if (modificado) {
+                ((ObjectNode) root.at("/selo")).set("verbas", verbas);
+            }
+        }
+        
+        return root;
+    }
+    
+    /**
+     * Converte ListaPropriedades para objetos aninhados
+     */
+    private static JsonNode converterListaPropriedades(JsonNode root) {
+        if (!root.isObject()) {
+            return root;
+        }
+        
+        ObjectNode obj = (ObjectNode) root;
+        
+        // Verificar se tem objeto 'selo'
+        if (obj.has("selo") && obj.get("selo").isObject()) {
+            ObjectNode seloObj = (ObjectNode) obj.get("selo");
+            return converterListaPropriedadesEmSelo(obj, seloObj);
+        }
+        
+        // Também processar quando o objeto é o próprio selo
+        if (obj.has("seloDigital") || obj.has("tipoAto")) {
+            return converterListaPropriedadesEmSelo(obj, obj);
+        }
+        
+        return root;
+    }
+    
+    /**
+     * Converte ListaPropriedades para objetos aninhados no objeto do selo
+     */
+    private static JsonNode converterListaPropriedadesEmSelo(ObjectNode root, ObjectNode seloObj) {
+        // Verificar se existe ListaPropriedades
+        if (!seloObj.has("ListaPropriedades") || !seloObj.get("ListaPropriedades").isArray()) {
+            return root;
+        }
+        
+        ArrayNode listaPropriedades = (ArrayNode) seloObj.get("ListaPropriedades");
+        
+        // Map para agrupar propriedades por objeto pai
+        java.util.Map<String, ObjectNode> objetos = new java.util.HashMap<>();
+        
+        for (int i = 0; i < listaPropriedades.size(); i++) {
+            JsonNode item = listaPropriedades.get(i);
+            if (item.isObject()) {
+                ObjectNode propObj = (ObjectNode) item;
+                String nomePropriedade = null;
+                String valorPropriedade = null;
+                
+                if (propObj.has("NomePropriedade")) {
+                    nomePropriedade = propObj.get("NomePropriedade").asText();
+                }
+                if (propObj.has("ValorPropriedade") && !propObj.get("ValorPropriedade").isNull()) {
+                    valorPropriedade = propObj.get("ValorPropriedade").asText();
+                }
+                
+                if (nomePropriedade != null && valorPropriedade != null) {
+                    // Separar nome do objeto pai e nome do campo
+                    // Exemplo: "envolvidos.nome_razao" -> objeto: "envolvidos", campo: "nome_razao"
+                    int ponto = nomePropriedade.indexOf('.');
+                    if (ponto > 0) {
+                        String objetoPai = nomePropriedade.substring(0, ponto);
+                        String campo = nomePropriedade.substring(ponto + 1);
+                        
+                        // Obter ou criar objeto pai
+                        ObjectNode objeto;
+                        if (objetos.containsKey(objetoPai)) {
+                            objeto = objetos.get(objetoPai);
+                        } else {
+                            objeto = M.createObjectNode();
+                            objetos.put(objetoPai, objeto);
+                        }
+                        
+                        // Adicionar campo ao objeto pai
+                        objeto.put(campo, valorPropriedade);
+                    } else {
+                        // Sem objeto pai, adicionar diretamente ao root
+                        seloObj.put(nomePropriedade, valorPropriedade);
+                    }
+                }
+            }
+        }
+        
+        // Adicionar objetos criados ao root (se ainda não existirem)
+        for (Map.Entry<String, ObjectNode> entry : objetos.entrySet()) {
+            if (!seloObj.has(entry.getKey())) {
+                seloObj.set(entry.getKey(), entry.getValue());
+            }
+        }
+        
+        return root;
+    }
+    
+    /**
+     * Adiciona campos livro, folha e termo para tipos de ato que exigem esses campos.
+     * Tipos que exigem: 416, 417, 418, 421, 424, 429, 430, 433, 436, 443, 446, 450, 452, 453, 454, 456, 457, 459
+     * 
+     * Para termo: sempre null conforme instrução
+     */
+    private static JsonNode adicionarCamposLivroFolhaTermo(JsonNode root) {
+        if (!root.isObject()) {
+            return root;
+        }
+        
+        ObjectNode obj = (ObjectNode) root;
+        
+        // Verificar se tem objeto 'selo'
+        ObjectNode selObj = null;
+        if (obj.has("selo") && obj.get("selo").isObject()) {
+            selObj = (ObjectNode) obj.get("selo");
+        } else if (obj.has("seloDigital") || obj.has("tipoAto")) {
+            selObj = obj;
+        }
+        
+        if (selObj == null) {
+            return root;
+        }
+        
+        // Verificar tipo de ato
+        int tipoAto = 0;
+        if (selObj.has("codigoTipoAto") && !selObj.get("codigoTipoAto").isNull()) {
+            tipoAto = selObj.get("codigoTipoAto").asInt();
+        } else if (selObj.has("tipoAto") && !selObj.get("tipoAto").isNull()) {
+            tipoAto = selObj.get("tipoAto").asInt();
+        }
+        
+        // Tipos que exigem livro, folha, termo
+        int[] tiposComProtocolo = {416, 417, 418, 421, 424, 429, 430, 433, 436, 443, 446, 450, 452, 453, 454, 456, 457, 459};
+        boolean exigeProtocolo = false;
+        for (int tipo : tiposComProtocolo) {
+            if (tipo == tipoAto) {
+                exigeProtocolo = true;
+                break;
+            }
+        }
+        
+        if (exigeProtocolo) {
+            // Garantir objeto protocolo
+            ObjectNode protocolo;
+            if (selObj.has("protocolo") && selObj.get("protocolo").isObject()) {
+                protocolo = (ObjectNode) selObj.get("protocolo");
+            } else {
+                protocolo = M.createObjectNode();
+                selObj.set("protocolo", protocolo);
+            }
+            
+            // Garantir que livro e folha existam (pode ser null se não info) e termo sempre null
+            if (!protocolo.has("livro") || protocolo.get("livro").isNull()) {
+                protocolo.putNull("livro");
+            }
+            if (!protocolo.has("folha") || protocolo.get("folha").isNull()) {
+                protocolo.putNull("folha");
+            }
+            // Termo sempre null conforme instrução
+            protocolo.putNull("termo");
+        }
+        
+        return root;
+    }
+    
+    /**
+     * Valida campos específicos por tipo de ato
+     */
+    private static void validarCamposPorTipoAto(ObjectNode seloObj, int tipoAto, 
+            List<String> erros, List<String> warnings) {
+        
+        switch (tipoAto) {
+            // ========== TIPOS COM SOLICITANTE ==========
+            case 401: // Autenticação (TN1)
+                if (!seloObj.has("totalPaginas") || seloObj.get("totalPaginas").isNull()) {
+                    erros.add("Falta campo 'totalPaginas' para tipo 401");
+                }
+                if (!seloObj.has("descricao") || seloObj.get("descricao").isNull()) {
+                    erros.add("Falta campo 'descricao' para tipo 401");
+                }
+                break;
+                
+            case 406: // Transferência de Veículo (TN1)
+                if (!seloObj.has("comunicadoVenda") || !seloObj.get("comunicadoVenda").isObject()) {
+                    erros.add("Falta objeto 'comunicadoVenda' para tipo 406");
+                } else {
+                    ObjectNode cv = (ObjectNode) seloObj.get("comunicadoVenda");
+                    if (!cv.has("data") || cv.get("data").isNull()) {
+                        erros.add("Falta 'comunicadoVenda.data' para tipo 406");
+                    }
+                    if (!cv.has("placa") || cv.get("placa").isNull()) {
+                        erros.add("Falta 'comunicadoVenda.placa' para tipo 406");
+                    }
+                }
+                if (!seloObj.has("envolvidos") || !seloObj.get("envolvidos").isArray()) {
+                    erros.add("Falta objeto 'envolvidos' para tipo 406");
+                }
+                break;
+                
+            case 407: // Carta de Sentença (TN2)
+                if (!seloObj.has("cartaSentenca") || !seloObj.get("cartaSentenca").isObject()) {
+                    erros.add("Falta objeto 'cartaSentenca' para tipo 407");
+                } else {
+                    ObjectNode cs = (ObjectNode) seloObj.get("cartaSentenca");
+                    if (!cs.has("dataRegistro") || cs.get("dataRegistro").isNull()) {
+                        erros.add("Falta 'cartaSentenca.dataRegistro' para tipo 407");
+                    }
+                    if (!cs.has("numeroProcesso") || cs.get("numeroProcesso").isNull()) {
+                        erros.add("Falta 'cartaSentenca.numeroProcesso' para tipo 407");
+                    }
+                    if (!cs.has("totalPaginas") || cs.get("totalPaginas").isNull()) {
+                        erros.add("Falta 'cartaSentenca.totalPaginas' para tipo 407");
+                    }
+                }
+                break;
+                
+            case 416: // Constituição de Condomínio (TN2)
+                if (!seloObj.has("escritura") || !seloObj.get("escritura").isObject()) {
+                    erros.add("Falta objeto 'escritura' para tipo 416");
+                } else {
+                    ObjectNode esc = (ObjectNode) seloObj.get("escritura");
+                    if (!esc.has("tipoEscritura") || esc.get("tipoEscritura").isNull()) {
+                        erros.add("Falta 'escritura.tipoEscritura' para tipo 416");
+                    }
+                }
+                break;
+                
+            // ========== TIPOS COM PROTOCOLO (livro, folha, termo) ==========
+            case 417: // Unidade Adicional (TN1)
+            case 418: // Unidade ou Bem Adicional (TN2)
+            case 421: // Página que Acrescer (ATA Notarial) (TN1)
+            case 430: // Traslado (TN2)
+            case 433: // Traslado (TN3)
+            case 436: // Traslado (TN3)
+                if (!seloObj.has("protocolo") || !seloObj.get("protocolo").isObject()) {
+                    warnings.add("Falta objeto 'protocolo' para tipo " + tipoAto);
+                } else {
+                    ObjectNode protocolo = (ObjectNode) seloObj.get("protocolo");
+                    if (!protocolo.has("livro") || protocolo.get("livro").isNull()) {
+                        warnings.add("Falta 'protocolo.livro' para tipo " + tipoAto);
+                    }
+                    if (!protocolo.has("folha") || protocolo.get("folha").isNull()) {
+                        warnings.add("Falta 'protocolo.folha' para tipo " + tipoAto);
+                    }
+                }
+                break;
+                
+            default:
+                // Outros tipos: só verifica solicitante e verbas
+                break;
+        }
+    }
+    
+    /**
+     * Busca todos os selos pendentes de sanitização para uma versão específica do FUNARPEN.
+     * 
+     * @param dtVersaoFunarpen Data da versão no formato YYYY-MM-DD
+     * @return Lista de selos digitais pendentes
+     */
+    public static List<String> buscarSelosPendentes(String dtVersaoFunarpen) {
+        List<String> selos = new ArrayList<>();
+        Connection conn = null;
+        try {
+            conn = ConnectionFactory.getConnection();
+            
+            // Busca selos que não têm JSON12 válido
+            String sql = "SELECT s.selo_sel " +
+                "FROM selados sel " +
+                "INNER JOIN selos s ON sel.SELO = s.selo_sel " +
+                "INNER JOIN parametros p ON p.CODIGO_PAR = 1 " +
+                "WHERE p.DTVERSAO_FUNARPEN = ? " +
+                "AND (sel.JSON12 IS NULL OR sel.JSON12 = '' OR JSON_VALID(sel.JSON12) = 0)";
+            
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, dtVersaoFunarpen);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        selos.add(rs.getString("selo_sel"));
+                    }
+                }
+            }
+            
+            LOGGER.info("[SeloJsonSanitizerNotas] Encontrados " + selos.size() + " selos pendentes para versão " + dtVersaoFunarpen);
+            
+        } catch (Exception e) {
+            LOGGER.severe("[SeloJsonSanitizerNotas] Erro ao buscar selos pendentes: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    LOGGER.severe("Erro ao fechar conexão: " + e.getMessage());
+                }
+            }
+        }
+        return selos;
+    }
+    
+    /**
+     * Método main para executar a sanitização em lote de todos os selos pendentes.
+     * Uso: java -cp <classpath> com.selador.util.SeloJsonSanitizerNotas <versao>
+     * Exemplo: java SeloJsonSanitizerNotas 2026-02-26
+     */
+    public static void main(String[] args) {
+        String dtVersao = args.length > 0 ? args[0] : "2026-02-26";
+        
+        System.out.println("========================================");
+        System.out.println("  SANITIZAÇÃO EM LOTE - SELOS FUNARPEN");
+        System.out.println("========================================");
+        System.out.println("Versão: " + dtVersao);
+        System.out.println("");
+        
+        try {
+            // 1. Buscar selos pendentes
+            System.out.println("[1/3] Buscando selos pendentes...");
+            List<String> selosPendentes = buscarSelosPendentes(dtVersao);
+            
+            if (selosPendentes.isEmpty()) {
+                System.out.println("✅ Nenhum selo pendente encontrado para a versão " + dtVersao);
+                return;
+            }
+            
+            System.out.println("   Total de selos pendentes: " + selosPendentes.size());
+            System.out.println("");
+            
+            // 2. Processar cada selo
+            System.out.println("[2/3] Processando selos...");
+            int sucessos = 0;
+            int erros = 0;
+            
+            for (int i = 0; i < selosPendentes.size(); i++) {
+                String selo = selosPendentes.get(i);
+                System.out.print("   Processando " + (i + 1) + "/" + selosPendentes.size() + ": " + selo + " ... ");
+                
+                try {
+                    boolean sucesso = sanitizarESalvar(selo);
+                    if (sucesso) {
+                        System.out.println("OK");
+                        sucessos++;
+                    } else {
+                        System.out.println("FALHA");
+                        erros++;
+                    }
+                } catch (Exception e) {
+                    System.out.println("ERRO: " + e.getMessage());
+                    erros++;
+                }
+                
+                // Pequena pausa para não sobrecarregar o banco
+                if (i < selosPendentes.size() - 1) {
+                    Thread.sleep(50);
+                }
+            }
+            
+            System.out.println("");
+            
+            // 3. Resumo
+            System.out.println("[3/3] Resumo da sanitização:");
+            System.out.println("   ✅ Sucesso: " + sucessos);
+            System.out.println("   ❌ Erros: " + erros);
+            System.out.println("   📊 Total: " + selosPendentes.size());
+            System.out.println("");
+            
+            if (erros > 0) {
+                System.out.println("⚠️  Alguns selos não puderam ser sanitizados. Verifique os logs.");
+            } else {
+                System.out.println("🎉 Sanitização concluída com sucesso!");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ Erro durante a sanitização: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}

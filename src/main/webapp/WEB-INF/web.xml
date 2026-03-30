@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee 
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+    
+    <display-name>Selador - Integração Maker 5</display-name>
+    
+    <!-- Configuração de contexto -->
+    <context-param>
+        <param-name>appName</param-name>
+        <param-value>Selador</param-value>
+    </context-param>
+    
+    <context-param>
+        <param-name>appVersion</param-name>
+        <param-value>1.26.1</param-value>
+    </context-param>
+    
+    <!-- ============================================
+         CONFIGURAÇÃO PARA SERVIR ARQUIVOS ESTÁTICOS
+         ============================================ -->
+    
+    <!-- Servlet padrão para arquivos estáticos -->
+    <servlet>
+        <servlet-name>default</servlet-name>
+        <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+        <init-param>
+            <param-name>debug</param-name>
+            <param-value>0</param-value>
+        </init-param>
+        <init-param>
+            <param-name>listings</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    
+    <!-- Mapeamentos para arquivos estáticos -->
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/views/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/assets/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>*.html</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>*.css</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>*.js</url-pattern>
+    </servlet-mapping>
+    
+    <!-- ============================================
+         FILTROS
+         ============================================ -->
+    
+    <!-- Filtro CROS (OBRIGATÓRIO para integração Maker) -->
+    <filter>
+        <filter-name>CorsFilter</filter-name>
+        <filter-class>com.selador.web.filters.CorsFilter</filter-class>
+    </filter>
+    
+    <filter-mapping>
+        <filter-name>CorsFilter</filter-name>
+        <url-pattern>/api/*</url-pattern>
+    </filter-mapping>
+    
+    <!-- ============================================
+         SERVLETS DA API
+         ============================================ -->
+    
+    <!-- 1. Servlet de Apontamentos -->
+    <servlet>
+        <servlet-name>ApontamentoServlet</servlet-name>
+        <servlet-class>com.selador.web.servlets.ApontamentoServlet</servlet-class>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>ApontamentoServlet</servlet-name>
+        <url-pattern>/api/apontamentos/*</url-pattern>
+    </servlet-mapping>
+    
+    <!-- 2. Servlet para Intervalo de Apontamentos -->
+    <servlet>
+        <servlet-name>IntervaloServlet</servlet-name>
+        <servlet-class>com.selador.web.servlets.IntervaloServlet</servlet-class>
+        <load-on-startup>3</load-on-startup>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>IntervaloServlet</servlet-name>
+        <url-pattern>/api/apontamentos/intervalo</url-pattern>
+    </servlet-mapping>
+    
+    <!-- 3. Servlet de Selos -->
+    <servlet>
+        <servlet-name>SeloServlet</servlet-name>
+        <servlet-class>com.selador.web.servlets.SeloServlet</servlet-class>
+        <load-on-startup>4</load-on-startup>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>SeloServlet</servlet-name>
+        <url-pattern>/api/selos/*</url-pattern>
+    </servlet-mapping>
+    
+    <!-- 4. Servlet de Selagem -->
+    <servlet>
+        <servlet-name>SelagemServlet</servlet-name>
+        <servlet-class>com.selador.web.servlets.SelagemServlet</servlet-class>
+        <load-on-startup>5</load-on-startup>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>SelagemServlet</servlet-name>
+        <url-pattern>/api/selagem/*</url-pattern>
+    </servlet-mapping>
+    
+    <!-- 5. Servlet de Configuração -->
+    <servlet>
+        <servlet-name>ConfigServlet</servlet-name>
+        <servlet-class>com.selador.web.servlets.ConfigServlet</servlet-class>
+        <load-on-startup>6</load-on-startup>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>ConfigServlet</servlet-name>
+        <url-pattern>/api/config/*</url-pattern>
+    </servlet-mapping>
+    
+    <!-- ============================================
+          CONFIGURAÇÕES GERAIS
+          ============================================ -->
+    
+    <!-- Servlet de Funarpen Selos (para compatibilidade com API do Protesto) -->
+    <servlet>
+        <servlet-name>FunarpenSelosServlet</servlet-name>
+        <servlet-class>com.selador.web.servlets.FunarpenSelosServlet</servlet-class>
+        <load-on-startup>10</load-on-startup>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>FunarpenSelosServlet</servlet-name>
+        <url-pattern>/maker/api/funarpen/selos/*</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Servlet de Funarpen Parametros -->
+    <servlet>
+        <servlet-name>FunarpenParametrosServlet</servlet-name>
+        <servlet-class>com.selador.web.servlets.FunarpenParametrosServlet</servlet-class>
+        <load-on-startup>11</load-on-startup>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>FunarpenParametrosServlet</servlet-name>
+        <url-pattern>/maker/api/funarpen/parametros</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Welcome files (IMPORTANTE: adicionar selador.html) -->
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+        <welcome-file>views/selador.html</welcome-file>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+    
+    <!-- Configuração de erro -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error/404.html</location>
+    </error-page>
+    
+    <error-page>
+        <error-code>500</error-code>
+        <location>/error/500.html</location>
+    </error-page>
+    
+    <!-- Configuração de sessão -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+            <secure>false</secure>
+        </cookie-config>
+    </session-config>
+    
+    <!-- Configuração de MIME types -->
+    <mime-mapping>
+        <extension>html</extension>
+        <mime-type>text/html;charset=UTF-8</mime-type>
+    </mime-mapping>
+    
+    <mime-mapping>
+        <extension>json</extension>
+        <mime-type>application/json;charset=UTF-8</mime-type>
+    </mime-mapping>
+    
+    <mime-mapping>
+        <extension>css</extension>
+        <mime-type>text/css;charset=UTF-8</mime-type>
+    </mime-mapping>
+    
+    <mime-mapping>
+        <extension>js</extension>
+        <mime-type>application/javascript;charset=UTF-8</mime-type>
+    </mime-mapping>
+    
+    <mime-mapping>
+        <extension>png</extension>
+        <mime-type>image/png</mime-type>
+    </mime-mapping>
+    
+    <mime-mapping>
+        <extension>jpg</extension>
+        <mime-type>image/jpeg</mime-type>
+    </mime-mapping>
+    
+    <mime-mapping>
+        <extension>ico</extension>
+        <mime-type>image/x-icon</mime-type>
+    </mime-mapping>
+    
+</web-app>
