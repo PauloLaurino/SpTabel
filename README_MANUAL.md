@@ -346,15 +346,22 @@ curl -X POST "http://100.102.13.23:8059/notas/maker/api/funarpen/selos/recepcao/
 
 ---
 
-**Status Atual**: ✅ Pronto para Envio Massivo ao FUNARPEN.
+**Status Atual**: ✅ Sanitização em andamento. 226+ selos processados para versão 11.12. Pendente: conversão V10→V11 para registros específicos.
 
 ## 📁 Arquivos Principais
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `SeloJsonSanitizerNotas.java` | Classe principal de sanitização (29 tipos implementados) |
-| `ExecutarAmostraNotas.java` | Utilitário para teste em massa |
-| `VerificarJson.java` | Utilitário para verificaç��o do JSON |
+| SeloJsonSanitizerNotas.java | Classe principal de sanitização (29 tipos implementados) |
+| ExecutarAmostraNotas.java | Utilitário para teste em massa |
+| VerificarJson.java | Utilitário para verificação do JSON |
+
+### Endpoints de Sanitização
+
+| Endpoint | Descrição |
+|----------|------------|
+| /maker/api/funarpen/selos/sanitizar/{seloDigital} | Sanitiza um selo específico |
+| /maker/api/funarpen/selos/sanitizar/lote?force=true | Sanitiza todos os selos (força revalidação) |
 
 ### Executar via Maven
 
@@ -371,5 +378,14 @@ mvn exec:java -Dexec.mainClass="com.selador.util.VerificarJson"
 
 ---
 
-*Documento atualizado em: 29/03/2026*
+## 🚀 Histórico de Atualizações
+
+| Data | Alteração |
+|------|-----------|
+| 29/03/2026 | Backup GitHub: https://github.com/PauloLaurino/SpTabel |
+| 29/03/2026 | Conexão forçada para sptabel |
+| 30/03/2026 | Correção versão 11 → 11.12 inline |
+| 30/03/2026 | 226+ selos processados com sucesso |
+
+*Documento atualizado em: 30/03/2026*
 *Versão: 1.8*
