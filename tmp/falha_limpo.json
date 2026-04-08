@@ -1,0 +1,19 @@
+{"ambiente": "prod","documentoResponsavel": "0","codigoEmpresa": "eyJhbGciOiJIUzUxMiJ9.eyJkb2N1bWVudG8iOiIxMDc1MjI0MTAwMDE0MCJ9.G1SilnGGFWQVPIfFBPS9-oQcYz6aXu3ndnjtvza2cvOcwWBuuY5pLIABrTwWnC3PH4hlOqiqbxX9O7Cl35g2vg","codigoOficio": 181196,{
+"numeroTipoAto":432,
+"qtde":1,
+"seloDigital":"SFTN3.cq6RH.MwPwe-MRuGM.1122q",
+"valorBase":0,
+"chavePedido":"94487.4",
+"dataAto":"2026-03-12T16:49:04.639",
+"documento":"32141173949",
+"idap":"0000000000000000289C00000000000000000000",
+"numeroSeloRetificado":"",
+"versao":"11",
+"ListaVerbas":[
+{"NomeVerba":"EMOLUMENTOS","ValorVerba":1246},
+{"NomeVerba":"FUNREJUS","ValorVerba":395},
+{"NomeVerba":"ISS","ValorVerba":47},
+{"NomeVerba":"FUNDEP","ValorVerba":79},
+{"NomeVerba":"FUNARPEN","ValorVerba":100},
+{"NomeVerba":"DISTRIBUIDOR","ValorVerba":0}],
+"ListaPropriedades":[{"NomePropriedade":"envolvidos.nome_razao","ValorPropriedade":"FRANCISCO POMOSSENO MUCHINSKI"},{"NomePropriedade":"envolvidos.CPF_CNPJ","ValorPropriedade":"32141173949"},{"NomePropriedade":"envolvidos.rg_emissor_uf","ValorPropriedade":"PR"},{"NomePropriedade":"envolvidos.rg_pessoa","ValorPropriedade":"1455216"},{"NomePropriedade":"detalhes_selo.data_registro","ValorPropriedade":"12/03/2026"},{"NomePropriedade":"detalhes_selo.isento","ValorPropriedade":""},{"NomePropriedade":"codoficio","ValorPropriedade":"181122"}]}

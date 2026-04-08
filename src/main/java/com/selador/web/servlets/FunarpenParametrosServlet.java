@@ -71,6 +71,32 @@ public class FunarpenParametrosServlet extends HttpServlet {
                         parametros.put("ativa", rs.getString("ATIVA"));
                         parametros.put("dtVersaoFunarpen", rs.getString("DTVERSAO_FUNARPEN"));
                         parametros.put("obsFunarpen", rs.getString("OBS_FUNARPEN"));
+                        
+                        // Impostos - Reforma Tributária
+                        // ISS (já existe)
+                        parametros.put("issPar", rs.getObject("ISS_PAR") != null ? rs.getDouble("ISS_PAR") : 0.05);
+                        // CBS (Contribuição sobre Bens e Serviços)
+                        parametros.put("cbsPar", rs.getObject("CBS_PAR") != null ? rs.getDouble("CBS_PAR") : 0.10);
+                        // IBS (Imposto sobre Bens e Serviços)
+                        parametros.put("ibsPar", rs.getObject("IBS_PAR") != null ? rs.getDouble("IBS_PAR") : 0.10);
+                        // PIS
+                        parametros.put("pisPar", rs.getObject("PIS_PAR") != null ? rs.getDouble("PIS_PAR") : 0.0165);
+                        // COFINS
+                        parametros.put("cofinsPar", rs.getObject("COFINS_PAR") != null ? rs.getDouble("COFINS_PAR") : 0.076);
+                        // CSLL
+                        parametros.put("csllPar", rs.getObject("CSLL_PAR") != null ? rs.getDouble("CSLL_PAR") : 0.09);
+                        // IRPJ
+                        parametros.put("irpjPar", rs.getObject("IRPJ_PAR") != null ? rs.getDouble("IRPJ_PAR") : 0.15);
+                        // IRPJ Adicional
+                        parametros.put("irpjAdicPar", rs.getObject("IRPJ_ADIC_PAR") != null ? rs.getDouble("IRPJ_ADIC_PAR") : 0.025);
+                        // CPP (Contribuição Patronal)
+                        parametros.put("cppPar", rs.getObject("CPP_PAR") != null ? rs.getDouble("CPP_PAR") : 0.12);
+                        
+                        // Fase da Reforma Tributária
+                        parametros.put("faseReformaPar", rs.getString("FASE_REFORMA_PAR") != null ? rs.getString("FASE_REFORMA_PAR") : "NAO_INICIADA");
+                        parametros.put("cbsAtivoPar", rs.getObject("CBS_ATIVO_PAR") != null ? rs.getBoolean("CBS_ATIVO_PAR") : false);
+                        parametros.put("ibsAtivoPar", rs.getObject("IBS_ATIVO_PAR") != null ? rs.getBoolean("IBS_ATIVO_PAR") : false);
+                        parametros.put("cppAtivoPar", rs.getObject("CPP_ATIVO_PAR") != null ? rs.getBoolean("CPP_ATIVO_PAR") : false);
                     }
                 }
             } catch (SQLException e) {

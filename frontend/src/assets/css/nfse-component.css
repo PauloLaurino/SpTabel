@@ -1,0 +1,387 @@
+/**
+ * Estilos para o componente NFS-e
+ * Pode ser incluído no arquivo CSS principal ou单独加载
+ */
+
+/* Container Principal */
+.nfse-component {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.nfse-component * {
+  box-sizing: border-box;
+}
+
+.nfse-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+}
+
+.nfse-header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+/* Tabs */
+.nfse-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.nfse-tabs .tab-button {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.nfse-tabs .tab-button:hover {
+  color: #667eea;
+}
+
+.nfse-tabs .tab-button.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+/* Content */
+.nfse-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.aba-content h2 {
+  margin-top: 0;
+  color: #333;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+/* Form */
+.nfse-form .form-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+
+.nfse-form .form-section h3 {
+  margin-top: 0;
+  color: #555;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+.nfse-form .form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.nfse-form .form-group {
+  flex: 1;
+  min-width: 150px;
+}
+
+.nfse-form .form-group.full-width {
+  flex: 100%;
+}
+
+.nfse-form .form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #555;
+  font-size: 13px;
+}
+
+.nfse-form .form-group input,
+.nfse-form .form-group select,
+.nfse-form .form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.nfse-form .form-group input:focus,
+.nfse-form .form-group select:focus,
+.nfse-form .form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.nfse-form .form-group textarea {
+  resize: vertical;
+}
+
+.nfse-form .form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* Buttons */
+.nfse-component .btn-primary {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.nfse-component .btn-primary:hover {
+  background: #5568d3;
+}
+
+.nfse-component .btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.nfse-component .btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.nfse-component .btn-secondary:hover {
+  background: #5a6268;
+}
+
+.nfse-component .btn-danger {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.nfse-component .btn-danger:hover {
+  background: #c82333;
+}
+
+.nfse-component .btn-small {
+  padding: 5px 10px;
+  font-size: 12px;
+  margin-right: 5px;
+}
+
+/* Table */
+.nfse-component .tabela-container {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.nfse-component .nfse-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.nfse-component .nfse-table th {
+  background: #f8f9fa;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.nfse-component .nfse-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.nfse-component .nfse-table tr:hover {
+  background: #f8f9fa;
+}
+
+.nfse-component .nfse-table .acoes {
+  white-space: nowrap;
+}
+
+/* Situação */
+.nfse-component .situacao-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nfse-component .situacao-pendente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.nfse-component .situacao-emitida {
+  background: #d4edda;
+  color: #155724;
+}
+
+.nfse-component .situacao-cancelada {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.nfse-component .situacao-erro {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Filtros */
+.nfse-component .filtros {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+/* Resultado Consulta */
+.nfse-component .resultado-consulta {
+  margin-top: 20px;
+  padding: 15px;
+  background: #d4edda;
+  border-radius: 6px;
+  border: 1px solid #c3e6cb;
+}
+
+.nfse-component .resultado-consulta h3 {
+  margin-top: 0;
+  color: #155724;
+}
+
+.nfse-component .resultado-info p {
+  margin: 5px 0;
+  color: #155724;
+}
+
+.nfse-component .resultado-info a {
+  color: #007bff;
+  word-break: break-all;
+}
+
+/* Cancelamento */
+.nfse-component .nota-selecionada {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.nfse-component .nota-selecionada h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.nfse-component .nota-selecionada p {
+  margin: 5px 0;
+}
+
+.nfse-component .selecionar-nota {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+/* Loading e Error */
+.nfse-component .loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.nfse-component .error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-top: 15px;
+  border: 1px solid #f5c6cb;
+}
+
+.nfse-component .sem-registros {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+/* Paginação */
+.nfse-component .paginacao {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.nfse-component .paginacao button {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.nfse-component .paginacao button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nfse-component .paginacao span {
+  color: #666;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nfse-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .nfse-tabs .tab-button {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+  }
+  
+  .nfse-form .form-row {
+    flex-direction: column;
+  }
+  
+  .nfse-form .form-group {
+    min-width: 100%;
+  }
+}

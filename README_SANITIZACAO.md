@@ -30,7 +30,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\sanitizar_selados_completo
 - Consulta parametros para obter DOC_PAR
 - Extrai signatários de ListaPropriedades
 - Constrói JSON sanitizado conforme regras de negócio
-- Gera arquivo selados.JSON12
+- grava json sanitizado em selados.JSON12
 
 ### 2. `sanitizar_lote_selados.ps1`
 
@@ -53,7 +53,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\sanitizar_lote_selados.ps1
 **Funcionalidades:**
 - Consulta selos pendentes no período especificado
 - Processa cada selo individualmente
-- Gera arquivo JSON12 para cada selo
+- Sanitiza cada selo individualmente e grava em selados.JSON12 mantento o selados.JSON intacto para auditoria
 - Exibe resumo do processamento
 - Verifica status de recepção geral
 

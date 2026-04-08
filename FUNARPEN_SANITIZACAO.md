@@ -20,7 +20,7 @@
 ### Task 1: debug e Correção Conversão V10→V11
 **Problema**: Registros com JSON na estrutura antiga (sem objeto "selo") não estão sendo convertidos.
 
-**JSON Atual (V10)**:
+**JSON Atual (V11)**:
 ```json
 {
   "numeroTipoAto": 430,
@@ -47,7 +47,7 @@
 }
 ```
 
-**Solução**: O conversor `converterV10ParaV11` precisa ser Called quando JSON12 não tem objeto "selo".
+**Solução**: O conversor `converterV11ParaV11.12` precisa ser Called quando JSON12 não tem objeto "selo".
 
 ### Task 2: Teste de endpoints
 **Verificar após correção**:
@@ -89,11 +89,11 @@ Esperado: Todos com "11.12"
 O código tem logging em:
 - `[SeloJsonSanitizerNotas] JSON12 válido para selo`
 - `[SeloJsonSanitizerNotas] Atualizando versão` para 11.12
-- `[SeloJsonSanitizerNotas] JSON12 é V10 (sem objeto 'selo')`
+- `[SeloJsonSanitizerNotas] JSON12 é V11 (sem objeto 'selo')`
 
 ### Variáveis Importantes
 - `forceRevalidate` - força re-processamento
-- `needsConversion` - indica se precisa converter V10→V11
+- `needsConversion` - indica se precisa converter V11→V11.12
 
 ---
 

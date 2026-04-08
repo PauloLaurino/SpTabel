@@ -48,173 +48,237 @@ public class SeloJsonSanitizerNotas {
 
     private static String converterV10ParaV11(String json, Map<String, Object> dadosComplementares) {
         try {
-            String[] camposParaRemover;
-            ObjectNode propriedadesExtras;
-            ObjectNode verbas;
-            String codtabelPar;
-            String codigoPar;
             String jsonPrincipal = json;
             String dadosExtras = null;
+            
+            // Localiza o fechamento do primeiro objeto JSON raiz
+            int level = 0;
             int firstOpen = json.indexOf("{");
-            int braceCount = 0;
+            if (firstOpen == -1) return json;
+            
             int closeBrace = -1;
             boolean inString = false;
-            int prevChar = 0;
-            for (int i = firstOpen; i < json.length(); ++i) {
+            for (int i = firstOpen; i < json.length(); i++) {
                 char c = json.charAt(i);
-                if (c == '\"' && prevChar != 92) {
+                if (c == '\"' && (i == 0 || json.charAt(i-1) != '\\')) {
                     inString = !inString;
                 } else if (!inString) {
-                    if (c == '{') {
-                        ++braceCount;
-                    } else if (c == '}' && --braceCount == 0) {
-                        closeBrace = i;
-                        break;
+                    if (c == '{') level++;
+                    else if (c == '}') {
+                        level--;
+                        if (level == 0) {
+                            closeBrace = i;
+                            break;
+                        }
                     }
                 }
-                prevChar = c;
             }
-            if (closeBrace > 0) {
+
+            if (closeBrace != -1) {
                 jsonPrincipal = json.substring(0, closeBrace + 1);
-                String resto = json.substring(closeBrace + 1).trim();
-                if (resto.startsWith(",{")) {
-                    dadosExtras = resto.substring(1);
-                } else if (resto.startsWith("{")) {
-                    dadosExtras = resto;
-                }
+                dadosExtras = json.substring(closeBrace + 1).trim();
             }
-            JsonNode root = M.readTree(jsonPrincipal);
+
+            // Uso de leitura leniente para suportar JSONs mal formados (Modelo 1 - campo sem aspas)
+            JsonNode root = lerJsonLeniente(jsonPrincipal);
+            if (root == null || !root.isObject()) return json;
+            
             ObjectNode obj = (ObjectNode)root;
-            String ambientePar = (String)dadosComplementares.get("AMBIENTE_PAR");
-            if (ambientePar == null || ambientePar.isEmpty()) {
-                ambientePar = "P";
-            }
-            if ("P".equalsIgnoreCase(ambientePar)) {
-                ambientePar = "prod";
-            } else if ("H".equalsIgnoreCase(ambientePar)) {
-                ambientePar = "homolog";
-            }
-            String docPar = (String)dadosComplementares.get("DOC_PAR");
-            if (docPar == null || docPar.isEmpty()) {
-                docPar = "0";
-            }
-            if ((codigoPar = (String)dadosComplementares.get("CODIGO_PAR")) == null || codigoPar.isEmpty()) {
-                codigoPar = "1";
-            }
-            if ((codtabelPar = (String)dadosComplementares.get("CODTABEL_PAR")) == null || codtabelPar.isEmpty()) {
-                codtabelPar = "181122";
-            }
+            
+            // Dados de Parâmetros
+            String ambientePar = (String)dadosComplementares.getOrDefault("AMBIENTE_PAR", "prod");
+            if ("P".equalsIgnoreCase(ambientePar)) ambientePar = "prod";
+            else if ("H".equalsIgnoreCase(ambientePar)) ambientePar = "homolog";
+            
+            String docPar = (String)dadosComplementares.getOrDefault("DOC_PAR", "0");
+            String codigoPar = (String)dadosComplementares.getOrDefault("CODIGO_PAR", "1");
+            String codtabelPar = (String)dadosComplementares.getOrDefault("CODTABEL_PAR", "181122");
+
             ObjectNode seloObj = M.createObjectNode();
-            if (obj.has("seloDigital")) {
-                seloObj.set("seloDigital", obj.get("seloDigital"));
-            }
+            
+            // Mapeamento Flat -> V11
+            if (obj.has("seloDigital")) seloObj.set("seloDigital", obj.get("seloDigital"));
+            
             if (obj.has("codigoPedido")) {
                 JsonNode cpNode = obj.get("codigoPedido");
-                if (cpNode.isTextual()) {
-                    String cpStr = cpNode.asText();
-                    if (cpStr.contains(".")) {
-                        cpStr = cpStr.replace(".", "").replaceAll("[^0-9]", "");
-                    }
-                    try {
-                        seloObj.put("codigoPedido", Long.parseLong(cpStr));
-                    }
-                    catch (Exception exception) {}
-                } else if (cpNode.isNumber()) {
-                    double val = cpNode.asDouble();
-                    long valLong = (long)val;
-                    seloObj.put("codigoPedido", valLong);
-                }
-            }
-            if (obj.has("numeroTipoAto")) {
-                int tipoAto = obj.get("numeroTipoAto").asInt();
-                if (tipoAto == 408) {
-                    tipoAto = 459;
-                }
-                seloObj.put("codigoTipoAto", tipoAto);
-            } else {
-                seloObj.put("codigoTipoAto", 0);
-            }
-            if (obj.has("tipoEmissaoAto")) {
-                seloObj.set("tipoEmissaoAto", obj.get("tipoEmissaoAto"));
-            } else {
-                seloObj.put("tipoEmissaoAto", 1);
-            }
-            if (obj.has("idap")) {
-                seloObj.set("idap", obj.get("idap"));
-            }
-            if (obj.has("versao")) {
-                String versaoOriginal = obj.get("versao").asText();
-                if (versaoOriginal != null && !versaoOriginal.isEmpty() && versaoOriginal.contains(".")) {
-                    seloObj.set("versao", obj.get("versao"));
+                if (cpNode.isNumber()) {
+                    seloObj.put("codigoPedido", (long)cpNode.asDouble());
                 } else {
-                    seloObj.put("versao", "11.12");
+                    String cpStr = cpNode.asText().replaceAll("[^0-9]", "");
+                    if (!cpStr.isEmpty()) {
+                        try {
+                            seloObj.put("codigoPedido", Long.parseLong(cpStr));
+                        } catch (Exception e) {}
+                    }
                 }
-            } else {
-                seloObj.put("versao", "11.12");
             }
+
+            int tipoAto = 0;
+            if (obj.has("numeroTipoAto")) {
+                tipoAto = obj.get("numeroTipoAto").asInt();
+                if (tipoAto == 408) tipoAto = 459;
+                seloObj.put("codigoTipoAto", tipoAto);
+            }
+
+            seloObj.put("tipoEmissaoAto", obj.has("tipoEmissaoAto") ? obj.get("tipoEmissaoAto").asInt() : 1);
+            if (obj.has("idap")) seloObj.set("idap", obj.get("idap"));
+            seloObj.put("versao", "11.12");
+            
             if (obj.has("dataAto")) {
-                String dataAto = obj.get("dataAto").asText();
-                if (dataAto.contains("T")) {
-                    dataAto = dataAto.substring(0, 10);
-                }
-                seloObj.put("dataAtoPraticado", dataAto);
-                String dataSelo = dataAto;
-                seloObj.put("dataSeloEmitido", dataSelo);
+                String data = obj.get("dataAto").asText();
+                if (data.contains("T")) data = data.substring(0, 10);
+                seloObj.put("dataAtoPraticado", data);
+                seloObj.put("dataSeloEmitido", data);
             }
-            if (obj.has("numeroSeloRetificado")) {
-                String retif = obj.get("numeroSeloRetificado").asText();
-                if (retif == null || retif.isEmpty() || retif.equals("null")) {
-                    retif = null;
-                }
-                seloObj.put("seloRetificado", retif);
-            } else {
-                seloObj.put("seloRetificado", (String)null);
-            }
-            if (obj.has("tipoGratuidade")) {
-                seloObj.set("tipoGratuidade", obj.get("tipoGratuidade"));
-            } else {
-                seloObj.put("tipoGratuidade", 0);
-            }
+
+            seloObj.put("tipoGratuidade", obj.has("tipoGratuidade") ? obj.get("tipoGratuidade").asInt() : 0);
+            
+            // Verbas
             if (obj.has("ListaVerbas") && obj.get("ListaVerbas").isArray()) {
-                verbas = SeloJsonSanitizerNotas.processarListaVerbasV10((ArrayNode)obj.get("ListaVerbas"));
-                seloObj.set("verbas", (JsonNode)verbas);
-            } else {
-                verbas = M.createObjectNode();
-                verbas.put("emolumentos", 0);
-                verbas.put("vrcExt", 0);
-                verbas.put("funrejus", 0);
-                verbas.put("iss", 0);
-                verbas.put("fundep", 0);
-                verbas.put("funarpen", 0);
-                verbas.put("distribuidor", 0);
-                verbas.put("valorAdicional", 0);
-                seloObj.set("verbas", (JsonNode)verbas);
+                seloObj.set("verbas", processarListaVerbasV10((ArrayNode)obj.get("ListaVerbas")));
             }
-            ObjectNode propriedades = SeloJsonSanitizerNotas.processarListaPropriedadesV10(obj);
-            if (dadosExtras != null && dadosExtras.contains("NomePropriedade") && (propriedadesExtras = SeloJsonSanitizerNotas.parseListaPropriedadesExtras(dadosExtras)) != null) {
-                SeloJsonSanitizerNotas.mesclarPropriedades(propriedades, propriedadesExtras);
+
+            // Propriedades (Pool)
+            ObjectNode propriedades = processarListaPropriedadesV10(obj);
+            
+            // Ingestão de Dados Extras (fragmentos concatenados)
+            if (dadosExtras != null && !dadosExtras.isEmpty()) {
+                ObjectNode propsExtras = parseQualquerFragmentoProps(dadosExtras);
+                if (propsExtras != null) mesclarPropriedades(propriedades, propsExtras);
             }
-            seloObj.set("propriedades", (JsonNode)propriedades);
-            obj.set("selo", (JsonNode)seloObj);
-            obj.put("ambiente", ambientePar);
-            obj.put("documentoResponsavel", docPar);
-            obj.put("codigoEmpresa", codigoPar);
-            try {
-                obj.put("codigoOficio", Integer.parseInt(codtabelPar));
-            }
-            catch (Exception e) {
-                obj.put("codigoOficio", codtabelPar);
-            }
-            for (String campo : camposParaRemover = new String[]{"seloDigital", "codigoPedido", "numeroTipoAto", "tipoEmissaoAto", "idap", "versao", "dataAto", "numeroSeloRetificado", "tipoGratuidade", "ListaVerbas", "ListaPropriedades"}) {
-                obj.remove(campo);
-            }
-            return M.writeValueAsString((Object)obj);
-        }
-        catch (Exception e) {
-            LOGGER.warning("Erro ao converter V10 para V11: " + e.getMessage());
-            e.printStackTrace();
+            
+            seloObj.set("propriedades", propriedades);
+            
+            // Montagem Final do Wrapper
+            ObjectNode wrapper = M.createObjectNode();
+            wrapper.put("ambiente", ambientePar);
+            wrapper.put("documentoResponsavel", docPar);
+            wrapper.put("codigoEmpresa", codigoPar);
+            wrapper.put("codigoOficio", Integer.parseInt(codtabelPar.replaceAll("[^0-9]", "")));
+            wrapper.set("selo", seloObj);
+
+            return M.writeValueAsString(wrapper);
+            
+        } catch (Exception e) {
+            LOGGER.severe("Erro ao converter V10 para V11: " + e.getMessage());
             return json;
         }
+    }
+
+    private static JsonNode lerJsonLeniente(String json) {
+        if (json == null) return null;
+        String raw = json.trim();
+        
+        // Remove prefixos como (String), (string), etc.
+        int start = raw.indexOf('{');
+        int end = raw.lastIndexOf('}');
+        if (start != -1 && end != -1 && end > start) {
+            raw = raw.substring(start, end + 1);
+        }
+        try {
+            // Limpeza radial: substitui placeholders e detritos que quebram o parse
+            raw = raw.replace("|codoficio|", "0")
+                     .replace("|ambiente|", "prod")
+                     .replace("|codigoEmpresa|", "1")
+                     .replace("|dataato|", "")
+                     .replace("|numapo1|", "0")
+                     .replace("|numser|", "0")
+                     .replace("...", "")
+                     .replace("{ , }", "{}")
+                     .replace("{,}", "{}")
+                     .replace(", }", "}")
+                     .replace(",}", "}");
+
+            // Aspas em qualquer literal que não pareça JSON válido
+            String limpo = raw.replaceAll(":\\s*([^\\\"\\d\\-\\{\\[\\stf\\n][^,}\\n]*)([\\s,}\\n])", ": \"$1\"$2");
+            
+            Gson gson = new GsonBuilder().setLenient().create();
+            Object obj = null;
+            try {
+                obj = gson.fromJson(limpo, Object.class);
+            } catch (Exception e) {
+                try {
+                    java.nio.file.Files.write(java.nio.file.Paths.get("c:/Desenvolvimento/Seprocom/Notas/tmp/falha_limpo.json"), limpo.getBytes());
+                } catch (Exception e_log) {}
+                throw e;
+            }
+            return M.valueToTree(obj);
+        } catch (Exception e) {
+            try {
+                // Tenta Gson puro se a regex falhar
+                Gson gson2 = new GsonBuilder().setLenient().create();
+                Object obj2 = gson2.fromJson(raw, Object.class);
+                return M.valueToTree(obj2);
+            } catch (Exception e2) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Tenta extrair pares NomePropriedade/ValorPropriedade de qualquer fragmento de string,
+     * mesmo que não seja um JSON perfeito (suporta arrays truncados, objetos soltos, etc).
+     */
+    private static ObjectNode parseQualquerFragmentoProps(String fragmento) {
+        ObjectNode result = M.createObjectNode();
+        ArrayNode signatarios = M.createArrayNode();
+        HashSet<String> seen = new HashSet<>();
+        
+        try {
+            // Limpeza radical para tornar o fragmento um array JSON válido
+            String limpo = fragmento.trim();
+            if (limpo.startsWith("}{")) limpo = "{" + limpo.substring(2);
+            if (limpo.startsWith("}")) limpo = limpo.substring(1);
+            if (limpo.endsWith("]}") || limpo.endsWith("]")) {
+                if (!limpo.startsWith("[")) limpo = "[" + limpo;
+            } else {
+                if (!limpo.startsWith("[")) limpo = "[" + limpo + "]";
+            }
+            // Garante que objetos entre vírgulas estejam corretos
+            limpo = limpo.replace("}{", "},{");
+            
+            Gson gson = new GsonBuilder().setLenient().create();
+            JsonArray arr = gson.fromJson(limpo, JsonArray.class);
+            
+            String ultNome = null, ultDoc = null;
+            
+            for (JsonElement el : arr) {
+                if (!el.isJsonObject()) continue;
+                com.google.gson.JsonObject item = el.getAsJsonObject();
+                
+                String nome = item.has("NomePropriedade") ? item.get("NomePropriedade").getAsString() : null;
+                String valor = item.has("ValorPropriedade") ? item.get("ValorPropriedade").getAsString() : "";
+                
+                if (nome == null) continue;
+                String n = nome.toLowerCase();
+                
+                if (n.contains("nome_razao")) ultNome = valor;
+                else if (n.contains("cpf") || n.contains("cnpj") || n.contains("emvolvidos") || n.contains("documento")) ultDoc = valor;
+                
+                // Se temos um par completo, adiciona aos signatários
+                if (ultNome != null && !ultNome.isEmpty() && ultDoc != null && !ultDoc.isEmpty()) {
+                    String key = ultDoc.replaceAll("[^0-9]", "");
+                    if (!seen.contains(key)) {
+                        seen.add(key);
+                        ObjectNode s = M.createObjectNode();
+                        s.put("nomeRazao", ultNome);
+                        s.put("documentoTipo", detectarTipoDocumento(ultDoc));
+                        s.put("documentoNumero", ultDoc);
+                        signatarios.add(s);
+                    }
+                    ultNome = null; ultDoc = null;
+                }
+                
+                // Também guarda no pool genérico para mapeamento por tipo de ato
+                result.put(nome, valor);
+            }
+            
+            if (signatarios.size() > 0) result.set("signatarios", signatarios);
+            
+        } catch (Exception e) {
+            LOGGER.fine("Falha ao parsear fragmento de propriedades: " + e.getMessage());
+        }
+        return result;
     }
 
     private static ObjectNode parseListaPropriedadesExtras(String dadosExtras) {
@@ -583,63 +647,64 @@ public class SeloJsonSanitizerNotas {
     }
 
     private static ArrayNode extrairSignatarios(ObjectNode seloObj) {
-        String doc;
-        int i;
         ArrayNode signatarios = M.createArrayNode();
-        HashSet<String> seen = new HashSet<String>();
+        HashSet<String> seen = new HashSet<>();
+        
+        // --- FONTE 1: POOL UNIFICADO (MAIS CONFIÁVEL) ---
+        if (seloObj.has("_pool_propriedades")) {
+            ObjectNode pool = (ObjectNode) seloObj.get("_pool_propriedades");
+            if (pool.has("signatarios") && pool.get("signatarios").isArray()) {
+                for (JsonNode s : pool.get("signatarios")) {
+                    if (s.isObject() && s.has("documentoNumero")) {
+                        String doc = s.get("documentoNumero").asText().replaceAll("[^0-9]", "");
+                        if (!doc.isEmpty() && !seen.contains(doc)) {
+                            seen.add(doc);
+                            signatarios.add(s);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // --- FONTE 2: PROPRIEDADES LEGADAS NO JSON ---
         if (seloObj.has("propriedades") && seloObj.get("propriedades").isObject()) {
             ObjectNode props = (ObjectNode)seloObj.get("propriedades");
             if (props.has("signatarios") && props.get("signatarios").isArray()) {
-                ArrayNode existentes = (ArrayNode)props.get("signatarios");
-                for (i = 0; i < existentes.size(); ++i) {
-                    JsonNode item = existentes.get(i);
-                    if (!item.isObject()) continue;
-                    signatarios.add(item);
-                    if (!item.has("documentoNumero")) continue;
-                    doc = item.get("documentoNumero").asText();
-                    seen.add(doc.replaceAll("[^0-9]", ""));
+                for (JsonNode s : props.get("signatarios")) {
+                    if (s.isObject() && s.has("documentoNumero")) {
+                        String doc = s.get("documentoNumero").asText().replaceAll("[^0-9]", "");
+                        if (!doc.isEmpty() && !seen.contains(doc)) {
+                            seen.add(doc);
+                            signatarios.add(s);
+                        }
+                    }
                 }
             }
+            // Envolvidos flat (Modelo 2)
             if (props.has("envolvidos") && props.get("envolvidos").isObject()) {
-                String key;
-                ObjectNode envolvidos = (ObjectNode)props.get("envolvidos");
-                String nomeRazao = null;
-                String cpfCnpj = null;
-                if (envolvidos.has("nome_razao") && !envolvidos.get("nome_razao").isNull()) {
-                    nomeRazao = envolvidos.get("nome_razao").asText();
-                }
-                if (envolvidos.has("CPF_CNPJ") && !envolvidos.get("CPF_CNPJ").isNull()) {
-                    cpfCnpj = envolvidos.get("CPF_CNPJ").asText();
-                }
-                if (!(nomeRazao == null || nomeRazao.isEmpty() || cpfCnpj == null || cpfCnpj.isEmpty() || seen.contains(key = cpfCnpj.replaceAll("[^0-9]", "")))) {
-                    seen.add(key);
-                    ObjectNode sign = M.createObjectNode();
-                    sign.put("nomeRazao", nomeRazao);
-                    sign.put("documentoTipo", SeloJsonSanitizerNotas.detectarTipoDocumento(cpfCnpj));
-                    sign.put("documentoNumero", cpfCnpj);
-                    signatarios.add((JsonNode)sign);
+                ObjectNode env = (ObjectNode)props.get("envolvidos");
+                String nome = env.has("nome_razao") ? env.get("nome_razao").asText() : (env.has("nome") ? env.get("nome").asText() : null);
+                String docX = env.has("CPF_CNPJ") ? env.get("CPF_CNPJ").asText() : (env.has("documento") ? env.get("documento").asText() : null);
+                if (nome != null && docX != null) {
+                    String normDoc = docX.replaceAll("[^0-9]", "");
+                    if (!normDoc.isEmpty() && !seen.contains(normDoc)) {
+                        seen.add(normDoc);
+                        ObjectNode s = M.createObjectNode();
+                        s.put("nomeRazao", nome);
+                        s.put("documentoTipo", detectarTipoDocumento(docX));
+                        s.put("documentoNumero", docX);
+                        signatarios.add(s);
+                    }
                 }
             }
         }
-        if (signatarios.size() == 0 && seloObj.has("ListaPropriedades") && seloObj.get("ListaPropriedades").isArray()) {
-            signatarios = SeloJsonSanitizerNotas.processarListaPropriedadesParaSignatarios((ArrayNode)seloObj.get("ListaPropriedades"), seen);
+        
+        // --- FONTE 3: LISTAS V10 ---
+        if (seloObj.has("ListaPropriedades") && seloObj.get("ListaPropriedades").isArray()) {
+            ArrayNode v10p = processarListaPropriedadesParaSignatarios((ArrayNode)seloObj.get("ListaPropriedades"), seen);
+            for (JsonNode s : v10p) signatarios.add(s);
         }
-        if (seloObj.has("ListaPropriedadesExtras")) {
-            JsonNode listaExtras = seloObj.get("ListaPropriedadesExtras");
-            ArrayNode extrasProcessado = SeloJsonSanitizerNotas.processarListaPropriedadesExtras(listaExtras);
-            for (i = 0; i < extrasProcessado.size(); ++i) {
-                JsonNode sign = extrasProcessado.get(i);
-                if (!sign.isObject()) continue;
-                if (sign.has("documentoNumero")) {
-                    doc = sign.get("documentoNumero").asText().replaceAll("[^0-9]", "");
-                    if (seen.contains(doc)) continue;
-                    seen.add(doc);
-                    signatarios.add(sign);
-                    continue;
-                }
-                signatarios.add(sign);
-            }
-        }
+        
         return signatarios;
     }
 
@@ -899,127 +964,88 @@ public class SeloJsonSanitizerNotas {
     }
 
     private static String sanitizarComDados(String jsonOriginal, Map<String, Object> dadosComplementares, String dtVersaoFunarpen) throws Exception {
-        int nextObj;
-        String codtabelPar;
-        String codigoPar;
-        String ambientePar;
         if (jsonOriginal == null || jsonOriginal.trim().isEmpty()) {
-            throw new Exception("JSON original est\u00e1 vazio");
+            throw new Exception("JSON original está vazio");
         }
-        String cleanedJson = jsonOriginal.trim();
-        int firstBrace = cleanedJson.indexOf("{");
-        int lastBrace = cleanedJson.lastIndexOf("}");
-        if (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace) {
-            cleanedJson = cleanedJson.substring(firstBrace, lastBrace + 1);
+
+        String raw = jsonOriginal.trim();
+        if (raw.startsWith("(String)")) raw = raw.substring(8).trim();
+        // Remove aspas envoltas em toda a string se for o caso
+        if (raw.startsWith("\"") && raw.endsWith("\"") && raw.length() > 2) {
+            raw = raw.substring(1, raw.length() - 1).replace("\\\"", "\"");
         }
-        boolean isV10 = cleanedJson.contains("\"versao\":\"11\"") || cleanedJson.contains("\"versao\": \"11\"") || cleanedJson.contains("\"versao\":\"10\"") || cleanedJson.contains("\"versao\": \"10\"") || cleanedJson.contains("\"versao\":11") || cleanedJson.contains("\"versao\": 11") || cleanedJson.contains("\"versao\":10") || cleanedJson.contains("\"versao\": 10");
-        boolean hasSeloObject = cleanedJson.contains("\"selo\":{");
-        if (isV10 && !hasSeloObject) {
-            LOGGER.info("[SeloJsonSanitizerNotas] Convertendo V10 para V11: " + (cleanedJson.length() > 100 ? cleanedJson.substring(0, 100) : cleanedJson));
-            cleanedJson = SeloJsonSanitizerNotas.converterV10ParaV11(cleanedJson, dadosComplementares);
-        }
-        if ((ambientePar = (String)dadosComplementares.get("AMBIENTE_PAR")) == null || ambientePar.isEmpty()) {
-            ambientePar = "P";
-        }
-        if ("P".equalsIgnoreCase(ambientePar)) {
-            ambientePar = "prod";
-        } else if ("H".equalsIgnoreCase(ambientePar)) {
-            ambientePar = "homolog";
-        } else if ("D".equalsIgnoreCase(ambientePar) || "DEV".equalsIgnoreCase(ambientePar)) {
-            ambientePar = "dev";
-        }
-        String docPar = (String)dadosComplementares.get("DOC_PAR");
-        if (docPar == null) {
-            docPar = "";
-        }
-        if ((codigoPar = (String)dadosComplementares.get("CODIGO_PAR")) == null || codigoPar.isEmpty()) {
-            codigoPar = "1";
-        }
-        if ((codtabelPar = (String)dadosComplementares.get("CODTABEL_PAR")) == null || codtabelPar.isEmpty()) {
-            codtabelPar = "";
-        }
-        String codigoEmpresa = codigoPar;
-        cleanedJson = cleanedJson.replace("\"|ambiente|\"", "\"" + ambientePar + "\"");
-        cleanedJson = cleanedJson.replace("|ambiente|", "\"" + ambientePar + "\"");
-        cleanedJson = cleanedJson.replace("\"|documentoResponsavel|\"", "\"" + docPar + "\"");
-        cleanedJson = cleanedJson.replace("|documentoResponsavel|", "\"" + docPar + "\"");
-        cleanedJson = cleanedJson.replace("\"|codigoEmpresa|\"", "\"" + codigoEmpresa + "\"");
-        cleanedJson = cleanedJson.replace("|codigoEmpresa|", "\"" + codigoEmpresa + "\"");
-        cleanedJson = cleanedJson.replace("\"|codoficio|\"", "\"" + codtabelPar + "\"");
-        cleanedJson = cleanedJson.replace("|codoficio|", "\"" + codtabelPar + "\"");
-        cleanedJson = cleanedJson.replace(": codoficio", ": \"" + codtabelPar + "\"");
-        cleanedJson = cleanedJson.replace(":codoficio", ": \"" + codtabelPar + "\"");
-        cleanedJson = cleanedJson.replace("...", "").replace("..", "").replace("|", "").replace("\n", " ").replace("\r", " ").replace("\t", " ");
-        cleanedJson = cleanedJson.replace(",{", "}{");
-        int secondObject = cleanedJson.indexOf("}{");
-        String dadosExtras = null;
-        if (secondObject != -1) {
-            dadosExtras = cleanedJson.substring(secondObject + 1).trim();
-            cleanedJson = cleanedJson.substring(0, secondObject + 1);
-        }
-        while (cleanedJson.lastIndexOf("}{") > cleanedJson.lastIndexOf("}") && (nextObj = cleanedJson.indexOf("}{", cleanedJson.lastIndexOf("}") + 1)) != -1) {
-            dadosExtras = (dadosExtras != null ? dadosExtras + "," : "") + cleanedJson.substring(nextObj + 1).trim();
-            cleanedJson = cleanedJson.substring(0, nextObj + 1);
-        }
-        if (dadosExtras != null && !dadosExtras.isEmpty() && dadosExtras.contains("NomePropriedade")) {
-            if (dadosExtras.startsWith("}")) {
-                dadosExtras = dadosExtras.substring(1);
+        
+        // --- DETECÇÃO DE MODELO E NORMALIZAÇÃO ---
+        // Se começa com wrapper mas tem lixo no final ou é flat, normalizamos
+        boolean isV10 = raw.contains("\"numeroTipoAto\"") || raw.contains("\"ListaVerbas\"");
+        boolean hasSelo = raw.contains("\"selo\":");
+        
+        String jsonSanitizado;
+        if (isV10 && !hasSelo) {
+            jsonSanitizado = converterV10ParaV11(raw, dadosComplementares);
+        } else {
+            // Se for Modelo 1/3 (Wrapper + Lixo concatenado), extraímos o principal e o pool
+            List<String> fragmentos = splitRootObjects(raw);
+            if (fragmentos.isEmpty()) throw new Exception("Não foi possível extrair JSON válido");
+            
+            String principal = fragmentos.get(0);
+            JsonNode root = lerJsonLeniente(principal);
+            if (root == null || !root.isObject()) {
+                throw new Exception("Não foi possível parsear objeto principal");
             }
-            if (dadosExtras.endsWith("{")) {
-                dadosExtras = dadosExtras.substring(0, dadosExtras.length() - 1);
-            }
-            if ((dadosExtras = dadosExtras.trim()).endsWith("}")) {
-                dadosExtras = dadosExtras.substring(0, dadosExtras.length() - 1);
-            }
-            String[] objetosExtras = dadosExtras.split("\\}\\{");
-            StringBuilder arrayExtras = new StringBuilder();
-            for (int i = 0; i < objetosExtras.length; ++i) {
-                String obj = objetosExtras[i];
-                if (i > 0) {
-                    obj = "{" + obj;
+            ObjectNode obj = (ObjectNode) root;
+            
+            // Pool de propriedades de todas as fontes
+            ObjectNode pool = M.createObjectNode();
+            
+            // Fonte 1: Propriedades já existentes no JSON (Modelo 2)
+            if (obj.has("selo") && obj.get("selo").isObject()) {
+                ObjectNode s = (ObjectNode) obj.get("selo");
+                if (s.has("propriedades") && s.get("propriedades").isObject()) {
+                    consolidarObjectNodeNoPool((ObjectNode)s.get("propriedades"), pool);
                 }
-                if (i < objetosExtras.length - 1) {
-                    obj = obj + "}";
-                }
-                if (arrayExtras.length() > 0) {
-                    arrayExtras.append(",");
-                }
-                arrayExtras.append(obj);
             }
-            cleanedJson = "[" + cleanedJson + "," + arrayExtras.toString() + "]";
+            
+            // Fonte 2: Fragmentos extras concatenados (Modelo 1/3/5)
+            for (int i = 1; i < fragmentos.size(); i++) {
+                ObjectNode extra = parseQualquerFragmentoProps(fragmentos.get(i));
+                if (extra != null) consolidarObjectNodeNoPool(extra, pool);
+            }
+            
+            // Fonte 3: ListaPropriedadesExtras dentro do selo (se existir)
+            if (obj.has("selo") && obj.get("selo").has("ListaPropriedadesExtras")) {
+                ObjectNode extraInterno = parseQualquerFragmentoProps(obj.get("selo").get("ListaPropriedadesExtras").toString());
+                if (extraInterno != null) consolidarObjectNodeNoPool(extraInterno, pool);
+            }
+
+            // Injeta o pool no objeto selo para processamento posterior por tipo de ato
+            if (obj.has("selo") && obj.get("selo").isObject()) {
+                ((ObjectNode)obj.get("selo")).set("_pool_propriedades", pool);
+            }
+
+            jsonSanitizado = M.writeValueAsString(obj);
         }
-        try {
-            ObjectNode seloObj;
-            ObjectNode rootNode;
-            Gson gson = new GsonBuilder().setLenient().create();
-            JsonElement root = (JsonElement)gson.fromJson(cleanedJson, JsonElement.class);
-            JsonNode listaPropExtraNode = null;
-            JsonElement rootElement = root;
-            if (root.isJsonArray() && root.getAsJsonArray().size() > 0) {
-                JsonElement segundoElem;
-                JsonArray rootArray = root.getAsJsonArray();
-                if (rootArray.size() > 1 && (segundoElem = rootArray.get(1)).isJsonObject()) {
-                    listaPropExtraNode = M.readTree(gson.toJson(segundoElem));
-                }
-                rootElement = rootArray.get(0);
-            }
-            JsonNode jacksonNode = M.readTree(gson.toJson(rootElement));
-            jacksonNode = SeloJsonSanitizerNotas.corrigirDatasNoJson(jacksonNode);
-            jacksonNode = SeloJsonSanitizerNotas.corrigirPlaceholders(jacksonNode);
-            jacksonNode = SeloJsonSanitizerNotas.corrigirErrosDigitacao(jacksonNode);
-            jacksonNode = SeloJsonSanitizerNotas.converterListaVerbasParaVerbas(jacksonNode);
-            jacksonNode = SeloJsonSanitizerNotas.converterListaPropriedades(jacksonNode);
-            jacksonNode = SeloJsonSanitizerNotas.corrigirSeloRetificado(jacksonNode);
-            if (listaPropExtraNode != null && jacksonNode.isObject() && (rootNode = (ObjectNode)jacksonNode).has("selo") && rootNode.get("selo").isObject() && !(seloObj = (ObjectNode)rootNode.get("selo")).has("ListaPropriedadesExtras")) {
-                seloObj.set("ListaPropriedadesExtras", listaPropExtraNode);
-            }
-            String registro = (String)dadosComplementares.get("REGISTRO");
-            jacksonNode = SeloJsonSanitizerNotas.corrigirComDadosDoBanco(jacksonNode, dadosComplementares, dtVersaoFunarpen, registro);
-            return M.writeValueAsString((Object)jacksonNode);
-        }
-        catch (Exception e) {
-            System.err.println("!!! ERRO Jackson no JSON (length=" + cleanedJson.length() + "): \n" + (cleanedJson.length() > 5000 ? cleanedJson.substring(0, 5000) + "..." : cleanedJson));
-            throw e;
+
+        // --- LIMPEZA E INJEÇÃO DE PARÂMETROS ---
+        JsonNode node = M.readTree(jsonSanitizado);
+        node = corrigirComDadosDoBanco(node, dadosComplementares, dtVersaoFunarpen, (String)dadosComplementares.get("REGISTRO"));
+        
+        String finalOutput = M.writeValueAsString(node);
+        // Limpezas finais de placeholders e caracteres de controle que quebram a API
+        finalOutput = finalOutput.replace("|ambiente|", (String)dadosComplementares.getOrDefault("AMBIENTE_PAR", "prod"))
+                               .replace("|documentoResponsavel|", (String)dadosComplementares.getOrDefault("DOC_PAR", ""))
+                               .replace("|codoficio|", (String)dadosComplementares.getOrDefault("CODTABEL_PAR", ""))
+                               .replace("...", "").replace("|", "");
+                               
+        return finalOutput;
+    }
+
+    private static void consolidarObjectNodeNoPool(ObjectNode origem, ObjectNode pool) {
+        Iterator<Map.Entry<String, JsonNode>> fields = origem.fields();
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> entry = fields.next();
+            // Prioridade para o novo valor (conforme regra do usuário de fragmentos extras)
+            pool.set(entry.getKey(), entry.getValue());
         }
     }
 
@@ -1029,80 +1055,81 @@ public class SeloJsonSanitizerNotas {
     private static void processarTipo455(ObjectNode seloObj, ObjectNode rootObj, String docPar) {
         Connection conn = null;
         try {
-            String codigoPedido;
             conn = ConnectionFactory.getConnection();
-            String idap = seloObj.has("idap") ? seloObj.get("idap").asText() : null;
-            String[] solicitante = SeloJsonSanitizerNotas.buscarSolicitanteFinRecCab(idap, conn);
-            int tipo = 2;
-            if (seloObj.has("codigoTipoAto") && !seloObj.get("codigoTipoAto").isNull()) {
-                int codigoTipo = seloObj.get("codigoTipoAto").asInt();
-                if (codigoTipo == 403) {
-                    tipo = 1;
-                } else if (codigoTipo == 402) {
-                    tipo = 2;
-                } else if (codigoTipo == 404) {
-                    tipo = 3;
+            ObjectNode pool = seloObj.has("_pool_propriedades") ? (ObjectNode) seloObj.get("_pool_propriedades") : M.createObjectNode();
+            
+            // --- 1. Determina o Subtipo (Com Valor, Sem Valor ou Sinal Público) ---
+            int tipo = 2; // Default: Sem Valor
+            if (seloObj.has("codigoTipoAto")) {
+                int cod = seloObj.get("codigoTipoAto").asInt();
+                if (cod == 403) tipo = 1;
+                else if (cod == 404) tipo = 3;
+            }
+            
+            // --- 2. Busca Solicitante (Prioridade: Pool -> Banco) ---
+            String solNome = obterDoPool(pool, "solicitanteAto.nomeRazao", "solicitante.nome", "nomecli_rec");
+            String solDoc = obterDoPool(pool, "solicitanteAto.numeroDocumento", "solicitante.doc", "cpfcli_rec");
+            
+            if (solNome == null) {
+                String idap = seloObj.has("idap") ? seloObj.get("idap").asText() : null;
+                String[] dbSol = buscarSolicitanteFinRecCab(idap, conn);
+                if (dbSol != null) {
+                    solNome = dbSol[0];
+                    solDoc = dbSol[1];
                 }
             }
-            ArrayNode signatarios = SeloJsonSanitizerNotas.extrairSignatarios(seloObj);
-            ObjectNode propriedadesSanitizadas = M.createObjectNode();
-            propriedadesSanitizadas.put("tipo", tipo);
+            
             ObjectNode solicitanteAto = M.createObjectNode();
-            if (solicitante != null && solicitante[0] != null) {
-                solicitanteAto.put("nomeRazao", solicitante[0]);
-                if (solicitante[1] != null && !solicitante[1].isEmpty()) {
-                    solicitanteAto.put("tipoDocumento", SeloJsonSanitizerNotas.detectarTipoDocumento(solicitante[1]));
-                    solicitanteAto.put("numeroDocumento", solicitante[1]);
-                } else {
-                    solicitanteAto.put("tipoDocumento", 12);
-                    solicitanteAto.putNull("numeroDocumento");
-                }
-            } else {
-                solicitanteAto.putNull("nomeRazao");
-                solicitanteAto.put("tipoDocumento", 12);
-                solicitanteAto.putNull("numeroDocumento");
-            }
-            propriedadesSanitizadas.set("solicitanteAto", (JsonNode)solicitanteAto);
+            solicitanteAto.put("nomeRazao", solNome != null ? solNome : "");
+            solicitanteAto.put("documentoTipo", detectarTipoDocumento(solDoc));
+            solicitanteAto.put("numeroDocumento", solDoc != null ? solDoc : "");
+            solicitanteAto.put("endereco", (String)null);
+
+            // --- 3. Extrai Signatários ---
+            ArrayNode signatarios = extrairSignatarios(seloObj);
+            
+            // --- 4. Reconhecimento ---
             ObjectNode reconhecimento = M.createObjectNode();
-            reconhecimento.put("especie", 1);
+            reconhecimento.put("especie", 1); // 1 = Por Verdadeira (Manual v11.12)
             reconhecimento.putNull("quantidadePaginasAto");
             reconhecimento.put("quantidadePartesEnvolvidasAto", signatarios.size());
-            if (seloObj.has("dataAtoPraticado") && !seloObj.get("dataAtoPraticado").isNull()) {
-                reconhecimento.put("data", seloObj.get("dataAtoPraticado").asText());
-            } else if (seloObj.has("dataAto") && !seloObj.get("dataAto").isNull()) {
-                reconhecimento.put("data", seloObj.get("dataAto").asText());
-            }
+            
+            String dataAto = seloObj.has("dataAtoPraticado") ? seloObj.get("dataAtoPraticado").asText() : "";
+            reconhecimento.put("data", dataAto);
             reconhecimento.putNull("descricao");
-            propriedadesSanitizadas.set("reconhecimento", (JsonNode)reconhecimento);
-            propriedadesSanitizadas.set("signatarios", (JsonNode)signatarios);
-            if (docPar != null && !docPar.isEmpty()) {
-                rootObj.put("documentoResponsavel", docPar);
-            }
-            seloObj.put("codigoTipoAto", 455);
-            if (seloObj.has("codigoPedido") && !seloObj.get("codigoPedido").isNull() && (codigoPedido = seloObj.get("codigoPedido").asText()).contains(".")) {
-                String codigoCorreto = codigoPedido.replace(".", "");
-                try {
-                    seloObj.put("codigoPedido", Long.parseLong(codigoCorreto));
-                }
-                catch (NumberFormatException numberFormatException) {
-                    // empty catch block
-                }
-            }
-            seloObj.set("propriedades", (JsonNode)propriedadesSanitizadas);
-            LOGGER.info("[SeloJsonSanitizerNotas] TIPO 455 processado com sucesso. Solicitante: " + (solicitante != null ? solicitante[0] : "n\u00e3o encontrado") + ", Signat\u00e1rios: " + signatarios.size());
+
+            // --- 5. Monta Propriedades Finais ---
+            ObjectNode propsFinal = M.createObjectNode();
+            propsFinal.put("tipo", tipo);
+            propsFinal.set("solicitanteAto", solicitanteAto);
+            propsFinal.set("reconhecimento", reconhecimento);
+            propsFinal.set("signatarios", signatarios);
+            
+            seloObj.set("propriedades", propsFinal);
+            seloObj.put("codigoTipoAto", 455); // Força código Funarpen Notas
+
+            LOGGER.info("[SeloJsonSanitizerNotas] Tipo 455 processado. Solicitante: " + solNome + ", Signatários: " + signatarios.size());
+            
+        } catch (Exception e) {
+            LOGGER.severe("Erro processarTipo455: " + e.getMessage());
+        } finally {
+            if (conn != null) try { conn.close(); } catch (SQLException e) {}
         }
-        catch (Exception e) {
-            LOGGER.severe("[SeloJsonSanitizerNotas] Erro ao processar TIPO 455: " + e.getMessage());
-            e.printStackTrace();
-        }
-        finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                }
-                catch (SQLException sQLException) {}
+    }
+
+    private static String obterDoPool(ObjectNode pool, String... chaves) {
+        for (String c : chaves) {
+            // Busca exata
+            if (pool.has(c) && !pool.get(c).isNull()) return pool.get(c).asText();
+            
+            // Busca case-insensitive básica se necessário
+            Iterator<String> fields = pool.fieldNames();
+            while (fields.hasNext()) {
+                String f = fields.next();
+                if (f.equalsIgnoreCase(c) && !pool.get(f).isNull()) return pool.get(f).asText();
             }
         }
+        return null;
     }
 
     /*
@@ -1134,164 +1161,145 @@ public class SeloJsonSanitizerNotas {
     }
 
     private static JsonNode corrigirComDadosDoBanco(JsonNode root, Map<String, Object> dadosComplementares, String dtVersaoFunarpen, String registro) throws Exception {
-        String codOfAtual;
-        String codEmpAtual;
-        String docRespAtual;
-        String ambAtual;
-        if (!root.isObject()) {
-            return root;
-        }
+        if (root == null || !root.isObject()) return root;
         ObjectNode obj = (ObjectNode)root;
+
         String docPar = (String)dadosComplementares.get("DOC_PAR");
-        String ambientePar = (String)dadosComplementares.get("AMBIENTE_PAR");
         String codigoPar = (String)dadosComplementares.get("CODIGO_PAR");
         String codtabelPar = (String)dadosComplementares.get("CODTABEL_PAR");
-        if (ambientePar == null || ambientePar.isEmpty()) {
-            ambientePar = "P";
-        }
-        if ("P".equalsIgnoreCase(ambientePar)) {
-            ambientePar = "prod";
-        } else if ("H".equalsIgnoreCase(ambientePar)) {
-            ambientePar = "homolog";
-        } else if ("D".equalsIgnoreCase(ambientePar) || "DEV".equalsIgnoreCase(ambientePar)) {
-            ambientePar = "dev";
-        }
-        if (obj.has("ambiente") && ((ambAtual = obj.get("ambiente").asText()) == null || ambAtual.isEmpty() || ambAtual.contains("|") || ambAtual.equals("0") || ambAtual.equals("P"))) {
-            obj.put("ambiente", ambientePar);
-        }
-        if (obj.has("documentoResponsavel") && ((docRespAtual = obj.get("documentoResponsavel").asText()) == null || docRespAtual.isEmpty() || docRespAtual.contains("|") || docRespAtual.equals("0")) && docPar != null) {
+        String ambienteParRaw = (String)dadosComplementares.get("AMBIENTE_PAR");
+        String ambientePar = (ambienteParRaw == null || ambienteParRaw.isEmpty()) ? "prod" : ambienteParRaw;
+        
+        if ("P".equalsIgnoreCase(ambientePar)) ambientePar = "prod";
+        else if ("H".equalsIgnoreCase(ambientePar)) ambientePar = "homolog";
+        else if ("D".equalsIgnoreCase(ambientePar) || "DEV".equalsIgnoreCase(ambientePar)) ambientePar = "dev";
+
+        obj.put("ambiente", ambientePar);
+        
+        if (docPar != null && !docPar.isEmpty() && !docPar.equals("0")) {
             obj.put("documentoResponsavel", docPar);
         }
-        if (obj.has("codigoEmpresa") && ((codEmpAtual = obj.get("codigoEmpresa").asText()) == null || codEmpAtual.isEmpty() || codEmpAtual.contains("|") || codEmpAtual.equals("0") || codEmpAtual.equals("1")) && codigoPar != null && !codigoPar.isEmpty()) {
-            obj.put("codigoEmpresa", codigoPar);
-        }
-        if (obj.has("codigoOficio") && ((codOfAtual = obj.get("codigoOficio").asText()) == null || codOfAtual.isEmpty() || codOfAtual.contains("|") || codOfAtual.equals("0") || codOfAtual.equals("codoficio")) && codtabelPar != null && !codtabelPar.isEmpty()) {
-            try {
-                obj.put("codigoOficio", Integer.parseInt(codtabelPar));
-            }
-            catch (NumberFormatException e) {
-                obj.put("codigoOficio", codtabelPar);
+        
+        if (codigoPar != null && !codigoPar.isEmpty()) {
+            if (codigoPar.length() > 50 && codigoPar.contains(".")) {
+                obj.put("codigoEmpresa", "1"); 
+            } else {
+                obj.put("codigoEmpresa", codigoPar);
             }
         }
+        
+        if (codtabelPar != null && !codtabelPar.isEmpty()) {
+            obj.put("codigoOficio", codtabelPar);
+        }
+
         if (obj.has("selo") && obj.get("selo").isObject()) {
-            String dataSelo;
-            String dataAto;
-            String val;
             ObjectNode seloObj = (ObjectNode)obj.get("selo");
-            if (seloObj.has("documentoResponsavel") && ((val = seloObj.get("documentoResponsavel").asText()) == null || val.isEmpty() || val.contains("|") || val.equals("0")) && docPar != null) {
-                seloObj.put("documentoResponsavel", docPar);
-            }
+            
+            // --- 1. Normalização de Dados Básicos (codigoPedido, datas) ---
             if (seloObj.has("codigoPedido") && !seloObj.get("codigoPedido").isNull()) {
                 JsonNode cpNode = seloObj.get("codigoPedido");
                 if (cpNode.isNumber()) {
-                    double valDouble = cpNode.asDouble();
-                    long valLong = (long)valDouble;
-                    seloObj.put("codigoPedido", valLong);
+                    seloObj.put("codigoPedido", (long)cpNode.asDouble());
                 } else {
-                    String valStr = cpNode.asText();
-                    if (valStr.contains(".")) {
-                        String valInt = valStr.replace(".", "").replaceAll("[^0-9]", "");
-                        try {
-                            seloObj.put("codigoPedido", Long.parseLong(valInt));
-                        }
-                        catch (NumberFormatException numberFormatException) {
-                            // empty catch block
+                    String valStr = cpNode.asText().replaceAll("[^0-9]", "");
+                    if (!valStr.isEmpty()) try { seloObj.put("codigoPedido", Long.parseLong(valStr)); } catch (Exception e) {}
+                }
+            }
+            
+            if (seloObj.has("dataAtoPraticado") && !seloObj.get("dataAtoPraticado").isNull()) {
+                String dAt = seloObj.get("dataAtoPraticado").asText();
+                if (dAt.contains("|") || dAt.equalsIgnoreCase("dataato") || dAt.isEmpty()) {
+                    if (seloObj.has("dataSeloEmitido") && !seloObj.get("dataSeloEmitido").isNull()) {
+                        seloObj.set("dataAtoPraticado", seloObj.get("dataSeloEmitido"));
+                    }
+                }
+            }
+
+            // --- 2. Normalização de Verbas (Pre-processamento) ---
+            if (seloObj.has("verbas") && seloObj.get("verbas").isObject()) {
+                ObjectNode v = (ObjectNode)seloObj.get("verbas");
+                String[] camposVerbas = {"emolumentos", "funrejus", "iss", "fundep", "funarpen", "distribuidor", "vrcExt", "valorAdicional"};
+                for (String c : camposVerbas) {
+                    if (v.has(c) && v.get(c).isNumber()) {
+                        double dVal = v.get(c).asDouble();
+                        String sVal = v.get(c).asText();
+                        if (!sVal.contains(".") && dVal >= 10.0) {
+                            v.put(c, (double)Math.round(dVal) / 100.0);
                         }
                     }
                 }
             }
-            if (seloObj.has("dataAtoPraticado") && !seloObj.get("dataAtoPraticado").isNull() && ("dataato".equalsIgnoreCase(dataAto = seloObj.get("dataAtoPraticado").asText()) || dataAto.contains("|") || dataAto.isEmpty()) && seloObj.has("dataSeloEmitido") && !seloObj.get("dataSeloEmitido").isNull() && (dataSelo = seloObj.get("dataSeloEmitido").asText()) != null && !dataSelo.isEmpty() && !dataSelo.contains("|")) {
-                seloObj.put("dataAtoPraticado", dataSelo);
-            }
-            if (seloObj.has("verbas") && seloObj.get("verbas").isObject()) {
-                String[] camposVerbas;
-                ObjectNode verbas = (ObjectNode)seloObj.get("verbas");
-                for (String campo : camposVerbas = new String[]{"emolumentos", "funrejus", "iss", "fundep", "funarpen", "distribuidor", "vrcExt", "valorAdicional"}) {
-                    JsonNode vNode;
-                    if (!verbas.has(campo) || verbas.get(campo).isNull() || !(vNode = verbas.get(campo)).isNumber()) continue;
-                    double val2 = vNode.asDouble();
-                    String valStr = vNode.asText();
-                    if (valStr.contains(".") || !(val2 >= 10.0)) continue;
-                    double valDecimal = val2 / 100.0;
-                    valDecimal = (double)Math.round(valDecimal * 100.0) / 100.0;
-                    verbas.put(campo, valDecimal);
-                }
-            }
-            seloObj.remove("seloRetificado_original");
-            seloObj.remove("propriedades_sanitizadas");
-            seloObj.remove("codigoPedido_sanitizado");
+
+            // --- 3. Processamento Específico por Tipo de Ato ---
             int codigoTipoAtoOriginal = 0;
             if (obj.has("numeroTipoAto") && !obj.get("numeroTipoAto").isNull()) {
                 codigoTipoAtoOriginal = obj.get("numeroTipoAto").asInt();
             } else if (seloObj.has("codigoTipoAto") && !seloObj.get("codigoTipoAto").isNull()) {
                 codigoTipoAtoOriginal = seloObj.get("codigoTipoAto").asInt();
             }
-            if (codigoTipoAtoOriginal == 408) {
-                codigoTipoAtoOriginal = 459;
-            }
+            if (codigoTipoAtoOriginal == 408) codigoTipoAtoOriginal = 459;
+
             if (codigoTipoAtoOriginal > 0) {
                 switch (codigoTipoAtoOriginal) {
-                    case 401: 
-                    case 402: 
-                    case 403: 
-                    case 404: 
-                    case 455: {
-                        SeloJsonSanitizerNotas.processarTipo455(seloObj, obj, docPar);
+                    case 401: case 402: case 403: case 404: case 455:
+                        processarTipo455(seloObj, obj, docPar);
                         break;
-                    }
-                    case 408: 
-                    case 409: 
-                    case 411: 
-                    case 412: 
-                    case 413: 
-                    case 459: {
-                        SeloJsonSanitizerNotas.processarTipo459(seloObj, obj, docPar, registro);
+                    case 409: case 411: case 412: case 413: case 459:
+                        processarTipo459(seloObj, obj, docPar, registro);
                         break;
-                    }
-                    case 430: 
-                    case 433: 
-                    case 439: 
-                    case 443: 
-                    case 446: 
-                    case 450: {
-                        SeloJsonSanitizerNotas.processarTipo430(seloObj, obj);
+                    case 430: case 433: case 439: case 443: case 446: case 450:
+                        processarTipo430(seloObj, obj);
                         break;
-                    }
-                    case 452: {
-                        SeloJsonSanitizerNotas.processarTipo452(seloObj, obj, docPar);
+                    case 452:
+                        processarTipo452(seloObj, obj, docPar);
                         break;
-                    }
-                    case 453: {
-                        SeloJsonSanitizerNotas.processarTipo453(seloObj, obj);
+                    case 453:
+                        processarTipo453(seloObj, obj);
                         break;
-                    }
-                    case 432: 
-                    case 454: {
-                        SeloJsonSanitizerNotas.processarTipo454(seloObj, obj, docPar);
+                    case 432: case 454:
+                        String seloDigitalAtual = seloObj.has("seloDigital") ? seloObj.get("seloDigital").asText("") : "";
+                        processarTipo454(seloObj, obj, docPar, seloDigitalAtual);
                         break;
-                    }
-                    case 456: {
-                        SeloJsonSanitizerNotas.processarTipo456(seloObj, obj);
+                    case 456:
+                        processarTipo456(seloObj, obj);
                         break;
-                    }
-                    case 407: {
-                        SeloJsonSanitizerNotas.processarTipo407(seloObj, obj, docPar);
+                    case 407:
+                        processarTipo407(seloObj, obj, docPar);
                         break;
-                    }
-                    case 416: {
-                        SeloJsonSanitizerNotas.processarTipo416(seloObj, obj);
+                    case 416:
+                        processarTipo416(seloObj, obj);
                         break;
-                    }
-                    case 457: {
-                        SeloJsonSanitizerNotas.processarTipo457(seloObj, obj);
+                    case 457:
+                        processarTipo457(seloObj, obj);
                         break;
-                    }
-                    case 458: {
-                        SeloJsonSanitizerNotas.processarTipo458(seloObj, obj);
+                    case 458:
+                        processarTipo458(seloObj, obj);
                         break;
-                    }
-                    default: {
-                        SeloJsonSanitizerNotas.corrigirIdapNotas(seloObj);
+                    default:
+                        corrigirIdapNotas(seloObj);
+                }
+            }
+
+            // --- 4. Limpeza Final Global e Normalização Pós-processamento ---
+            seloObj.remove("ListaPropriedades");
+            seloObj.remove("ListaVerbas");
+            seloObj.remove("ListaPropriedadesExtras");
+            seloObj.remove("verbas_sanitizadas");
+            seloObj.remove("propriedades_sanitizadas");
+            seloObj.remove("codigoPedido_sanitizado");
+            seloObj.remove("seloRetificado_original");
+            seloObj.remove("_pool_propriedades");
+
+            if (seloObj.has("verbas") && seloObj.get("verbas").isObject()) {
+                ObjectNode v = (ObjectNode)seloObj.get("verbas");
+                String[] champs = {"emolumentos", "funrejus", "iss", "fundep", "funarpen", "distribuidor", "vrcExt", "valorAdicional"};
+                for (String c : champs) {
+                    if (v.has(c) && v.get(c).isNumber()) {
+                        double dVal = v.get(c).asDouble();
+                        String sVal = v.get(c).asText();
+                        if (!sVal.contains(".") && dVal >= 10.0) {
+                            v.put(c, (double)Math.round(dVal) / 100.0);
+                        }
                     }
                 }
             }
@@ -1335,125 +1343,126 @@ public class SeloJsonSanitizerNotas {
 
     private static void processarTipo430(ObjectNode seloObj, ObjectNode rootObj) {
         try {
-            String idap = seloObj.has("idap") ? seloObj.get("idap").asText() : "";
-            String livro = "0";
-            String folha = "0";
-            if (idap.length() >= 24) {
-                String parte = idap.substring(12, 20);
-                livro = parte.substring(0, 4);
-                if ((livro = livro.replaceFirst("^0+(?=\\d)", "")).isEmpty()) {
-                    livro = "0";
-                }
-                parte = idap.substring(20, 24);
-                folha = parte.substring(0, 4);
-                if ((folha = folha.replaceFirst("^0+(?=\\d)", "")).isEmpty()) {
-                    folha = "0";
+            ObjectNode pool = seloObj.has("_pool_propriedades") ? (ObjectNode) seloObj.get("_pool_propriedades") : M.createObjectNode();
+            
+            // Prioridade 1: Dados do Pool (Dados extras ou V10 mapeado)
+            String livro = obterDoPool(pool, "traslado.livro", "livro_ato", "livro");
+            String folha = obterDoPool(pool, "traslado.folha", "folha_ato", "folha");
+            String termo = obterDoPool(pool, "traslado.termo", "ato_ato", "termo");
+            
+            // Prioridade 2: Fallback parse IDAP
+            if (livro == null || folha == null) {
+                String idap = seloObj.has("idap") ? seloObj.get("idap").asText() : "";
+                if (idap.length() >= 24) {
+                    livro = idap.substring(12, 20).replaceFirst("^0+(?=\\d)", "");
+                    folha = idap.substring(20, 24).replaceFirst("^0+(?=\\d)", "");
                 }
             }
+
             ObjectNode prop = M.createObjectNode();
             ObjectNode traslado = M.createObjectNode();
-            traslado.putPOJO("livro", (Object)livro);
-            traslado.putPOJO("folha", (Object)folha);
-            traslado.putPOJO("termo", null);
-            prop.set("traslado", (JsonNode)traslado);
-            seloObj.set("propriedades", (JsonNode)prop);
-            SeloJsonSanitizerNotas.corrigirIdapNotas(seloObj);
-        }
-        catch (Exception e) {
-            LOGGER.warning("Erro 430: " + e.getMessage());
+            traslado.put("livro", livro != null ? livro : "0");
+            traslado.put("folha", folha != null ? folha : "0");
+            traslado.putNull("termo");
+            
+            prop.set("traslado", traslado);
+            seloObj.set("propriedades", prop);
+            corrigirIdapNotas(seloObj);
+            
+        } catch (Exception e) {
+            LOGGER.warning("Erro processarTipo430 (Traslado): " + e.getMessage());
         }
     }
 
-    /*
-     * WARNING - Removed try catching itself - possible behaviour change.
-     */
     private static void processarTipo459(ObjectNode seloObj, ObjectNode rootObj, String docPar, String registro) {
         Connection conn = null;
         try {
             conn = ConnectionFactory.getConnection();
+            ObjectNode pool = seloObj.has("_pool_propriedades") ? (ObjectNode) seloObj.get("_pool_propriedades") : M.createObjectNode();
             String selo = seloObj.has("seloDigital") ? seloObj.get("seloDigital").asText() : "";
-            Map<String, Object> dadosAto = SeloJsonSanitizerNotas.buscarDadosAtoPorSelo(selo, conn);
-            List<Map<String, Object>> imoveis = SeloJsonSanitizerNotas.buscarImoveisAto(selo, conn);
-            List<Map<String, Object>> partes = SeloJsonSanitizerNotas.buscarPartesNot1PorRegistro(registro, conn);
-            ObjectNode prop = M.createObjectNode();
-            ObjectNode escritura = M.createObjectNode();
-            escritura.put("livro", (String)dadosAto.getOrDefault("LIVRO_ATO", "0"));
-            escritura.put("folha", (String)dadosAto.getOrDefault("FOLHA_ATO", "0"));
-            escritura.put("termo", (String)dadosAto.getOrDefault("ATO_ATO", "1"));
-            escritura.put("data", (String)dadosAto.getOrDefault("DATA_ATO", ""));
-            prop.set("escritura", (JsonNode)escritura);
-            ArrayNode bens = M.createArrayNode();
-            for (Map<String, Object> imo : imoveis) {
-                ObjectNode b = M.createObjectNode();
-                b.put("descricao", (String)imo.getOrDefault("DESCRICAO_IMO", ""));
-                b.put("matricula", (String)imo.getOrDefault("MATRICULA_IMO", ""));
-                b.put("valorAvaliacao", (Double)imo.getOrDefault("VALORITBI_IMO", 0.0));
-                bens.add((JsonNode)b);
+            
+            // --- 1. Dados da Escritura (Pool -> Banco) ---
+            String livro = obterDoPool(pool, "escritura.livro", "livro_ato", "livro");
+            String folha = obterDoPool(pool, "escritura.folha", "folha_ato", "folha");
+            String termo = obterDoPool(pool, "escritura.termo", "ato_ato", "termo", "ato");
+            String data = obterDoPool(pool, "escritura.data", "data_ato", "data");
+            
+            if (livro == null || data == null) {
+                Map<String, Object> dbAto = buscarDadosAtoPorSelo(selo, conn);
+                if (!dbAto.isEmpty()) {
+                    if (livro == null) livro = (String)dbAto.get("LIVRO_ATO");
+                    if (folha == null) folha = (String)dbAto.get("FOLHA_ATO");
+                    if (termo == null) termo = (String)dbAto.get("ATO_ATO");
+                    if (data == null) data = (String)dbAto.get("DATA_ATO");
+                }
             }
-            prop.set("bens", (JsonNode)bens);
+            
+            ObjectNode escritura = M.createObjectNode();
+            escritura.put("livro", livro != null ? livro : "0");
+            escritura.put("folha", folha != null ? folha : "0");
+            escritura.put("termo", termo != null ? termo : "1");
+            escritura.put("data", data != null ? data : "");
+            
+            ObjectNode props = M.createObjectNode();
+            props.set("escritura", escritura);
+
+            // --- 2. Bens/Imóveis (Pool -> Banco) ---
+            ArrayNode bens = M.createArrayNode();
+            if (pool.has("bens") && pool.get("bens").isArray()) {
+                bens = (ArrayNode) pool.get("bens");
+            } else {
+                List<Map<String, Object>> dbImoveis = buscarImoveisAto(selo, conn);
+                for (Map<String, Object> imo : dbImoveis) {
+                    ObjectNode b = M.createObjectNode();
+                    b.put("descricao", (String)imo.getOrDefault("DESCRICAO_IMO", ""));
+                    b.put("matricula", (String)imo.getOrDefault("MATRICULA_IMO", ""));
+                    b.put("valorAvaliacao", (Double)imo.getOrDefault("VALORITBI_IMO", 0.0));
+                    bens.add(b);
+                }
+            }
+            props.set("bens", bens);
+
+            // --- 3. Outorgantes / Outorgados ---
             ArrayNode outorgantes = M.createArrayNode();
             ArrayNode outorgados = M.createArrayNode();
-            for (Map<String, Object> p : partes) {
-                ObjectNode pn = M.createObjectNode();
-                pn.put("nomeRazao", (String)p.getOrDefault("NOME_NOT1", ""));
-                pn.put("numeroDocumento", (String)p.getOrDefault("CPF_NOT1", ""));
-                String tipoPessoa = (String)p.getOrDefault("TIPOPESSOA_NOT1", "");
-                if ("F".equalsIgnoreCase(tipoPessoa)) {
-                    pn.put("documentoTipo", 1);
-                } else if ("J".equalsIgnoreCase(tipoPessoa)) {
-                    pn.put("documentoTipo", 2);
-                } else {
-                    pn.put("documentoTipo", SeloJsonSanitizerNotas.detectarTipoDocumento((String)p.getOrDefault("CPF_NOT1", "")));
-                }
-                String qualif = String.valueOf(p.getOrDefault("QUALIF_NOT1", ""));
-                if ("2".equals(qualif)) {
-                    outorgados.add((JsonNode)pn);
-                    continue;
-                }
-                outorgantes.add((JsonNode)pn);
+            
+            // Primeiro checa se o pool já tem os arrays organizados
+            if (pool.has("outorgantes") && pool.get("outorgantes").isArray()) {
+                outorgantes = (ArrayNode) pool.get("outorgantes");
             }
-            prop.set("outorgantes", (JsonNode)outorgantes);
-            prop.set("outorgados", (JsonNode)outorgados);
-            if (seloObj != null) {
-                seloObj.put("codigoTipoAto", 459);
-                seloObj.set("propriedades", (JsonNode)prop);
-                SeloJsonSanitizerNotas.corrigirIdapNotas(seloObj);
+            if (pool.has("outorgados") && pool.get("outorgados").isArray()) {
+                outorgados = (ArrayNode) pool.get("outorgados");
             }
-        }
-        catch (Exception e) {
-            LOGGER.warning("Erro 459: " + e.getMessage());
-        }
-        finally {
-            try {
-                if (conn != null) {
-                    conn.close();
+            
+            // Caso contrário, tenta extrair de 'signatarios' no pool ou do banco
+            if (outorgantes.size() == 0 && outorgados.size() == 0) {
+                List<Map<String, Object>> dbPartes = buscarPartesNot1PorRegistro(registro, conn);
+                for (Map<String, Object> p : dbPartes) {
+                    ObjectNode pn = M.createObjectNode();
+                    String nome = (String)p.getOrDefault("NOME_NOT1", "");
+                    String numDoc = (String)p.getOrDefault("CPF_NOT1", "");
+                    pn.put("nomeRazao", nome);
+                    pn.put("documentoNumero", numDoc);
+                    pn.put("documentoTipo", detectarTipoDocumento(numDoc));
+                    
+                    String qualif = String.valueOf(p.getOrDefault("QUALIF_NOT1", ""));
+                    if ("2".equals(qualif)) outorgados.add(pn);
+                    else outorgantes.add(pn);
                 }
             }
-            catch (SQLException sQLException) {}
-        }
-    }
+            
+            props.set("outorgantes", outorgantes);
+            props.set("outorgados", outorgados);
+            
+            seloObj.set("propriedades", props);
+            seloObj.put("codigoTipoAto", 459);
+            corrigirIdapNotas(seloObj);
 
-    private static List<Map<String, Object>> buscarPartesNot1PorRegistro(String registro, Connection conn) throws SQLException {
-        ArrayList<Map<String, Object>> res = new ArrayList<Map<String, Object>>();
-        if (registro == null || registro.isEmpty()) {
-            return res;
+        } catch (Exception e) {
+            LOGGER.warning("Erro processarTipo459: " + e.getMessage());
+        } finally {
+            if (conn != null) try { conn.close(); } catch (SQLException e) {}
         }
-        String sql = "SELECT n.PROTATO_NOT1, n.QUALIF_NOT1, n.NOME_NOT1, n.TIPOPESSOA_NOT1, n.CPF_NOT1 FROM not_1 n WHERE n.PROTATO_NOT1 = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql);){
-            ps.setString(1, registro);
-            try (ResultSet rs = ps.executeQuery();){
-                while (rs.next()) {
-                    HashMap<String, Object> m = new HashMap<String, Object>();
-                    m.put("PROTATO_NOT1", rs.getString("PROTATO_NOT1"));
-                    m.put("QUALIF_NOT1", rs.getInt("QUALIF_NOT1"));
-                    m.put("NOME_NOT1", rs.getString("NOME_NOT1"));
-                    m.put("TIPOPESSOA_NOT1", rs.getString("TIPOPESSOA_NOT1"));
-                    m.put("CPF_NOT1", rs.getString("CPF_NOT1"));
-                    res.add(m);
-                }
-            }
-        }
-        return res;
     }
 
     private static boolean processarListaPropriedadesParaEscritura(ObjectNode seloObj, ObjectNode prop) {
@@ -1639,61 +1648,103 @@ public class SeloJsonSanitizerNotas {
         }
     }
 
-    private static void processarTipo454(ObjectNode seloObj, ObjectNode rootObj, String docPar) {
+    private static void processarTipo454(ObjectNode seloObj, ObjectNode rootObj, String docPar, String seloDigital) {
         ObjectNode prop = M.createObjectNode();
+        String nomeRazaoEnvolvido = null;
+        String cpfCnpjEnvolvido = null;
+        String dataRegistro = null;
+        ArrayNode envolvidos = M.createArrayNode();
+        
+        // --- Extrair dados de ListaPropriedades ---
         if (seloObj.has("ListaPropriedades") && seloObj.get("ListaPropriedades").isArray()) {
-            ArrayNode listaProp = (ArrayNode)seloObj.get("ListaPropriedades");
-            String nomeRazao = null;
-            String cpfCnpj = null;
-            String dataRegistro = null;
-            for (int i = 0; i < listaProp.size(); ++i) {
-                String valorProp;
+            ArrayNode listaProp = (ArrayNode) seloObj.get("ListaPropriedades");
+            ObjectNode envolvidoAtual = null;
+            for (int i = 0; i < listaProp.size(); i++) {
                 JsonNode item = listaProp.get(i);
                 if (item == null || !item.isObject()) continue;
-                ObjectNode it = (ObjectNode)item;
-                String nomeProp = it.has("NomePropriedade") ? it.get("NomePropriedade").asText(null) : null;
-                String string = valorProp = it.has("ValorPropriedade") && !it.get("ValorPropriedade").isNull() ? it.get("ValorPropriedade").asText(null) : null;
-                if (nomeProp == null || valorProp == null) continue;
+                String nomeProp = item.has("NomePropriedade") ? item.get("NomePropriedade").asText("") : "";
+                String valorProp = item.has("ValorPropriedade") ? item.get("ValorPropriedade").asText("") : "";
                 String npLower = nomeProp.toLowerCase();
                 if (npLower.contains("nome_razao")) {
-                    nomeRazao = valorProp;
-                    continue;
+                    if (envolvidoAtual != null && envolvidoAtual.has("nomeRazao")) {
+                        envolvidos.add(envolvidoAtual);
+                    }
+                    envolvidoAtual = M.createObjectNode();
+                    envolvidoAtual.put("nomeRazao", valorProp);
+                    if (nomeRazaoEnvolvido == null) nomeRazaoEnvolvido = valorProp;
+                } else if ((npLower.contains("cpf") || npLower.contains("cnpj")) && envolvidoAtual != null) {
+                    envolvidoAtual.put("numeroDocumento", valorProp);
+                    envolvidoAtual.put("tipoDocumento", SeloJsonSanitizerNotas.detectarTipoDocumento(valorProp));
+                    if (cpfCnpjEnvolvido == null) cpfCnpjEnvolvido = valorProp;
+                } else if (npLower.contains("data_registro")) {
+                    dataRegistro = valorProp;
                 }
-                if (npLower.contains("cpf") || npLower.contains("cnpj")) {
-                    cpfCnpj = valorProp;
-                    continue;
-                }
-                if (!npLower.contains("data_registro")) continue;
-                dataRegistro = valorProp;
             }
-            if (nomeRazao != null && !nomeRazao.isEmpty()) {
-                ObjectNode solicitante = M.createObjectNode();
-                solicitante.put("nomeRazao", nomeRazao);
-                solicitante.put("numeroDocumento", cpfCnpj != null ? cpfCnpj : "");
-                solicitante.put("tipoDocumento", SeloJsonSanitizerNotas.detectarTipoDocumento(cpfCnpj != null ? cpfCnpj : ""));
-                prop.set("solicitanteAto", (JsonNode)solicitante);
+            if (envolvidoAtual != null && envolvidoAtual.has("nomeRazao")) {
+                envolvidos.add(envolvidoAtual);
             }
-            ObjectNode certidao = M.createObjectNode();
-            certidao.put("tipo", 1);
-            if (dataRegistro != null && !dataRegistro.isEmpty()) {
-                certidao.put("dataRegistro", dataRegistro);
-            }
-            prop.set("certidao", (JsonNode)certidao);
-            if (nomeRazao != null && !nomeRazao.isEmpty() && cpfCnpj != null && !cpfCnpj.isEmpty()) {
-                ObjectNode envolvido = M.createObjectNode();
-                envolvido.put("nomeRazao", nomeRazao);
-                envolvido.put("numeroDocumento", cpfCnpj);
-                envolvido.put("tipoDocumento", SeloJsonSanitizerNotas.detectarTipoDocumento(cpfCnpj));
-                prop.set("envolvidos", (JsonNode)M.createArrayNode().add((JsonNode)envolvido));
-            }
-        } else {
-            ObjectNode certidao = M.createObjectNode();
-            certidao.put("tipo", 1);
-            prop.set("certidao", (JsonNode)certidao);
         }
-        seloObj.set("propriedades", (JsonNode)prop);
-        seloObj.put("codigoTipoAto", 454);
-        SeloJsonSanitizerNotas.corrigirIdapNotas(seloObj);
+        
+        try {
+            ObjectNode pool = seloObj.has("_pool_propriedades") ? (ObjectNode) seloObj.get("_pool_propriedades") : M.createObjectNode();
+            ObjectNode certProps = M.createObjectNode();
+            
+            // --- 1. Dados da Certidão (Pool -> Banco) ---
+            String livro = obterDoPool(pool, "certidao.livro", "livro_ato", "livro");
+            String folha = obterDoPool(pool, "certidao.folha", "folha_ato", "folha");
+            String dataReg = obterDoPool(pool, "certidao.dataRegistro", "data_registro", "data");
+            String solicAto = obterDoPool(pool, "solicitanteAto.nomeRazao", "solic_ato", "nome_razao");
+            int certidaoTipo = 1; // Default 1 = Procuração (Manual v11.12)
+            
+            if (livro == null || solicAto == null) {
+                try (Connection conn = ConnectionFactory.getConnection();
+                     PreparedStatement ps = conn.prepareStatement(
+                         "SELECT c.SOLIC_ATO, c.LIVRO_ATO, c.LETRA_ATO, c.FOLHA_ATO, f.codigo_ser " +
+                         "FROM certidao c " +
+                         "LEFT JOIN fin_reccab f ON c.NUM_REC_ATO = f.num_rec " +
+                         "WHERE c.SELO_ATO = ? LIMIT 1")) {
+                    ps.setString(1, seloDigital);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            if (solicAto == null) solicAto = rs.getString("SOLIC_ATO");
+                            if (livro == null) {
+                                String l = rs.getString("LIVRO_ATO");
+                                String letra = rs.getString("LETRA_ATO");
+                                livro = (l != null ? l : "") + (letra != null ? letra : "");
+                            }
+                            if (folha == null) folha = rs.getString("FOLHA_ATO");
+                            
+                            String codSer = rs.getString("codigo_ser");
+                            if ("28".equals(codSer)) certidaoTipo = 2; // Escritura
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.warning("Erro banco Certidao: " + e.getMessage());
+                }
+            }
+
+            // --- 2. Monta Objetos v11.12 ---
+            ObjectNode solicitante = M.createObjectNode();
+            solicitante.put("nomeRazao", solicAto != null ? solicAto : "");
+            solicitante.put("tipoDocumento", 12);
+            solicitante.putNull("numeroDocumento");
+            certProps.set("solicitanteAto", solicitante);
+
+            ObjectNode certidaoNode = M.createObjectNode();
+            certidaoNode.put("tipo", certidaoTipo);
+            certidaoNode.put("livro", livro != null ? livro : "0");
+            certidaoNode.put("folha", folha != null ? folha : "0");
+            certidaoNode.put("dataRegistro", dataReg != null ? dataReg : "");
+            certidaoNode.putNull("termo");
+            certProps.set("certidao", certidaoNode);
+
+            seloObj.set("propriedades", certProps);
+            seloObj.put("codigoTipoAto", 454);
+            corrigirIdapNotas(seloObj);
+
+        } catch (Exception e) {
+            LOGGER.warning("Erro processarTipo454: " + e.getMessage());
+        }
     }
 
     private static void processarTipo453(ObjectNode seloObj, ObjectNode rootObj) {
@@ -2096,9 +2147,11 @@ public class SeloJsonSanitizerNotas {
                 verbas.put("valorAdicional", 0.0);
             }
             if ((seloNode = root.get("selo")) != null && seloNode.isObject()) {
-                ((ObjectNode)seloNode).set("verbas_sanitizadas", (JsonNode)verbas);
+                ((ObjectNode)seloNode).set("verbas", (JsonNode)verbas);
+            } else {
+                root.set("verbas", (JsonNode)verbas);
             }
-            LOGGER.fine("[SeloJsonSanitizerNotas] ListaVerbas convertida para verbas_sanitizadas (original mantido)");
+            LOGGER.info("[SeloJsonSanitizerNotas] ListaVerbas convertida para objeto verbas");
         }
         return root;
     }
@@ -2315,5 +2368,53 @@ public class SeloJsonSanitizerNotas {
             catch (SQLException sQLException) {}
         }
         return selos;
+    }
+    private static List<String> splitRootObjects(String json) {
+        ArrayList<String> result = new ArrayList<String>();
+        if (json == null || json.isEmpty()) return result;
+        int level = 0;
+        int start = -1;
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c == '{') {
+                if (level == 0) start = i;
+                level++;
+            } else if (c == '}') {
+                level--;
+                if (level == 0 && start != -1) {
+                    result.add(json.substring(start, i + 1));
+                    start = -1;
+                }
+            }
+        }
+        if (level > 0 && start != -1) {
+            String truncated = json.substring(start);
+            for (int i = 0; i < level; i++) {
+                truncated = truncated + "}";
+            }
+            result.add(truncated);
+        }
+        return result;
+    }
+
+    private static List<Map<String, Object>> buscarPartesNot1PorRegistro(String registro, Connection conn) {
+        ArrayList<Map<String, Object>> partes = new ArrayList<Map<String, Object>>();
+        if (registro == null || registro.isEmpty()) return partes;
+        String sql = "SELECT n.NOME_NOT1, n.CPF_NOT1, n.QUALIF_NOT1 FROM not_1 n WHERE n.REGISTRO_NOT1 = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, registro);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    HashMap<String, Object> p = new HashMap<String, Object>();
+                    p.put("NOME_NOT1", rs.getString("NOME_NOT1"));
+                    p.put("CPF_NOT1", rs.getString("CPF_NOT1"));
+                    p.put("QUALIF_NOT1", rs.getString("QUALIF_NOT1"));
+                    partes.add(p);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("[SeloJsonSanitizerNotas] Erro buscarPartesNot1: " + e.getMessage());
+        }
+        return partes;
     }
 }

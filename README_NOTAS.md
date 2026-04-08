@@ -25,7 +25,7 @@ Diferenças entre ambientes (D vs P)
 - Ambiente D (Desenvolvimento):
   - Contexto típico: `webrun`/`Maker Studio` local em Windows.
   - Exemplo de destino (padrão do `deploy.ps1` em dev para NOTAS):
-    `C:\Program Files (x86)\Softwell Solutions\Maker Studio\Webrun Studio\tomcat\webapps\funarpen_notas.war`
+    `C:\Program Files (x86)\Softwell Solutions\Maker Studio\Webrun Studio\tomcat\webapps\notas.war`
   - Certificado PFX geralmente em um caminho local (ex.: `C:\spd\funarpen\certificado.pfx`).
 
 - Ambiente P (Produção):
@@ -105,7 +105,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\run_local_tests.ps1 \
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\run_curl.ps1 \
   -RequestFile request.json \
-  -Url "https://dev-v11plus.funarpen.com.br/selos/recepcao" \
+  AMBIENTE_PAR ='D'  -Url "https://dev-v11plus.funarpen.com.br/selos/recepcao" \
+  AMBIENTE_PAR ='P'  -Url "https://v11plus.funarpen.com.br/selos/recepcao" \
   -Cert "C:\\spd\\funarpen\\certificado.pfx" -Senha "6*****75" \
   -Token "eyJhbGciOiJIUzUxMiJ9.eyJ...G1Si...5g"
 ```
@@ -123,16 +124,16 @@ Objetivo
 
 Regras gerais
 - Reaproveitar módulos, `pom.xml`, `node` e configuração do projeto `Protesto`.
-- Estrutura de deploy: gerar WAR `funarpen_notas.war` e disponibilizar em `webapps` do Tomcat.
+- Estrutura de deploy: gerar WAR `notas.war` e disponibilizar em `webapps` do Tomcat.
 
 Instalação / deploy
 - `install_spr.ps1`: ajustar contexto/paths para este projeto:
-  - O `WAR` deve ser instalado como `/webapps/funarpen_notas.war` (atualize `$WarLocalPath` / `$RemoteTomcatHome` conforme necessário).
-  - Exemplo: copie o WAR para `C:\Program Files (x86)\Apache Software Foundation\Tomcat 9.0\webapps\funarpen_notas.war` e reinicie o Tomcat.
+  - O `WAR` deve ser instalado como `/webapps/notas.war` (atualize `$WarLocalPath` / `$RemoteTomcatHome` conforme necessário).
+  - Exemplo: copie o WAR para `C:\Program Files (x86)\Apache Software Foundation\Tomcat 9.0\webapps\notas.war` e reinicie o Tomcat.
 
 Acesso ao banco e criptografia
 - `DbUtil.java` (mesma lógica do `Protesto`):
-  - Ler `C:\ProgramData\spr\Notas\db.properties` e `C:\ProgramData\spr\Notas\master.key`.
+  - Ler `C:\ProgramData\spr\Notas\db.properties` e `C:\ProgramData\spr\master.key`.
   - Suportar valores em texto e `ENC(...)` (Jasypt). Se `ENC(...)` presente, tentar decifrar usando `master.key`.
   - Recomenda-se usar `ENC(...)` para `DB_PASS` em produção; o desenvolvedor pode gerar com o utilitário `Spr` (ex.: via Maven).
 - Comando exemplo para gerar cipher (developer machine):
@@ -140,12 +141,12 @@ Acesso ao banco e criptografia
 mvn org.codehaus.mojo:exec-maven-plugin:3.0.0:java -Dexec.mainClass=com.monitor.funarpen.util.spr.Spr -Dexec.args="encrypt MASTERKEY senha_plain"
 ```
 - No servidor, garanta que o usuário do Tomcat tem permissão de leitura em:
-  - `C:\ProgramData\spr\notas\master.key`
+  - `C:\ProgramData\spr\master.key`
   - `C:\ProgramData\spr\notas\db.properties`
   - Exemplo de `icacls` para aplicar permissões (executar como Administrador):
 ```
-icacls "C:\ProgramData\spr\Notas\master.key" /inheritance:r
-icacls "C:\ProgramData\spr\Notas\master.key" /grant:r "SYSTEM:F" "Administradores:F"
+icacls "C:\ProgramData\spr\master.key" /inheritance:r
+icacls "C:\ProgramData\spr\master.key" /grant:r "SYSTEM:F" "Administradores:F"
 icacls "C:\ProgramData\spr\Notas\db.properties" /inheritance:r
 icacls "C:\ProgramData\spr\Notas\db.properties" /grant:r "SYSTEM:F" "Administradores:F"
 ```
@@ -176,11 +177,11 @@ Integração de formulários (sprURLOpenFrame)
 
 Dependências e build
 - Manter os mesmos módulos e dependências do `Protesto` (copiar `pom.xml`, `package.json` e `node_modules`/build scripts se necessário).
-- Ajustar `artifactId`/nome do WAR para `funarpen_notas` no `pom.xml` (se desejar gerar `funarpen_notas.war`).
+- Ajustar `artifactId`/nome do WAR para `notas` no `pom.xml` (se desejar gerar `notas.war`).
 
 Testes e verificação
 1. Gerar WAR (mvn package) e garantir que `WEB-INF/web.xml` e `WEB-INF/classes/com/monitor/funarpen/web/servlets/ParametrosServlet.class` estejam presentes no WAR.
-2. Copiar `funarpen_notas.war` para `TOMCAT_HOME/webapps` e reiniciar Tomcat.
+2. Copiar `notas.war` para `TOMCAT_HOME/webapps` e reiniciar Tomcat.
 3. Verificar arquivos de configuração em `C:\ProgramData\spr\Notas` e permissões.
 4. Testar endpoint de parâmetros localmente no servidor:
 ```
@@ -194,7 +195,7 @@ Observações finais
 - Documentar no repositório `Notas` quaisquer diferenças específicas de negócio (campos/colunas da tabela `parametros`) e manter sincronizado com `Protesto` quando compartilhar utilitários.
 
 Próximos passos sugeridos
-- Atualizar `install_spr.ps1` para usar `/webapps/funarpen_notas.war` e gerar payload compatível.
+- Atualizar `install_spr.ps1` para usar `/webapps/notas.war` e gerar payload compatível.
 - Validar `DbUtil` com `ENC(...)` e `master.key` em ambiente de teste.
 - Atualizar `Menu` e aplicar `sprURLOpenFrame` na base Maker do cliente.
 
