@@ -11,7 +11,6 @@ export interface AssinaturaCaminhoRequest {
   certificado?: string;
   pin?: string;
   timestamp?: boolean;
-  pdfa?: boolean;
 }
 
 export interface AssinaturaResponse {

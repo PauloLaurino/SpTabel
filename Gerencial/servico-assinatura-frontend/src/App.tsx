@@ -7,85 +7,49 @@ import AgruparPdfs from './components/AgruparPdfs';
 type Tab = 'unico' | 'lote' | 'copiar' | 'agrupar';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('lote');
+  const [activeTab, setActiveTab] = useState<Tab>('unico');
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'lote', label: 'Assinatura em Lote', icon: '📚' },
-    { id: 'unico', label: 'PDF Único', icon: '📄' },
-    { id: 'copiar', label: 'Separar Páginas', icon: '📑' },
-    { id: 'agrupar', label: 'Unir PDFs', icon: '📦' },
+    { id: 'unico', label: 'Assinar PDF Único', icon: '📄' },
+    { id: 'lote', label: 'Assinar em Lote', icon: '📚' },
+    { id: 'copiar', label: 'Copiar Página', icon: '📑' },
+    { id: 'agrupar', label: 'Agrupar PDFs', icon: '📦' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 font-inter selection:bg-blue-500/30">
-      {/* Background Glow */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
-        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full" />
-      </div>
-
-      <header className="relative z-10 border-b border-slate-800/60 bg-slate-900/40 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <span className="text-xl">✍️</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                Seprocom Assinatura
-              </h1>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-semibold">
-                Portal de Assinatura Digital
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-xs font-medium text-emerald-400">Servidor Online</span>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Serviço de Assinatura Digital
+          </h1>
         </div>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-12 gap-8">
-          {/* Sidebar Navigation */}
-          <div className="col-span-3 space-y-2">
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="flex border-b border-gray-200 overflow-x-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 translate-x-1'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                    ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                <span className="text-lg">{tab.icon}</span>
+                <span>{tab.icon}</span>
                 {tab.label}
               </button>
             ))}
-            
-            <div className="pt-8 px-4">
-              <div className="p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Suporte</h3>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Problemas com o certificado? Certifique-se que o token está conectado corretamente.
-                </p>
-              </div>
-            </div>
           </div>
 
-          {/* Main Content Area */}
-          <div className="col-span-9 bg-slate-900/40 border border-slate-800/60 backdrop-blur-xl rounded-[2rem] overflow-hidden shadow-2xl">
-            <div className="p-8">
-              {activeTab === 'unico' && <AssinarPdfUnico />}
-              {activeTab === 'lote' && <AssinarLote />}
-              {activeTab === 'copiar' && <CopiarPagina />}
-              {activeTab === 'agrupar' && <AgruparPdfs />}
-            </div>
+          <div className="p-6">
+            {activeTab === 'unico' && <AssinarPdfUnico />}
+            {activeTab === 'lote' && <AssinarLote />}
+            {activeTab === 'copiar' && <CopiarPagina />}
+            {activeTab === 'agrupar' && <AgruparPdfs />}
           </div>
         </div>
       </main>

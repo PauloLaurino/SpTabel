@@ -33,11 +33,6 @@ export const assinaturaService = {
     };
   },
 
-  async listarArquivos(caminho: string): Promise<{ status: string; arquivos: any[] }> {
-    const response = await api.post<{ status: string; arquivos: any[] }>('/pdf/listar', { caminho });
-    return response.data;
-  },
-
   async health(): Promise<{ status: string }> {
     const response = await api.get<{ status: string }>('/health');
     return response.data;
