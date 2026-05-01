@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  servico-assinatura:
+    build: .
+    container_name: servico-assinatura
+    ports:
+      - "8443:8443"
+    environment:
+      - ASSINATURA_TSA_URL=https://tsp.datalat.com.br/tsp
+      - ASSINATURA_SESSAO_MINUTOS_VALIDADE=30
+    volumes:
+      - ./config:/app/config
+      - token-drivers:/usr/lib
+    restart: unless-stopped
+
+volumes:
+  token-drivers:

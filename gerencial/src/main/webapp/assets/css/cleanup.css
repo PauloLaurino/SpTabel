@@ -1,0 +1,36 @@
+/* ============================================
+   REMOVER ELEMENTOS DESNECESSÁRIOS
+   ============================================ */
+
+.cards-container,
+.input-actions,
+.form-help,
+.intervalo-actions,
+.panel-actions,
+.filter-section,
+.selection-summary,
+.selos-summary,
+.currency,
+.totais-container,
+.selos-grid,
+.selo-card,
+.options-loading,
+.form-section,
+.selected-option-container,
+.actions-container,
+.btn-action,
+.btn-solicitar,
+.btn-selar,
+.btn-warning,
+.secondary-actions,
+.form-container,
+.selos-section,
+.intervalo-grid,
+.intervalo-group,
+/* REMOVER CONTAINERS ANTIGOS */
+.right-container,
+.data-container,
+.opcao-selecionada-container,
+.apontamentos-container {
+    display: none !important;
+}

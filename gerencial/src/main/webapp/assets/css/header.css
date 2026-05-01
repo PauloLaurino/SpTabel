@@ -1,0 +1,310 @@
+/* ============================================
+   HEADER - SISTEMA SELADOR
+   ============================================ */
+
+.app-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 0 12px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ========== HEADER ESQUERDO ========== */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 180px;
+}
+
+/* Logo/Sistema */
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-icon {
+    font-size: 18px !important;
+    color: #3498db;
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.system-name {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: white;
+    letter-spacing: 0.3px;
+}
+
+.system-description {
+    font-size: 10px !important;
+    opacity: 0.9;
+    color: #ecf0f1;
+    font-weight: 400;
+}
+
+/* Versão */
+.version-container {
+    display: flex;
+    align-items: center;
+    background: rgba(52, 152, 219, 0.15);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 4px;
+    padding: 2px 6px !important;
+}
+
+.version-badge {
+    font-size: 10px !important;
+    font-weight: 600;
+    color: #3498db;
+}
+
+/* ========== HEADER CENTRO ========== */
+.header-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+/* Status Centralizado com separador */
+.status-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-icon {
+    font-size: 8px;
+}
+
+.status-text {
+    font-size: 12px !important;
+    font-weight: 500;
+}
+
+/* Online - Verde */
+.status-item.online .status-icon {
+    color: #2ecc71;
+}
+
+.status-item.online .status-text {
+    color: #2ecc71;
+}
+
+/* Database - Azul claro */
+.status-item.db .status-icon {
+    color: #3498db;
+}
+
+.status-item.db .status-text {
+    color: #3498db;
+}
+
+/* Time - Amarelo */
+.status-item.time .status-icon {
+    color: #f1c40f;
+}
+
+.status-item.time .status-text {
+    color: #f1c40f;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+}
+
+/* Separador entre itens */
+.status-separator {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 12px;
+    margin: 0 2px;
+}
+
+/* ========== HEADER DIREITO ========== */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 180px;
+    justify-content: flex-end;
+}
+
+/* Usuário - Logo + Nome/Cargo em duas linhas */
+.user-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(155, 89, 182, 0.1);
+    border: 1px solid rgba(155, 89, 182, 0.2);
+    border-radius: 4px;
+    padding: 4px 10px !important;
+    min-width: 140px;
+}
+
+.user-avatar {
+    font-size: 20px !important;
+    color: #9b59b6;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    justify-content: center;
+}
+
+.user-name {
+    font-size: 12px !important;
+    font-weight: 700;
+    color: white;
+}
+
+.user-role {
+    font-size: 10px !important;
+    color: #ecf0f1;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Botões do header (ícones pequenos) */
+.header-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-header {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: white;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px !important;
+}
+
+.btn-header:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: rgba(231, 76, 60, 0.2);
+    border-color: rgba(231, 76, 60, 0.3);
+}
+
+.btn-danger:hover {
+    background: rgba(231, 76, 60, 0.3);
+}
+
+/* ========== RESPONSIVIDADE ========== */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 0 8px !important;
+        height: 35px !important;
+    }
+    
+    .header-left {
+        min-width: 150px;
+        gap: 8px;
+    }
+    
+    .system-name {
+        font-size: 14px !important;
+    }
+    
+    .system-description {
+        font-size: 8px !important;
+    }
+    
+    .header-right {
+        min-width: 140px;
+        gap: 8px;
+    }
+    
+    .user-container {
+        min-width: 120px;
+        padding: 3px 8px !important;
+    }
+    
+    .user-name {
+        font-size: 11px !important;
+    }
+    
+    .user-role {
+        font-size: 9px !important;
+    }
+    
+    .btn-header {
+        width: 20px !important;
+        height: 20px !important;
+    }
+    
+    .status-text {
+        font-size: 11px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .system-description {
+        display: none;
+    }
+    
+    .version-container {
+        display: none;
+    }
+    
+    .user-details {
+        display: none;
+    }
+    
+    .user-container {
+        min-width: auto;
+        padding: 2px !important;
+    }
+    
+    .status-separator {
+        margin: 0 1px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-left {
+        min-width: 120px;
+    }
+    
+    .system-name {
+        font-size: 12px !important;
+    }
+    
+    .status-text {
+        font-size: 10px !important;
+    }
+    
+    .header-actions {
+        gap: 2px;
+    }
+}

@@ -1,0 +1,125 @@
+/* ============================================
+   ESTILOS PARA MODO EMBEDDED
+   ============================================ */
+
+body[data-embedded="true"],
+body.embedded-maker {
+    height: 100vh !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #f8f9fa !important;
+}
+
+body[data-embedded="true"] #appContainer,
+body.embedded-maker #appContainer {
+    width: 100% !important;
+    height: 100vh !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body[data-embedded="true"] .app-header,
+body.embedded-maker .app-header {
+    height: 35px !important;
+    padding: 0 8px !important;
+}
+
+body[data-embedded="true"] .app-title,
+body.embedded-maker .app-title {
+    font-size: 13px !important;
+}
+
+body[data-embedded="true"] .app-subtitle,
+body.embedded-maker .app-subtitle {
+    display: none !important;
+}
+
+body[data-embedded="true"] .main-content,
+body.embedded-maker .main-content {
+    padding: 8px !important;
+    gap: 8px !important;
+    height: calc(100vh - 70px) !important;
+}
+
+body[data-embedded="true"] .left-panel,
+body.embedded-maker .left-panel {
+    width: 380px !important;
+}
+
+body[data-embedded="true"] .right-panel,
+body.embedded-maker .right-panel {
+    width: 400px !important; /* MODIFICADO: 360px → 400px */
+}
+
+body[data-embedded="true"] .selos-botoes-container,
+body.embedded-maker .selos-botoes-container {
+    min-height: auto !important;
+}/* ============================================
+   ESTILOS PARA MODO EMBEDDED
+   ============================================ */
+
+body[data-embedded="true"],
+body.embedded-maker {
+    height: 100vh !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #f8f9fa !important;
+}
+
+body[data-embedded="true"] #appContainer,
+body.embedded-maker #appContainer {
+    width: 100% !important;
+    height: 100vh !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body[data-embedded="true"] .app-header,
+body.embedded-maker .app-header {
+    height: 35px !important;
+    padding: 0 8px !important;
+}
+
+body[data-embedded="true"] .app-title,
+body.embedded-maker .app-title {
+    font-size: 13px !important;
+}
+
+body[data-embedded="true"] .app-subtitle,
+body.embedded-maker .app-subtitle {
+    display: none !important;
+}
+
+body[data-embedded="true"] .main-content,
+body.embedded-maker .main-content {
+    padding: 8px !important;
+    gap: 8px !important;
+    height: calc(100vh - 70px) !important;
+}
+
+body[data-embedded="true"] .left-panel,
+body.embedded-maker .left-panel {
+    width: 380px !important;
+}
+
+body[data-embedded="true"] .right-panel,
+body.embedded-maker .right-panel {
+    width: 400px !important; /* MODIFICADO: 360px → 400px */
+}
+
+body[data-embedded="true"] .selos-botoes-container,
+body.embedded-maker .selos-botoes-container {
+    min-height: auto !important;
+}
