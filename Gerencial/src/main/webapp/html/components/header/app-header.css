@@ -1,0 +1,146 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  padding: 10px 24px;
+  margin-bottom: 18px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo-icon {
+  font-size: 32px;
+  color: #2d8cf0;
+  margin-right: 10px;
+}
+
+.logo-text h1 {
+  font-size: 22px;
+  margin: 0;
+  color: #2d8cf0;
+}
+
+.logo-text p {
+  font-size: 13px;
+  margin: 0;
+  color: #666;
+}
+
+.version-badge {
+  background: #e3e6f0;
+  color: #2d8cf0;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 12px;
+}
+
+.status-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.status-icon {
+  font-size: 14px;
+}
+
+.online .status-icon { color: #1e7e34; }
+.db .status-icon { color: #2d8cf0; }
+.time .status-icon { color: #666; }
+
+.user-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  font-size: 28px;
+  color: #2d8cf0;
+}
+
+.user-name {
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #666;
+}
+
+.btn-header {
+  background: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 15px;
+  color: #2d8cf0;
+}
+
+.btn-danger {
+  color: #c82333;
+}
+
+/* Fixes para header do Maker: garantir alinhamento, visibilidade de ícones e dropdowns */
+#NavLogo, #Navbar, #UserInfo {
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Cor de fundo padrão do header principal do formulário Maker */
+#Navbar {
+  background-color: #6d9deb !important;
+  color: #fff !important;
+}
+
+/* Garantir que imagens no logo mantenham object-fit */
+#NavLogo img {
+  object-fit: contain;
+  object-position: left center;
+}
+
+/* Evitar que containers do header cortem os dropdowns */
+#UserInfo, #NavLogo, #Navbar {
+  overflow: visible !important;
+}
+
+/* Dropdown deve ficar acima de elementos gerais */
+.dropdown-menu {
+  z-index: 2050 !important;
+}
+
+/* Forçar cor dos ícones no header para contraste adequado quando usado background azul/escuro */
+.text-bg-blue .fas,
+.text-bg-primary .fas,
+.text-bg-secondary .fas,
+#Navbar .menu-icon,
+#UserInfo .fa-user,
+#UserInfo .btn .fas {
+  color: #fff !important;
+}
+
+/* Garantir espaço mínimo para ícones em itens de menu */
+.dropdown-item .fas,
+.menu-icon {
+  min-width: 2rem;
+  text-align: center;
+}
+
+/* Inputs de exibição no header devem herdar estilo e não terem borda visível */
+#Navbar .form-control[readonly] {
+  background: transparent;
+  border: none;
+  color: inherit;
+  height: 25px;
+}

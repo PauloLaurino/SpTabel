@@ -1,0 +1,65 @@
+/* ============================================
+   BASE E RESET
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12px !important;
+    line-height: 1.3;
+    color: #333;
+    background-color: #f5f5f5;
+    height: 100vh;
+    overflow: hidden !important;
+}
+
+html {
+    overflow: hidden !important;
+    height: 100% !important;
+    width: 100% !important;
+}
+
+/* ========== UTILIDADES ========== */
+.hidden {
+    display: none !important;
+}
+
+/* ========== SCROLLBAR ========== */
+::-webkit-scrollbar {
+    width: 3px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 1px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 1px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* ========== ANIMAÇÕES ========== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========== TRANSIÇÕES SUAVES ========== */
+.btn-acao, .opcao-item, .selo-item, .data-input, .apontamento-input, .selo-input,
+.selo-quantidade, .quantidade-valor, .selo-quantidades {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}

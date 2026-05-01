@@ -1,0 +1,47 @@
+{
+  "formId": "masfor",
+  "label": "Tipo de Fornecedores",
+  "description": "Formulário gerado a partir de src/refatorado/frontend/masfor/MasforForm.tsx — import para FormBuilder Editor (homologação)",
+  "fields": [
+    {
+      "name": "codigo",
+      "label": "Código",
+      "type": "text",
+      "required": true,
+      "maxLength": 30
+    },
+    {
+      "name": "descricao",
+      "label": "Descrição",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 200
+    },
+    {
+      "name": "ativo",
+      "label": "Ativo",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "S", "label": "Sim" },
+        { "value": "N", "label": "Não" }
+      ],
+      "default": "S"
+    }
+  ],
+  "layout": {
+    "sections": [
+      {
+        "id": "sec1",
+        "label": "Dados",
+        "fields": ["codigo", "descricao", "ativo"]
+      }
+    ]
+  },
+  "metadata": {
+    "table": "masfor",
+    "idField": "id",
+    "idFilField": "id_fil",
+    "readOnlyFields": ["id", "id_fil"]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Flow Schema",
+  "description": "JSON Schema para descrever flows de negócio executáveis pelo FlowRunner",
+  "type": "object",
+  "required": ["id", "name", "version", "steps"],
+  "properties": {
+    "id": {"type": "string"},
+    "name": {"type": "string"},
+    "version": {"type": "string"},
+    "description": {"type": "string"},
+    "variables": {
+      "type": "object",
+      "description": "Variáveis iniciais do fluxo (pares nome: valor)",
+      "additionalProperties": true
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/step"}
+    }
+  },
+  "definitions": {
+    "step": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {"type": "string"},
+        "type": {"type": "string","enum":["set","httpRequest","validate","condition","end"]},
+        "name": {"type": "string"},
+        "comment": {"type": "string"},
+        "next": {"type":"string","description":"id do próximo step em fluxo linear"},
+        "timeoutMs": {"type":"integer"},
+        "set": {"type":"object","description":"define variáveis; pares chave: expressão ou valor; expressão executada com contexto","additionalProperties":true},
+        "httpRequest": {
+          "type": "object",
+          "properties": {
+            "method": {"type":"string","enum":["GET","POST","PUT","DELETE"]},
+            "url": {"type":"string"},
+            "headers": {"type":"object","additionalProperties":true},
+            "body": {"type":["object","string","null"]},
+            "saveAs": {"type":"string","description":"nome da variável para salvar a resposta"}
+          },
+          "required": ["method","url"]
+        },
+        "validate": {
+          "type":"object",
+          "properties":{
+            "expression": {"type":"string","description":"JS expression que retorna truthy/falsey; recebe 'ctx' como contexto"},
+            "onFail": {"type":"string","description":"id do passo a executar em caso de falha"}
+          },
+          "required":["expression"]
+        },
+        "condition": {
+          "type":"object",
+          "properties":{
+            "expression": {"type":"string"},
+            "trueNext": {"type":"string"},
+            "falseNext": {"type":"string"}
+          },
+          "required":["expression","trueNext","falseNext"]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

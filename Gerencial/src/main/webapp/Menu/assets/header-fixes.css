@@ -1,0 +1,67 @@
+/* header-fixes.css
+   Regras para corrigir o header horizontal (NavLogo, Navbar, UserInfo)
+*/
+.webrun-main-form #Navbar {
+  gap: 8px; /* espaçamento entre colunas */
+  height: 64px; /* garantir altura consistente */
+  overflow: visible !important; /* permitir dropdowns visíveis */
+}
+
+.webrun-main-form #Navbar > .form-group {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+#NavLogo {
+  flex: 0 0 18.8%;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  overflow: visible !important;
+}
+#NavLogo img {
+  max-height: 48px;
+  height: auto;
+  object-fit: contain;
+}
+
+#Navbar {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+#UserInfo {
+  flex: 0 0 10.1%;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative; /* para dropdowns posicionarem corretamente */
+  overflow: visible !important;
+}
+
+.webrun-main-form #Navbar .dropdown-menu {
+  position: absolute;
+  z-index: 99999 !important;
+}
+
+#UserInfo .btn, #UserInfo .btn-light { background: transparent !important; color: inherit !important; border: none !important; }
+
+#Navbar .form-control[readonly] { background: transparent !important; border: none !important; color: inherit !important; height: 25px !important; }
+
+#Navbar .fas, #NavLogo .fas, #UserInfo .fas { color: inherit !important; visibility: visible !important; }
+
+/* Não forçar ícones brancos — herdar cor do contexto para evitar invisibilidade em fundos claros */
+#UserInfo, #NavLogo, #Navbar { color: inherit !important; z-index: 9999 !important; }
+#UserInfo .fas, #Navbar .fas, #NavLogo .fas, .menu-icon, #UserInfo i, #UserInfo svg {
+  color: inherit !important;
+  visibility: visible !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+#MenuButton { z-index: 2; }

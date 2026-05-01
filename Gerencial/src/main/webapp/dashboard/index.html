@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Serventia - Pro Max</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 24px;
+            overflow-x: hidden;
+        }
+
+        /* Container Principal */
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Header e Filtros */
+        .header {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .input-control {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-control:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-search {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            height: 44px;
+        }
+
+        .btn-search:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Cards de Resumo (KPIs) */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary);
+        }
+
+        .kpi-card.success::after { background: var(--success); }
+        .kpi-card.warning::after { background: var(--warning); }
+        .kpi-card.danger::after { background: var(--danger); }
+
+        .kpi-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .kpi-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Tabela Visual */
+        .table-container {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9;
+            padding: 14px 16px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 14px 16px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .serventia-row {
+            background: #eef2ff !important;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .header-row {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        /* Multi-select de Atos Customizado */
+        .atos-dropdown {
+            position: relative;
+        }
+
+        .atos-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: var(--shadow);
+            padding: 8px;
+        }
+
+        .atos-list.active { display: block; }
+
+        .ato-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .ato-item:hover { background: #f1f5f9; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <!-- Header e Filtros -->
+        <header class="header">
+            <h1>📊 Dashboard de Estatísticas Unificado</h1>
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Data Início</label>
+                    <input type="date" id="inputInicio" class="input-control">
+                </div>
+                <div class="filter-group">
+                    <label>Data Fim</label>
+                    <input type="date" id="inputFim" class="input-control">
+                </div>
+                <div class="filter-group">
+                    <label>Escolher Atos (Protesto)</label>
+                    <div class="atos-dropdown">
+                        <button id="btnAtos" class="input-control" style="width: 100%; text-align: left;">Selecionar Atos...</button>
+                        <div id="atosList" class="atos-list">
+                            <!-- Injetado via JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Agrupamento</label>
+                    <select id="selectTipo" class="input-control">
+                        <option value="mensal">Mensal</option>
+                        <option value="anual">Anual</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <button class="btn-search" onclick="carregarDados()">ATUALIZAR DASHBOARD</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI Grid -->
+        <div class="kpi-grid" id="kpiContainer">
+            <div class="kpi-card">
+                <span class="kpi-label">Aguardando busca...</span>
+                <span class="kpi-value">--</span>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-container">
+            <table id="tabelaDados">
+                <thead>
+                    <tr id="tableHead">
+                        <!-- Gerado dinamicamente -->
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="20" class="loading">Selecione o período e clique em atualizar.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/dashboard';
+        let atosDisponiveis = [];
+        let atosSelecionados = [];
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            // Setar datas padrão (Mês atual)
+            const hoje = new Date();
+            const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+            const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
+            
+            document.getElementById('inputInicio').value = primeiroDia;
+            document.getElementById('inputFim').value = ultimoDia;
+
+            carregarAtos();
+            
+            // Toggle dropdown de atos
+            document.getElementById('btnAtos').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('atosList').classList.toggle('active');
+            });
+
+            document.addEventListener('click', () => {
+                document.getElementById('atosList').classList.remove('active');
+            });
+        });
+
+        async function carregarAtos() {
+            try {
+                const resp = await fetch(`${API_BASE}/atos`);
+                atosDisponiveis = await resp.json();
+                renderizarListaAtos();
+            } catch (err) {
+                console.error("Erro ao carregar atos:", err);
+            }
+        }
+
+        function renderizarListaAtos() {
+            const container = document.getElementById('atosList');
+            container.innerHTML = atosDisponiveis.map(ato => `
+                <div class="ato-item" onclick="toggleAto('${ato}', event)">
+                    <input type="checkbox" id="chk_${ato}" ${atosSelecionados.includes(ato) ? 'checked' : ''}>
+                    <span>${ato}</span>
+                </div>
+            `).join('');
+        }
+
+        function toggleAto(ato, event) {
+            event.stopPropagation();
+            if (atosSelecionados.includes(ato)) {
+                atosSelecionados = atosSelecionados.filter(a => a !== ato);
+            } else {
+                atosSelecionados.push(ato);
+            }
+            renderizarListaAtos();
+            document.getElementById('btnAtos').innerText = atosSelecionados.length > 0 ? `${atosSelecionados.length} selecionado(s)` : 'Selecionar Atos...';
+        }
+
+        async function carregarDados() {
+            const inicio = document.getElementById('inputInicio').value;
+            const fim = document.getElementById('inputFim').value;
+            const tipo = document.getElementById('selectTipo').value;
+            const tableBody = document.getElementById('tableBody');
+            
+            if (!inicio || !fim) return alert("Selecione as datas!");
+
+            tableBody.innerHTML = '<tr><td colspan="20" class="loading">Processando dados oficiais...</td></tr>';
+
+            try {
+                // Montar query string para atos
+                const atosQuery = atosSelecionados.map(a => `atos=${encodeURIComponent(a)}`).join('&');
+                const url = `${API_BASE}/stats?inicio=${inicio}&fim=${fim}&tipo=${tipo}&${atosQuery}`;
+                
+                const resp = await fetch(url);
+                const dados = await resp.json();
+                
+                renderizarDashboard(dados);
+            } catch (err) {
+                tableBody.innerHTML = `<tr><td colspan="20" class="loading" style="color:red">Erro na conexão: ${err.message}</td></tr>`;
+            }
+        }
+
+        function renderizarDashboard(dados) {
+            const tableBody = document.getElementById('tableBody');
+            const kpiContainer = document.getElementById('kpiContainer');
+            
+            if (!dados || dados.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="20" class="loading">Nenhum dado encontrado para o período.</td></tr>';
+                return;
+            }
+
+            // KPIs (Resumo do primeiro mês válido do Protesto)
+            const resumoProtesto = dados.find(d => d.Serventia === 'Tabelionato de Protesto' && d.MesAno !== '' && d.MesAno !== 'Mes/Ano');
+            if (resumoProtesto) {
+                kpiContainer.innerHTML = `
+                    <div class="kpi-card">
+                        <span class="kpi-label">Títulos Apontados</span>
+                        <span class="kpi-value">${resumoProtesto.Apont || 0}</span>
+                    </div>
+                    <div class="kpi-card success">
+                        <span class="kpi-label">Títulos Protestados</span>
+                        <span class="kpi-value">${resumoProtesto.Prot || 0}</span>
+                    </div>
+                    <div class="kpi-card danger">
+                        <span class="kpi-label">Cancelamentos</span>
+                        <span class="kpi-value">${resumoProtesto.Canc || 0}</span>
+                    </div>
+                    <div class="kpi-card warning">
+                        <span class="kpi-label">Atos Selecionados</span>
+                        <span class="kpi-value">${resumoProtesto.SumAtos || 0}</span>
+                    </div>
+                `;
+            }
+
+            // Tabela
+            tableBody.innerHTML = '';
+            
+            // Pegamos as chaves da primeira linha para o Header
+            const keys = ["MesAno", "Apont", "Prot", "Canc", "Pagos", "Ret", "Susp", "SumAtos", "Arred", "Cust", "Rep"];
+            const labels = ["Mês/Ano", "Apont", "Prot", "Canc", "Pagos", "Ret", "Susp", "Atos", "Arrecad", "Custeio", "Repasses"];
+
+            const headRow = document.getElementById('tableHead');
+            headRow.innerHTML = labels.map(l => `<th>${l}</th>`).join('');
+
+            dados.forEach(row => {
+                // Pular linhas de título da query original pois vamos estilizar via JS
+                if (row.MesAno === 'Mes/Ano') return;
+                
+                const tr = document.createElement('tr');
+                if (row.MesAno === '') {
+                    tr.className = 'serventia-row';
+                    tr.innerHTML = `<td colspan="11">${row.Serventia}</td>`;
+                } else {
+                    tr.innerHTML = keys.map(k => `<td>${row[k] || ''}</td>`).join('');
+                }
+                tableBody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>

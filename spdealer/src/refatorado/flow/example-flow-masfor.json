@@ -1,0 +1,62 @@
+{
+  "id": "flow-masfor-create",
+  "name": "Criar/Validar Tipo de Fornecedor (masfor)",
+  "version": "1.0.0",
+  "description": "Exemplo mínimo: valida unicidade e persiste um registro em masfor",
+  "variables": {
+    "id_fil": 1,
+    "payload": {
+      "codigo": "TF-001",
+      "descricao": "Tipo Fornecedor Exemplo",
+      "ativo": true
+    }
+  },
+  "steps": [
+    {
+      "id": "check-unique",
+      "type": "httpRequest",
+      "name": "Verifica unicidade",
+      "httpRequest": {
+        "method": "POST",
+        "url": "/api/refatorado/masfor/unique-check",
+        "headers": {"Content-Type": "application/json"},
+        "body": {"id_fil": "{{id_fil}}", "codigo": "{{payload.codigo}}"},
+        "saveAs": "uniqueResult"
+      },
+      "next": "validate-unique"
+    },
+    {
+      "id": "validate-unique",
+      "type": "validate",
+      "name": "Validar resultado de unicidade",
+      "validate": {
+        "expression": "(ctx) => { return ctx.uniqueResult && ctx.uniqueResult.unique === true; }",
+        "onFail": "end-unique-error"
+      },
+      "next": "persist"
+    },
+    {
+      "id": "persist",
+      "type": "httpRequest",
+      "name": "Salvar registro",
+      "httpRequest": {
+        "method": "POST",
+        "url": "/api/refatorado/masfor",
+        "headers": {"Content-Type": "application/json"},
+        "body": "{{payload}}",
+        "saveAs": "createResult"
+      },
+      "next": "end-success"
+    },
+    {
+      "id": "end-unique-error",
+      "type": "end",
+      "name": "Fim - unico violado"
+    },
+    {
+      "id": "end-success",
+      "type": "end",
+      "name": "Fim - sucesso"
+    }
+  ]
+}

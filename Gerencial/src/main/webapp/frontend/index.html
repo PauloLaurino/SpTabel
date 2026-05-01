@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestão de Protestos - SEPROCOM</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script>
+      (function() {
+        // Captura o 'sys' da URL atual
+        var urlParams = new URLSearchParams(window.location.search);
+        var sys = urlParams.get('sys');
+        
+        // Se não houver sys, tenta inferir pela URL do Webrun (parent)
+        if (!sys && window.parent && window.parent.location.search) {
+          sys = new URLSearchParams(window.parent.location.search).get('sys');
+        }
+
+        var originalFetch = window.fetch;
+        window.fetch = function() {
+          var url = arguments[0];
+          if (typeof url === 'string') {
+            // 1. Redireciona chamadas do antigo contexto 'spprot' para 'gerencial'
+            url = url.replace('/spprot/', '/gerencial/');
+            
+            // 2. Garante que chamadas para /maker/api usem o contexto /gerencial
+            if (url.startsWith('/maker/api/')) {
+              url = '/gerencial' + url;
+            }
+
+            // 3. Injeta o parâmetro 'sys' se ele existir
+            if (sys && !url.includes('sys=')) {
+              url += (url.includes('?') ? '&' : '?') + 'sys=' + sys;
+            }
+          }
+          arguments[0] = url;
+          return originalFetch.apply(this, arguments);
+        };
+        console.log('Seprocom Multi-Tenant Patch Active. System Context:', sys);
+      })();
+    </script>
+    <script type="module" crossorigin src="/gerencial/frontend/assets/main-vBk8heBr.js"></script>
+    <link rel="stylesheet" crossorigin href="/gerencial/frontend/assets/main-D3ZgEZ7M.css">
+  </head>
+  <body>
+    <div id="root"></div>
+
+  </body>
+</html>

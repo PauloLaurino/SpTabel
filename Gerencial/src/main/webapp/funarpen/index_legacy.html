@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Monitoramento FUNARPEN - Selos</title>
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect width='100%' height='100%' fill='blue'/><text x='50%' y='50%' font-size='10' fill='white' text-anchor='middle' dominant-baseline='central'>S</text></svg>">
+
+  <style>
+     /* estilos principais (forçar aplicação no ambiente Maker)
+       Ajustes para ocupar 100% da moldura/iframe:
+       - html/body devem ter height:100% e sem padding para evitar overflow extra
+       - #app recebe padding interno e min-height:100% para preencher a moldura
+     */
+    html, body { height:100%; margin:0; padding:0; box-sizing: border-box; background:#f5f6fa; color:#333; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:12px; overflow:auto; }
+    #app { min-height:100%; padding:12px; box-sizing: border-box; display:flex; flex-direction:column; overflow:auto; max-width:100%; }
+    /* garantir header + grid verticalmente alinhados e permitir que .grid cresça */
+    #app > .header { flex: 0 0 auto; }
+    #app > .grid { flex: 1 1 auto; min-height: 0; }
+    /* permitir que colunas e boxes rolem internamente sem criar scroll externo */
+    .grid { height: auto; min-height: 0; }
+    .grid .box { display:flex; flex-direction:column; min-height: 0; }
+    .grid .box table { flex: 1 1 auto; min-height: 0; }
+    .types { overflow:auto; }
+    h2{margin:0 0 10px 0;}
+    .box{background:#fff;border-radius:6px;padding:12px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    /* layout responsivo: coluna esquerda fixa entre 220-360px e coluna direita flexível */
+    .grid{display:grid;grid-template-columns: minmax(220px,360px) 1fr;gap:12px;}
+    .types{padding:8px;border:1px solid #eee;border-radius:6px;}
+    .types-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #eee;}
+
+      .grid{display:grid;grid-template-columns:360px 1fr;gap:12px;}
+      .types{padding:8px;border:1px solid #eee;border-radius:6px;}
+      .types-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #eee;}
+      .types-row:last-child{border-bottom:none;}
+      table{width:100%;border-collapse:collapse;font-size:13px;}
+      th,td{border:1px solid #ddd;padding:6px;text-align:left;}
+      th{background:#f0f0f0;}
+      .ok{color:green}.erro{color:red}
+
+      /* form */
+      .form-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+      .form-row label{min-width:120px;font-weight:600;color:#333}
+      .form-row input[type="text"], .form-row input[type="number"]{padding:6px 8px !important;border:1px solid #cfcfcf !important;border-radius:4px !important;background:#fff !important;font-size:13px !important;color:#222 !important;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+      .form-row input[readonly]{background:#f3f6fb !important;border-color:#dcdfe6 !important;cursor:default}
+      .btn{padding:8px 12px;cursor:pointer;border-radius:4px;border:1px solid #cfcfcf;background:#fff}
+      .controls{display:flex;gap:8px;align-items:center}
+      /* table sizing: permitir quebra e scroll interno em telas pequenas */
+      .grid .box table{table-layout:auto; width:100%;}
+      .grid .box table th:nth-child(1){max-width:60px; width:6ch}
+      .grid .box table th:nth-child(2){max-width:120px; width:12ch}
+      .grid .box table th:nth-child(3){max-width:140px; width:14ch}
+      .grid .box table th:nth-child(4){max-width:60px; width:6ch}
+      .grid .box table th:nth-child(5){max-width:90px; width:9ch}
+      .grid .box table th:nth-child(6){max-width:120px; width:12ch}
+
+      /* em telas pequenas, empilha colunas e permite scroll interno nas caixas */
+      @media (max-width: 720px) {
+        .grid{grid-template-columns: 1fr;}
+        .types{order:2}
+        .grid .box{overflow:auto}
+        .form-row{flex-direction:column;align-items:stretch}
+        .form-row label{min-width:0;margin-bottom:6px}
+        .controls{flex-wrap:wrap}
+      }
+      .btn-primary{background:#2b7cff;color:#fff;border-color:#2566d6}
+      .note{font-size:12px;color:#666;margin-top:6px}
+
+      /* força prioridade dentro do host */
+      .form-row input, .btn { box-sizing: border-box !important; }
+      /* floating minimized widget */
+      .floating-minimized { position: fixed; right: 12px; bottom: 12px; z-index: 99999; }
+      .floating-minimized .mini-btn { background:#2b7cff;color:#fff;border:none;padding:10px 12px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.2);cursor:pointer }
+      .minimize-btn { margin-left:8px;padding:6px 8px;border-radius:4px;background:#eee;border:1px solid #d0d0d0;cursor:pointer }
+      .fallback-box { max-width:920px;margin:40px auto;padding:18px;background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.08); }
+      /* footer do app: deve renderizar no final da moldura/iframe */
+      .funarpen-footer { flex: 0 0 auto; padding:10px 12px; text-align:center; border-top:1px solid #e6eefc; background: linear-gradient(180deg, rgba(43,124,255,0.03), rgba(43,124,255,0.01)); color:#2566d6; font-weight:600; }
+      .funarpen-footer small { display:block; font-weight:400; color:#6b7b9a; margin-top:4px }
+    </style>
+
+    <link rel="stylesheet" href="./components/header/app-header.css">
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script>
+      // fallback imediato: evita tela em branco caso o script principal falhe com SyntaxError
+      try {
+        var _app = document.getElementById('app');
+        if (_app) {
+          _app.innerHTML = '<div class="fallback-box">' +
+            '<h2>Monitoramento FUNARPEN - Selos</h2>' +
+            '<p>Carregando a interface... se a página permanecer em branco, recarregue (Disable cache + Ctrl+F5).</p>' +
+            '<div style="margin-top:12px"><button class="btn btn-primary" onclick="window.open(\'/funarpen/html/monitor_selos_funarpen.html\',\'_blank\')">Abrir em nova aba</button>' +
+            '&nbsp;<button class="btn" onclick="location.reload()">Recarregar</button></div>' +
+          '</div>';
+        }
+      } catch(e) { /* noop */ }
+    </script>
+
+    <!-- WR-FrameBridge child snippet: envia altura do filho ao parent via postMessage -->
+    <script src="frame-bridge-child-snippet.js"></script>
+
+    <script>
+      // REDIRECT SE NÃO TEM PARÂMETROS NA URL
+      // Se o HTML foi acessado sem parâmetros (direto de iframe), redireciona para o servlet
+      // que lé do banco e retorna com parâmetros injetados
+      (function() {
+        const logPrefix = '[FunarpenHTML @ ' + new Date().toISOString() + ']';
+        console.log(logPrefix + ' ================== INICIALIZANDO ==================');
+        console.log(logPrefix + ' URL: ' + window.location.href);
+        console.log(logPrefix + ' Search: ' + window.location.search);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const ambientePar = urlParams.get('ambiente_par');
+        const contextoPar = urlParams.get('contexto_par');
+        
+        console.log(logPrefix + ' environment_par: [' + ambientePar + ']');
+        console.log(logPrefix + ' contexto_par: [' + contextoPar + ']');
+        
+        // Se não tem os parâmetros esperados na URL, redireciona para o servlet
+        // MAS: protege contra loop infinito limitando a 1 redirecionamento
+        if (!ambientePar && !contextoPar) {
+          const redirectCount = parseInt(sessionStorage.getItem('funarpen-redirect-count') || '0');
+          console.log(logPrefix + ' redirectCount: ' + redirectCount);
+          
+          if (redirectCount < 1) {
+            // Primeira tentativa: redireciona para o servlet
+            console.log(logPrefix + ' [1ª tentativa] Redirecionando para servlet...');
+            sessionStorage.setItem('funarpen-redirect-count', '1');
+            window.location.href = '/funarpen/monitor';
+            return;
+          } else {
+            // Segunda tentativa falhou: servlet não conseguiu ler parametros
+            // Fallback para padrões de produção
+            console.warn(logPrefix + ' [Fallback] Servlet não retornou parâmetros. Usando padrões.');
+            sessionStorage.removeItem('funarpen-redirect-count');
+            // Continuar com valores padrão em ctxCandidates()
+          }
+        } else {
+          // Tem parâmetros: limpa contador
+          console.log(logPrefix + ' ✅ Parâmetros encontrados na URL. Limpando contador.');
+          sessionStorage.removeItem('funarpen-redirect-count');
+        }
+      })();
+
+      // INJETAR REACT DINAMICAMENTE baseado no contexto_par
+      // Determina qual contexto usar para React libraries
+      (function() {
+        const logPrefix = '[ReactLoader @ ' + new Date().toISOString() + ']';
+        console.log(logPrefix + ' INICIANDO carregamento dinâmico de React');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const contextoPar = urlParams.get('contexto_par') || '/STP'; // padrão produção
+        
+        console.log(logPrefix + ' contextoPar da URL: [' + contextoPar + ']');
+        
+        // Garante que contexto inicia com '/'
+        const ctxPath = contextoPar.startsWith('/') ? contextoPar : '/' + contextoPar;
+        
+        console.log(logPrefix + ' ctxPath normalizado: [' + ctxPath + ']');
+        
+        // Injeta scripts React com o contexto correto
+        // IMPORTANTE: Usa origin + caminho absoluto para evitar problemas com CORS e paths relativos
+        const origin = window.location.origin;
+        const reactUrl = origin + ctxPath + '/components/react/react.production.min.js';
+        const reactDomUrl = origin + ctxPath + '/components/react/react-dom.production.min.js';
+        
+        console.log(logPrefix + ' reactUrl: ' + reactUrl);
+        console.log(logPrefix + ' reactDomUrl: ' + reactDomUrl);
+        
+        // Cria scripts dinamicamente
+        const reactScript = document.createElement('script');
+        reactScript.src = reactUrl;
+        reactScript.onload = function() {
+          console.log(logPrefix + ' ✅ React carregado com sucesso de: ' + reactUrl);
+          const reactDomScript = document.createElement('script');
+          reactDomScript.src = reactDomUrl;
+          reactDomScript.onload = function() {
+            console.log(logPrefix + ' ✅ ReactDOM carregado com sucesso de: ' + reactDomUrl);
+            // Após React e ReactDOM carregarem, carrega app-header
+            const headerScript = document.createElement('script');
+            headerScript.src = './components/header/app-header.js';
+            console.log(logPrefix + ' ↳ Carregando app-header...');
+            document.head.appendChild(headerScript);
+          };
+          reactDomScript.onerror = function() {
+            console.error(logPrefix + ' ❌ Erro ao carregar ReactDOM de: ' + reactDomUrl);
+          };
+          document.head.appendChild(reactDomScript);
+        };
+        reactScript.onerror = function() {
+          console.error(logPrefix + ' ❌ Erro ao carregar React de: ' + reactUrl);
+        };
+        document.head.appendChild(reactScript);
+        console.log(logPrefix + ' Script React adicionado ao DOM');
+      })();
+
+      // RENDERIZAR APP APÓS TODOS OS SCRIPTS CARREGAREM
+      // Aguarda React, ReactDOM e app-header estarem disponíveis
+      (function() {
+        const logPrefix = '[AppRenderer @ ' + new Date().toISOString() + ']';
+        
+        function attemptRender() {
+          if (typeof window.React === 'undefined' || typeof window.ReactDOM === 'undefined') {
+            console.log(logPrefix + ' Aguardando React/ReactDOM...');
+            setTimeout(attemptRender, 100);
+            return;
+          }
+          
+          console.log(logPrefix + ' ✅ React e ReactDOM disponíveis');
+          
+          var shouldRender = false;
+          try {
+            var path = window.location.pathname || '';
+            if (path.indexOf('/funarpen/html/monitor_selos_funarpen.html') !== -1 || window.location.href.indexOf('/monitor_selos_funarpen.html') !== -1) {
+              shouldRender = true;
+            }
+          } catch(e) { console.error(logPrefix + ' Erro ao verificar path:', e); }
+          
+          if (!shouldRender) {
+            console.log(logPrefix + ' ⚠️ Path não confere, render skipped');
+            return;
+          }
+          
+          var appEl = document.getElementById('app');
+          if (!appEl) {
+            console.error(logPrefix + ' ❌ Elemento #app não encontrado');
+            return;
+          }
+          
+          try {
+            console.log(logPrefix + ' Renderizando MonitorSelosFunarpen...');
+            window.ReactDOM.render(window.React.createElement(window.MonitorSelosFunarpen), appEl);
+            console.log(logPrefix + ' ✅ App renderizado com sucesso!');
+          } catch(e) {
+            console.error(logPrefix + ' ❌ Erro ao renderizar:', e);
+            appEl.innerHTML = '<div class="fallback-box"><h2>Erro ao Renderizar</h2><p>Erro: ' + (e.message || e) + '</p></div>';
+          }
+        }
+        
+        // Aguarda um pouco para o app-header.js ser carregado
+        setTimeout(attemptRender, 200);
+      })();
+    </script>
+
+    <script>
+      // auto-resize: envia altura do conteúdo para o pai via postMessage
+      (function(){
+        function sendHeight(){
+          try{
+            var h = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+            try { var fh = document.getElementById('funarpen-footer-height'); if (fh) fh.textContent = 'Altura do conteúdo: ' + h + ' px'; } catch(e){}
+            parent.postMessage({ type: 'funarpen-height', h: h, id: window.location.href }, '*');
+          }catch(e){}
+        }
+        window.addEventListener('load', function(){ sendHeight(); setTimeout(sendHeight, 500); });
+        if (window.ResizeObserver) {
+          try { new ResizeObserver(sendHeight).observe(document.documentElement); } catch(e){}
+        }
+        // fallback interval
+        setInterval(sendHeight, 2000);
+      })();
+
+      // Nota: useState e outros hooks são destructurizados DENTRO de MonitorSelosFunarpen
+      // para garantir que React já está carregado quando a função é chamada
+
+      // Cache para parâmetros lidos do banco
+      let _parametrosCache = null;
+      let _parametrosPromise = null;
+
+      function lerParametros() {
+        // Retorna Promise que resolve com os parâmetros do banco
+        if (_parametrosCache) return Promise.resolve(_parametrosCache);
+        
+        // Tenta ler de URL params (injetados pelo servidor) PRIMEIRO
+        const urlParams = new URLSearchParams(window.location.search);
+        const ambientePar = urlParams.get('ambiente_par');
+        const contextoPar = urlParams.get('contexto_par');
+        
+        if (ambientePar || contextoPar) {
+          // Parâmetros vieram na URL - use como está
+          _parametrosCache = { ambiente_par: ambientePar, contexto_par: contextoPar };
+          return Promise.resolve(_parametrosCache);
+        }
+        
+        // Fallback: retorna null se não tiver params na URL
+        // (O ctxCandidates() vai usar valores padrão)
+        return Promise.resolve(null);
+      }
+
+      function ctxCandidates() {
+        // Sem async/await aqui, retorna promise que resolve com os contextos
+        return lerParametros().then(params => {
+          const candidates = [];
+          const pathParts = window.location.pathname.split('/').filter(Boolean);
+          
+          // Detectar o contexto atual do pathname (primeira parte não-vazia)
+          // Ex: /STP/funarpen/html... -> ctxCurrent = '/STP'
+          const ctxCurrent = pathParts.length ? '/' + pathParts[0] : '';
+
+          // Preferência 1: contexto_par do banco se diferente do atual
+          if (params && params.contexto_par) {
+            const ctx = params.contexto_par;
+            if (ctx && ctx !== ctxCurrent && !candidates.includes(ctx)) {
+              candidates.push(ctx);
+            }
+          }
+
+          // Preferência 2: contexto detectado do pathname
+          if (ctxCurrent && !candidates.includes(ctxCurrent)) {
+            candidates.push(ctxCurrent);
+          }
+
+          // Fallbacks: STP (produção) + webrun5 (desenvolvimento) + funarpen (contexto) + raiz
+          // (Evita duplicação)
+          ['/STP', '/webrun5', '/funarpen', ''].forEach(c => { 
+            if (!candidates.includes(c)) candidates.push(c); 
+          });
+
+          return candidates;
+        });
+      }
+
+      // Exportar ctxCandidates para window global (necessário para importarSelos)
+      window.ctxCandidates = ctxCandidates;
+
+      function tryFetchJson(path) {
+        // debug helper: cria banner de debug leve no canto inferior esquerdo
+        try {
+          if (!window.funarpenDebug) {
+            window.funarpenDebug = function(txt){
+              try {
+                var d = document.getElementById('funarpen-debug');
+                if (!d) {
+                  d = document.createElement('div'); d.id = 'funarpen-debug';
+                  d.style.position = 'fixed'; d.style.left = '8px'; d.style.bottom = '8px'; d.style.zIndex = 200000; d.style.background = 'rgba(0,0,0,0.6)'; d.style.color = '#fff'; d.style.padding = '6px 10px'; d.style.borderRadius = '6px'; d.style.fontSize = '12px'; d.style.maxWidth = '60vw'; d.style.maxHeight = '40vh'; d.style.overflow = 'auto'; d.style.fontFamily='Segoe UI, Tahoma, sans-serif'; document.body.appendChild(d);
+                }
+                var now = (new Date()).toLocaleTimeString();
+                d.textContent = now + ' - ' + txt;
+              } catch(e){}
+            };
+          }
+        } catch(e){}
+
+        return ctxCandidates().then(candidates => {
+          return new Promise((resolve, reject) => {
+            let i = 0;
+            function attempt() {
+              if (i >= candidates.length) { window.funarpenDebug && window.funarpenDebug('ALL CANDIDATES FAILED for ' + path); return reject(new Error('all failed')); }
+              const candidate = candidates[i++];
+
+              // normaliza o candidate para formar a URL correta
+              // se candidate for vazio -> path absoluto (ex: /maker/api/parametros)
+              // se candidate começar com '/' -> candidate + path
+              // também tenta com origin (útil se houver proxy/contexto)
+              const tryUrls = [];
+              if (!candidate) {
+                tryUrls.push(path);
+                tryUrls.push(window.location.origin + path);
+              } else if (candidate.startsWith('/')) {
+                tryUrls.push(candidate.replace(/\/$/, '') + path);
+                tryUrls.push(window.location.origin + candidate.replace(/\/$/, '') + path);
+              } else {
+                tryUrls.push(candidate.replace(/\/$/, '') + path);
+              }
+
+              (function tryNextUrl(j){
+                if (j >= tryUrls.length) { window.funarpenDebug && window.funarpenDebug('candidate exhausted: ' + candidate); attempt(); return; }
+                const url = tryUrls[j];
+                window.funarpenDebug && window.funarpenDebug('trying ' + url);
+                fetch(url, { credentials: 'same-origin' })
+                  .then(r => {
+                    if (!r.ok) { window.funarpenDebug && window.funarpenDebug('failed ' + url + ' status ' + r.status); throw new Error('status ' + r.status); }
+                    return r.json();
+                  })
+                  .then(json => { window.funarpenDebug && window.funarpenDebug('ok ' + url + ' -> ' + path); resolve({ json, candidate }); })
+                  .catch((err) => { window.funarpenDebug && window.funarpenDebug('err ' + url + ' -> ' + (err && err.message)); tryNextUrl(j+1); });
+              })(0);
+            }
+            attempt();
+          });
+        });
+      }
+
+      function MonitorSelosFunarpen() {
+        // Destructurizar hooks DENTRO da função para garantir React está disponível
+        const { useState, useEffect, useMemo, useRef } = window.React || {};
+        
+        const [codigoOficio, setCodigoOficio] = useState("");
+        const [naturezas, setNaturezas] = useState("");
+        const [usuarioParam, setUsuarioParam] = useState("");
+        const [pedidoField, setPedidoField] = useState("");
+        const [minimized, setMinimized] = useState(false);
+        const [logs, setLogs] = useState([]);
+        const [selos, setSelos] = useState([]);
+        const [estoque, setEstoque] = useState([]);
+        const [msg, setMsg] = useState("");
+        const [selectedPedido, setSelectedPedido] = useState(null);
+        const [errorModal, setErrorModal] = useState(null);
+        const apiBaseRef = useRef(null);
+        const [page, setPage] = useState(1);
+        const [pageSize, setPageSize] = useState(10);
+
+        const paged = useMemo(() => {
+          const total = (logs && logs.length) ? logs.length : 0;
+          const ps = pageSize || 10;
+          const totalPages = Math.max(1, Math.ceil(total / ps));
+          const current = Math.min(Math.max(1, page), totalPages);
+          const start = (current - 1) * ps;
+          const items = (logs || []).slice(start, start + ps);
+          return { items, total, totalPages, current };
+        }, [logs, page, pageSize]);
+
+        useEffect(()=>{ setPage(1); }, [pageSize]);
+
+        // Visual test mode: se URL contém ?visualTest=1, popula dados mock para teste visual
+        const _visualTest = (function(){ try { const p = new URLSearchParams(window.location.search); return p.get('visualTest') === '1' || p.get('visualTest') === 'true'; } catch(e){ return false; } })();
+        useEffect(()=>{
+          if (!_visualTest) return;
+          try {
+            setCodigoOficio('181196');
+            setUsuarioParam('tabelionatotibagi@uol.com.br');
+            setNaturezas('tp,tn,ah');
+            const mockSelos = [
+              { ID_LOG: 1001, pedido_sel: 5001, tiposelo_sel: 'TP1', data_pedido: '2026-01-25', tipo_operacao: 'EMISSAO', qtde_carregada: 3, status: 'BAIXADO' },
+              { ID_LOG: 1002, pedido_sel: 5002, tiposelo_sel: 'TP3', data_pedido: '2026-01-24', tipo_operacao: 'REEMISSAO', qtde_carregada: 1, status: 'ERRO' },
+              { ID_LOG: 1003, pedido_sel: 5003, tiposelo_sel: 'TPD', data_pedido: '2026-01-23', tipo_operacao: 'EMISSAO', qtde_carregada: 2, status: 'BAIXADO' }
+            ];
+            setSelos(mockSelos);
+            setLogs([ { ID_LOG: 1001, data: '2026-01-25', tipo: 'EMISSAO', qtde: 3, status: 'BAIXADO' }, { ID_LOG: 1002, data: '2026-01-24', tipo: 'REEMISSAO', qtde: 1, status: 'ERRO' } ]);
+            setMsg('Visual Test Mode ativo');
+            apiBaseRef.current = '';
+          } catch(e){}
+        }, []);
+
+        useEffect(() => {
+          // busca parametros para popular CódigoOficio, Naturezas e Usuário
+            tryFetchJson('/funarpen/maker/api/parametros')
+            .then(({ json, candidate }) => {
+              if (candidate) apiBaseRef.current = candidate;
+              const codigo = json && (json.CODTABEL_PAR || json.codtabel_par || json.codigoOficio || json.codigo_oficio);
+              const nat = json && (json.SELOS_PAR && json.SELOS_PAR.naturezas);
+              console.log('[Parametros] JSON completo:', JSON.stringify(json).substring(0, 500));
+              console.log('[Parametros] SELOS_PAR:', json && json.SELOS_PAR);
+              console.log('[Parametros] naturezas encontradas:', nat);
+              const usuario = json && (json.USUARIO_PAR || json.usuario_par || json.USUARIO || json.usuario);
+              if (codigo) setCodigoOficio(String(codigo));
+              if (nat) setNaturezas(String(nat));
+              
+              // Tentar obter usuário: 1) ebfGetUserLogin (nativa Maker), 2) USUARIO_PAR (banco)
+              let usuarioFinal = null;
+              try {
+                if (typeof window.ebfGetUserLogin === 'function') {
+                  const userLogin = window.ebfGetUserLogin();
+                  if (userLogin) usuarioFinal = String(userLogin);
+                }
+              } catch(e) { console.warn('[Monitor] Erro ao chamar ebfGetUserLogin():', e); }
+              
+              // Fallback: usar USUARIO_PAR do banco se ebfGetUserLogin não retornou
+              if (!usuarioFinal && usuario) {
+                usuarioFinal = String(usuario);
+              }
+              
+              if (usuarioFinal) setUsuarioParam(usuarioFinal);
+            })
+            .catch(() => {
+              // fallback para sessão/sLista
+              tryFetchJson('/funarpen/maker/api/session/info')
+                .then(({ json, candidate }) => {
+                  if (candidate) apiBaseRef.current = candidate;
+                  if (json && json.sLista) {
+                    const s = json.sLista;
+                    const codigo = s.CODTABEL_PAR || s.codtabel_par || s.codigoOficio || s.codigo_oficio;
+                    const nat = s.SELOS_PAR && s.SELOS_PAR.naturezas;
+                    console.log('[Parametros-Fallback] SELOS_PAR:', s && s.SELOS_PAR);
+                    console.log('[Parametros-Fallback] naturezas encontradas:', nat);
+                    if (codigo) setCodigoOficio(String(codigo));
+                    if (nat) setNaturezas(String(nat));
+                  }
+                })
+                .catch(()=>{ /* sem parâmetros */ });
+            })
+            .finally(() => carregarMonitor());
+        }, []);
+
+        // receber mensagens do pai (minimizar/restaurar/status)
+        useEffect(() => {
+          function onParentMessage(e) {
+            try {
+              const m = e && e.data;
+              if (!m || m.type !== 'funarpen-minimize') return;
+              if (m.action === 'restore') {
+                try { setMinimized(false); } catch(err) {}
+              }
+            } catch(err) {}
+          }
+          window.addEventListener('message', onParentMessage);
+          return () => window.removeEventListener('message', onParentMessage);
+        }, []);
+
+        function carregarMonitor() {
+          console.log('[carregarMonitor] Iniciando busca de dados...');
+          tryFetchJson('/funarpen/maker/api/funarpen/selos/monitor?limit=10')
+            .then(({ json, candidate }) => {
+              console.log('[carregarMonitor] Dados recebidos:', json);
+              if (candidate && !apiBaseRef.current) apiBaseRef.current = candidate;
+              if (Array.isArray(json)) { setSelos(json); setLogs([]); setEstoque([]); console.log('[carregarMonitor] Array direto, selos:', json.length); }
+              else { setLogs(json.logs || []); setSelos(json.selos || []); setEstoque(json.estoque || []); console.log('[carregarMonitor] Logs:', json.logs?.length, 'Selos:', json.selos?.length, 'Estoque:', json.estoque?.length); }
+            })
+            .catch(() => { setLogs([]); setSelos([]); });
+        }
+
+        const tipos = useMemo(() => {
+          const list = ['TP1','TP3','TP4','TPD','TPI','TN1','TN2','TN3','TNI','AH','TP5'];
+          const codeToLabel = {
+            '0003':'TPD','0007':'TN1','0002':'TN2','0008':'TN3','0005':'TNI','0006':'TN5',
+            '0001':'TP1','0009':'TP3','0010':'TP4','0011':'TP5','0004':'TPI'
+          };
+          const map = {};
+          list.forEach(t => map[t] = { tipo: t, pedido: '-', importado: 0 });
+          (selos || []).forEach(s => {
+            const raw = String(s.tiposelo_sel || s.tipo || '').toUpperCase() || '';
+            const tp = codeToLabel[raw] || raw || 'OUTRO';
+            const qty = Number(s.qtde_carregada || s.qtde || s.qtd || 1) || 0;
+            if (!map[tp]) map[tp] = { tipo: tp, pedido: s.pedido_sel || s.pedido || '-', importado: 0 };
+            map[tp].importado = (map[tp].importado || 0) + qty;
+            if (!map[tp].pedido || map[tp].pedido === '-') map[tp].pedido = s.pedido_sel || s.pedido || '-';
+          });
+          return Object.values(map);
+        }, [selos]);
+
+        const estoqueList = useMemo(() => {
+          const codeToLabel = { '0003':'TPD','0007':'TN1','0002':'TN2','0008':'TN3','0005':'TNI','0006':'TN5', '0001':'TP1','0009':'TP3','0010':'TP4','0011':'TP5','0004':'TPI' };
+          const map = {};
+          (estoque || []).forEach(e => {
+            const raw = String(e.tiposelo || e.tiposelo_sel || '').toUpperCase();
+            const tp = codeToLabel[raw] || raw || 'OUTRO';
+            map[tp] = { tipo: tp, disponivel: Number(e.disponivel || 0) };
+          });
+          // garantir ordem conhecida
+          const order = ['TP1','TP3','TP4','TPD','TPI','TN1','TN2','TN3','TNI','AH','TP5'];
+          const res = [];
+          order.forEach(k => { if (map[k]) res.push(map[k]); else res.push({ tipo: k, disponivel: 0 }); });
+          return res;
+        }, [estoque]);
+
+        async function importarSelos() {
+          setMsg("🔄 Processando importação...");
+          console.log('[importarSelos] Iniciando busca de pedidos...');
+          
+          // Mostrar spinner de loading
+          window.funarpenShowSpinner('🔄 Buscando Pedidos de Selos', 'Conectando ao servidor...');
+          
+          // preparar payload (o usuário virá de getRemoteUser() no backend, não é necessário enviar)
+          const payload = {
+            codigoOficio: codigoOficio ? parseInt(codigoOficio) : 0,
+            naturezas: (function(){
+              if (typeof naturezas === 'string') {
+                try {
+                  const trimmed = naturezas.trim();
+                  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                    const parsed = JSON.parse(trimmed);
+                    if (Array.isArray(parsed)) return parsed;
+                    if (parsed && parsed.naturezas) return parsed.naturezas;
+                  }
+                } catch(e) {}
+                return naturezas.split(',').map(s => s.trim()).filter(Boolean);
+              }
+              return naturezas;
+            })(),
+            ...(pedidoField && pedidoField !== '' ? { pedido: parseInt(pedidoField) } : {})
+          };
+
+          console.log('[importarSelos] Payload:', payload);
+          
+          // Tentar obter bases de contextos
+          let bases = [];
+          try {
+            if (apiBaseRef.current) {
+              bases = [apiBaseRef.current];
+            }
+            const candidates = await window.ctxCandidates();
+            bases.push(...candidates);
+            console.log('[importarSelos] Contextos disponíveis:', bases);
+          } catch(e) {
+            console.error('[importarSelos] Erro ao obter contextos:', e);
+            window.funarpenUpdateSpinner('⚠️ Erro', 'Falha ao determinar contextos');
+            setMsg('Erro ao determinar contextos do servidor');
+            window.funarpenHideSpinner();
+            return;
+          }
+
+          try { window.parent.postMessage({ type: 'funarpen-minimize', action: 'status', status: 'running', id: window.location.href }, '*'); } catch(e){}
+          
+          let lastError = null;
+          let baseIndex = 0;
+          
+          for (const b of bases) {
+            baseIndex++;
+            const url = b + '/maker/api/funarpen/selos/importar';
+            console.log(`[importarSelos] Tentativa ${baseIndex}/${bases.length} URL:`, url);
+            window.funarpenUpdateSpinner('🔄 Buscando Pedidos de Selos', `Tentativa ${baseIndex}/${bases.length}...\nURL: ${url.replace(/^.*\/(STP|webrun5|funarpen)/, '...$1')}`);
+            
+            try {
+              console.log('[importarSelos] Enviando POST com payload:', payload);
+              const resp = await fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json;charset=UTF-8' },
+                body: JSON.stringify(payload)
+              });
+              console.log('[importarSelos] Response status:', resp.status);
+              
+              const text = await resp.text();
+              console.log('[importarSelos] Response body (primeiros 200 chars):', text.substring(0, 200));
+              
+              let body;
+              try { body = text ? JSON.parse(text) : null; } catch(e) { body = text; }
+              
+              const hasData = body && (
+                body.status === 'OK' ||
+                (Array.isArray(body.pedidos) && body.pedidos.length > 0) ||
+                (typeof body.importados === 'number' && body.importados > 0) ||
+                (typeof body.codigoStatus === 'number' && body.codigoStatus >= 0 && body.pedidos && Object.keys(body.pedidos).length > 0)
+              );
+              
+              if (!resp.ok && !hasData) {
+                let errJson = null;
+                try { errJson = text ? JSON.parse(text) : null; } catch(e) { errJson = null; }
+                const code = errJson && (errJson.codigoStatus || errJson.code) ? (errJson.codigoStatus || errJson.code) : resp.status;
+                const message = errJson && (errJson.mensagemStatus || errJson.message) ? (errJson.mensagemStatus || errJson.message) : text;
+                console.error('[importarSelos] Erro na tentativa:', { code, message, url });
+                lastError = { code, message, url };
+                setErrorModal({ title: 'Erro ao tentar baixar selos', code: code, message: message, raw: errJson || text });
+                try { window.parent.postMessage({ type: 'funarpen-minimize', action: 'status', status: 'error', id: window.location.href, detail: { code } }, '*'); } catch(e){}
+                window.funarpenHideSpinner();
+                return;
+              }
+              apiBaseRef.current = b;
+              if (hasData) {
+                const importados = (body && (body.importados || 0)) || 0;
+                console.log('[importarSelos] ✅ Sucesso! Importados:', importados);
+                window.funarpenUpdateSpinner('✅ Sucesso!', `${importados} selos importados com sucesso`);
+                setTimeout(() => {
+                  window.funarpenHideSpinner();
+                  setMsg("✅ Importação concluída. Importados: " + importados);
+                  showToast('success', '✅ ' + importados + ' selos importados com sucesso!');
+                  carregarMonitor();
+                }, 800);
+              } else if (body && body.status === 'ERRO') {
+                let errObj = null;
+                try { errObj = body.mensagem ? JSON.parse(body.mensagem) : null; } catch(e) { errObj = null; }
+                const code = (errObj && (errObj.codigoStatus || errObj.code)) || body.codigoStatus || 'N/A';
+                const message = (errObj && (errObj.mensagemStatus || errObj.message)) || body.mensagem || JSON.stringify(body);
+                console.error('[importarSelos] Erro na resposta:', { code, message });
+                window.funarpenHideSpinner();
+                setErrorModal({ title: 'Erro ao tentar baixar selos', code: code, message: message, raw: errObj || body });
+                try { window.parent.postMessage({ type: 'funarpen-minimize', action: 'status', status: 'error', id: window.location.href, detail: { code } }, '*'); } catch(e){}
+                return;
+              } else {
+                console.log('[importarSelos] Resposta:', body);
+                window.funarpenHideSpinner();
+                setMsg("✅ Resposta: " + (body && body.mensagem ? body.mensagem : JSON.stringify(body)));
+              }
+              try { window.parent.postMessage({ type: 'funarpen-minimize', action: 'status', status: 'done', id: window.location.href, detail: body }, '*'); } catch(e){}
+              return;
+            } catch (err) {
+              console.error('[importarSelos] Erro na tentativa:', err);
+              lastError = err.message || String(err);
+            }
+          }
+          window.funarpenHideSpinner();
+          const errorMsg = "❌ Erro ao importar: " + (lastError || 'nenhum endpoint disponível');
+          setMsg(errorMsg);
+          console.error('[importarSelos] ❌ Falhou após todas as tentativas:', lastError);
+          showToast('error', errorMsg);
+          try { window.parent.postMessage({ type: 'funarpen-minimize', action: 'status', status: 'error', id: window.location.href, detail: { message: lastError } }, '*'); } catch(e){}
+        }
+
+        async function mostrarPedido(pedidoIdent) {
+          setSelectedPedido(pedidoIdent);
+          console.debug('mostrarPedido start', pedidoIdent);
+          setMsg('Carregando pedido ' + pedidoIdent + '...');
+          // tentar buscar por pedidoId primeiro, depois por pedido
+          const tryPaths = [
+            '/maker/api/funarpen/selos/monitor?pedidoId=' + encodeURIComponent(pedidoIdent),
+            '/maker/api/funarpen/selos/monitor?pedido=' + encodeURIComponent(pedidoIdent)
+          ];
+          for (const p of tryPaths) {
+            try {
+              const { json } = await tryFetchJson(p);
+              if (json) {
+                console.debug('mostrarPedido response from', p, json);
+                if (Array.isArray(json.selos)) {
+                  setSelos(json.selos);
+                } else if (Array.isArray(json)) {
+                  setSelos(json);
+                } else if (json.selos && Array.isArray(json.selos)) {
+                  setSelos(json.selos);
+                }
+                setMsg('Pedido ' + pedidoIdent + ' carregado.');
+                return;
+              }
+            } catch (e) {
+              // tentar próximo
+            }
+          }
+          // fallback: se pedidoIdent for um id de log (numérico), tentar endpoint que retorna response_json
+          try {
+            const asNum = Number(pedidoIdent);
+            if (!isNaN(asNum) && asNum > 0) {
+              try {
+                const { json } = await tryFetchJson('/maker/api/funarpen/selos/logapi?id_log=' + encodeURIComponent(asNum));
+                console.debug('mostrarPedido logapi response', json);
+                if (json) {
+                  if (Array.isArray(json.selos)) {
+                    setSelos(json.selos);
+                  } else if (json.selos && Array.isArray(json.selos)) {
+                    setSelos(json.selos);
+                  } else if (json.raw && json.raw.selos) {
+                    setSelos(json.raw.selos);
+                  }
+                  setMsg('Pedido ' + pedidoIdent + ' carregado a partir do log.');
+                  return;
+                }
+              } catch (e) { /* ignore */ }
+            }
+          } catch(e){}
+          try {
+            const filtered = (selos || []).filter(s => String(s.pedido_sel || s.pedido || s.pedidoId || s.ID_PEDIDO) === String(pedidoIdent));
+            console.debug('mostrarPedido local filter found', filtered && filtered.length ? filtered.length : 0);
+            if (filtered.length > 0) {
+              setSelos(filtered);
+              setMsg('Pedido ' + pedidoIdent + ' filtrado localmente.');
+            } else {
+              setMsg('Nenhum selo encontrado para o pedido ' + pedidoIdent + '.');
+            }
+          } catch (err) {
+            setMsg('Erro ao carregar pedido: ' + (err && err.message ? err.message : String(err)));
+          }
+        }
+
+        // Reimportar um pedido já presente em `log_selos_api` (fará INSERT somente)
+        async function reimportPedido(pedidoIdent, idLog) {
+          if (!pedidoIdent && !idLog) { setMsg('PedidoId não informado'); return; }
+          const pid = pedidoIdent || idLog;
+          const confirmMsg = 'Confirma reimportar pedido ' + pid + '?\n\nA operação tentará inserir apenas registros não existentes (sem UPDATE).';
+          if (!window.confirm(confirmMsg)) { setMsg('Reimportação cancelada.'); return; }
+          setMsg('Reimportando pedido ' + pid + '...');
+          const payload = { pedidoId: Number(pedidoIdent) || null, id_log: idLog || null, insertOnly: true };
+          const bases = apiBaseRef.current ? [apiBaseRef.current, ...window['ctx'+'Candidates']()] : window['ctx'+'Candidates']();
+          let lastError = null;
+          for (const b of bases) {
+            try {
+              const endpoint = (b && b.endsWith('/') ? b.slice(0,-1) : b) + '/maker/api/funarpen/selos/reimport';
+              const resp = await fetch(endpoint, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type':'application/json;charset=UTF-8' }, body: JSON.stringify(payload) });
+              if (resp && resp.ok) {
+                setMsg('Reimportação iniciada no endpoint: ' + b);
+                showToast('success', 'Reimportação iniciada');
+                return;
+              } else {
+                const txt = await resp.text().catch(()=>null);
+                lastError = txt || resp.statusText || resp.status;
+              }
+            } catch (err) {
+              lastError = err && err.message ? err.message : String(err);
+            }
+          }
+          setMsg('Erro na reimportação: ' + (lastError || 'nenhuma base disponível'));
+          showToast('error', 'Erro na reimportação: ' + (lastError || 'nenhuma base disponível'));
+        }
+
+        function renderRow(l) {
+          var pid = l.pedidoId || l.pedido || l.pedido_sel || l.ID_LOG || l.id;
+          function onRowClick(){ try{ mostrarPedido(pid); }catch(e){} }
+          function onPdfClick(e){ try{ e.stopPropagation(); (async function(){
+                var id = (l.ID_LOG || l.id);
+                var path = '/relatorios/selos/baixa/pdf?id_log=' + encodeURIComponent(id);
+                var candidates = apiBaseRef.current ? [apiBaseRef.current, ...window['ctx'+'Candidates']()] : window['ctx'+'Candidates']();
+                // normalize candidates and try sequentially
+                for (var i=0;i<candidates.length;i++){
+                  try{
+                    var base = candidates[i] || '';
+                    // ensure no duplicate slashes
+                    if (base.endsWith('/')) base = base.slice(0,-1);
+                    var testUrl = (base || '') + path;
+                    // try a HEAD request first
+                    var ok = false;
+                    try {
+                      var r = await fetch(testUrl, { method: 'HEAD', credentials: 'same-origin' });
+                      ok = r && r.ok;
+                    } catch(e) {
+                      // fallback to GET
+                      try { var r2 = await fetch(testUrl, { method: 'GET', credentials: 'same-origin' }); ok = r2 && r2.ok; } catch(e2) { ok = false; }
+                    }
+                    if (ok) { window.open(testUrl); return; }
+                  }catch(ignore){}
+                }
+                showToast('error','Relatório não encontrado (404) nas bases candidatas');
+            })(); }catch(err){} }
+          return React.createElement('tr',{key: l.ID_LOG || l.id, onClick:onRowClick},
+            React.createElement('td',null,l.ID_LOG || l.id),
+            React.createElement('td',null, l.pedidoId || l.pedido || l.pedido_sel || l.PEDIDO_ID || '-'),
+            React.createElement('td',null,l.data_pedido || l.data || '-'),
+            React.createElement('td',null,l.tipo_operacao || l.tipo || '-'),
+            React.createElement('td',null,l.qtde_carregada || l.qtde || 0),
+            React.createElement('td',{className: l.status === 'ERRO' ? 'erro' : 'ok'}, l.status || 'BAIXADO'),
+            React.createElement('td',null,
+              React.createElement('button',{className:'btn',onClick:(e)=>{ try{ e.stopPropagation(); reimportPedido(pid, l.ID_LOG); }catch(err){} }},'Reimportar'),
+              ' ',
+              React.createElement('button',{className:'btn',onClick:onPdfClick},'Auditoria PDF')
+            )
+          );
+        }
+
+        function openInAppTab() {
+          var _candidate = apiBaseRef.current || window['ctx'+'Candidates']()[0];
+          var url = (_candidate || '') + '/funarpen/html/monitor_selos_funarpen.html';
+          var title = 'Monitoramento FUNARPEN - Selos';
+          try {
+            if (window.parent && typeof window.parent.openTab === 'function') {
+              window.parent.openTab(url, { title });
+              return;
+            }
+            if (window.top && typeof window.top.openTab === 'function') {
+              window.top.openTab(url, { title });
+              return;
+            }
+          } catch (e) {}
+          try {
+            window.parent.postMessage({ type: 'openTab', url: url, title: title }, '*');
+            return;
+          } catch (e) {}
+          window.open(url, '_blank');
+        }
+
+        // Reintroduzindo gradualmente: AppHeader + formulário de importação + modal + grid
+        return React.createElement('div', null,
+          React.createElement('div', {style: { position: 'relative' }},
+            (window.AppHeader ? React.createElement(window.AppHeader, { title: 'Monitoramento FUNARPEN - Selos', subtitle: 'Selos', version: 'v11.12', userName: usuarioParam, userLogin: usuarioParam }) : React.createElement('h2', null, 'Monitoramento FUNARPEN - Selos')),
+            React.createElement('button', {
+              title: 'Minimizar',
+              onClick: ()=>{ setMinimized(true); try { window.parent.postMessage({ type: 'funarpen-minimize', action: 'minimize', id: window.location.href }, '*'); } catch(e){} },
+              style: { position: 'absolute', right: 12, top: 12, border: 'none', background: 'transparent', cursor: 'pointer', padding: 6, borderRadius: 4 }
+            }, '\u2013')
+          ),
+
+          !minimized ? React.createElement('div', {className:'box'},
+            React.createElement('strong',null,'Importar Selos'),
+
+            React.createElement('div',{className:'form-row'},
+              React.createElement('label',null,'Código Ofício:'),
+              React.createElement('input',{type:'text',value:codigoOficio || '',readOnly:true,size:12})
+            ),
+
+            React.createElement('div',{className:'form-row'},
+              React.createElement('label',null,'Usuário (API):'),
+              React.createElement('input',{type:'text',value:usuarioParam || '',readOnly:true,size:20})
+            ),
+
+            React.createElement('div',{className:'form-row'},
+              React.createElement('label',null,'Naturezas:'),
+              React.createElement('input',{type:'text',value:naturezas || '',readOnly:true,size:30})
+            ),
+
+            React.createElement('div',{className:'form-row'},
+              React.createElement('label',null,'Pedido (opcional):'),
+              React.createElement('input',{type:'number',value:pedidoField || '',onChange:(e)=>setPedidoField(e.target.value),placeholder:'Informe ID do pedido (opcional)'})
+            ),
+
+            React.createElement('div',{className:'controls',style:{marginTop:8}},
+              React.createElement('button',{className:'btn btn-primary',onClick:importarSelos},'Importar Selos'),
+              React.createElement('button',{className:'btn',onClick:carregarMonitor,type:'button'},'Atualizar'),
+              React.createElement('button',{className:'btn btn-success',onClick:persistSelos,disabled:!(selos && selos.length),title: (selos && selos.length) ? '' : 'Nenhum selo para persistir'},'Persistir Selos'),
+              React.createElement('button',{className:'btn',onClick:exportSelosJson,type:'button'},'Exportar JSON')
+            ),
+
+            React.createElement('div',{className:'note'},msg)
+          ) : React.createElement('div', {className:'floating-minimized'},
+            React.createElement('div',null,
+              React.createElement('button',{className:'mini-btn',onClick:()=>{ setMinimized(false); try { window.parent.postMessage({ type: 'funarpen-minimize', action: 'restore', id: window.location.href }, '*'); } catch(e){} }},'Abrir Monitor Selos')
+            )
+          ),
+
+          // error modal (simples)
+          errorModal ? React.createElement('div',{style:{position:'fixed',left:0,top:0,right:0,bottom:0,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999}},
+            React.createElement('div',{style:{background:'#fff',padding:20,borderRadius:8,width:520,maxWidth:'90%'}},
+              React.createElement('h3',null,errorModal.title || 'Erro'),
+              React.createElement('div',{style:{marginBottom:8,fontWeight:600}},'Codigo: ' + (errorModal.code || 'N/A')),
+              React.createElement('div',{style:{marginBottom:12,whiteSpace:'pre-wrap'}}, errorModal.message || ''),
+              React.createElement('details',null,
+                React.createElement('summary',null,'Ver JSON completo'),
+                React.createElement('pre',{style:{maxHeight:300,overflow:'auto',background:'#f7f7f7',padding:8,borderRadius:4}}, JSON.stringify(errorModal.raw, null, 2))
+              ),
+              React.createElement('div',{style:{textAlign:'right',marginTop:12}},
+                React.createElement('button',{className:'btn',onClick:()=>setErrorModal(null)},'Fechar')
+              )
+            )
+          ) : null,
+
+          // grid: tipos + últimos pedidos
+          React.createElement('div',{className:'grid'},
+            React.createElement('div',{className:'box types'},
+              React.createElement('h3',null,'TIPOS DE SELOS'),
+              tipos && tipos.map ? tipos.map(function(t){ return React.createElement('div',{key:t.tipo,className:'types-row'}, React.createElement('div',null,t.tipo + ' | ' + (t.pedido||'-')), React.createElement('div',null,'Importado: ' + t.importado) ); }) : React.createElement('div',null,'Nenhum tipo'),
+              React.createElement('h3', { style: { marginTop: 12 } }, 'ESTOQUE ATUAL DISPONIVEL'),
+              estoqueList && estoqueList.map ? estoqueList.map(function(e){ return React.createElement('div',{key:'estoque-'+e.tipo,className:'types-row'}, React.createElement('div',null,e.tipo + ' | '), React.createElement('div',null,'Disponível: ' + e.disponivel) ); }) : React.createElement('div',null,'Nenhum estoque')
+            ),
+
+            React.createElement('div',{className:'box'},
+              React.createElement('h3',null,'ÚLTIMOS PEDIDOS IMPORTADOS (log_selos – últimos 10)'),
+              React.createElement('div', null,
+                React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},
+                  React.createElement('div',null,
+                    React.createElement('label',null,'Linhas:'),
+                    React.createElement('select',{value:pageSize,onChange:(e)=>setPageSize(parseInt(e.target.value,10)),style:{marginLeft:6}},
+                      React.createElement('option',{value:5},'5'),
+                      React.createElement('option',{value:10},'10'),
+                      React.createElement('option',{value:20},'20')
+                    )
+                  ),
+                  React.createElement('div',null,
+                    React.createElement('button',{className:'btn',onClick:()=>setPage(Math.max(1, paged.current-1)),disabled:paged.current<=1},'Anterior'),
+                    React.createElement('span',{style:{margin:'0 8px'}}, 'Página ' + paged.current + ' de ' + paged.totalPages),
+                    React.createElement('button',{className:'btn',onClick:()=>setPage(Math.min(paged.totalPages, paged.current+1)),disabled:paged.current>=paged.totalPages},'Próxima')
+                  )
+                ),
+                React.createElement('table',null,
+                  React.createElement('thead',null,
+                    React.createElement('tr',null,
+                      React.createElement('th',null,'ID'),
+                      React.createElement('th',null,'PedidoId'),
+                      React.createElement('th',null,'Data'),
+                      React.createElement('th',null,'Tipo'),
+                      React.createElement('th',null,'Qtde'),
+                      React.createElement('th',null,'Status'),
+                      React.createElement('th',null,'')
+                    )
+                  ),
+                  React.createElement('tbody',null,
+                    (paged && paged.items && paged.items.length) ? paged.items.map(function(l){ return renderRow(l); }) : React.createElement('tr',null,React.createElement('td',{colSpan:7},'Nenhum log encontrado'))
+                  )
+                )
+              )
+            )
+          )
+          ,
+          // Rodapé fixo ao final da moldura
+          React.createElement('div', { className: 'funarpen-footer' },
+            React.createElement('div', { id: 'funarpen-footer-main' }, 'FIM DO APP — fim da moldura'),
+            React.createElement('small', { id: 'funarpen-footer-sub' }, 'Se você enxergar espaço abaixo deste rodapé, o iframe não está ajustando corretamente.'),
+            React.createElement('div', { id: 'funarpen-footer-height', style: { marginTop: '6px', fontSize: '12px', color: '#4a5a7a' } }, 'Altura do conteúdo: —')
+          )
+        );
+      }
+      
+      // Exportar para window para que o AppRenderer consiga acessar
+      window.MonitorSelosFunarpen = MonitorSelosFunarpen;
+
+      // Estilos do spinner de loading
+      const spinnerStyles = `
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse-box { 0%, 100% { box-shadow: 0 0 0 0 rgba(43, 124, 255, 0.7); } 50% { box-shadow: 0 0 0 15px rgba(43, 124, 255, 0); } }
+        .funarpen-spinner-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0, 0, 0, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 50000;
+          backdrop-filter: blur(2px);
+        }
+        .funarpen-spinner-box {
+          background: #fff;
+          border-radius: 12px;
+          padding: 40px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+          text-align: center;
+          min-width: 320px;
+          animation: pulse-box 2s infinite;
+        }
+        .funarpen-spinner-circle {
+          width: 50px;
+          height: 50px;
+          margin: 0 auto 20px;
+          border: 4px solid #f0f0f0;
+          border-top: 4px solid #2b7cff;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        .funarpen-spinner-text {
+          font-size: 16px;
+          color: #333;
+          font-weight: 600;
+          margin-bottom: 8px;
+        }
+        .funarpen-spinner-subtext {
+          font-size: 13px;
+          color: #666;
+          margin-bottom: 12px;
+        }
+        .funarpen-spinner-progress {
+          width: 100%;
+          height: 4px;
+          background: #eee;
+          border-radius: 2px;
+          overflow: hidden;
+          margin-top: 12px;
+        }
+        .funarpen-spinner-progress-bar {
+          height: 100%;
+          background: linear-gradient(90deg, #2b7cff, #2566d6);
+          border-radius: 2px;
+          animation: progress-anim 3s ease-in-out infinite;
+        }
+        @keyframes progress-anim {
+          0% { width: 10%; }
+          50% { width: 90%; }
+          100% { width: 10%; }
+        }
+      `;
+
+      // Adicionar estilos de spinner ao documento
+      if (!document.getElementById('funarpen-spinner-styles')) {
+        const styleEl = document.createElement('style');
+        styleEl.id = 'funarpen-spinner-styles';
+        styleEl.textContent = spinnerStyles;
+        document.head.appendChild(styleEl);
+      }
+
+      // Função para mostrar spinner de loading
+      window.funarpenShowSpinner = function(message = 'Importando Selos', subtext = 'Buscando pedidos do servidor...') {
+        let overlay = document.getElementById('funarpen-spinner-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'funarpen-spinner-overlay';
+          overlay.className = 'funarpen-spinner-overlay';
+          overlay.innerHTML = `
+            <div class="funarpen-spinner-box">
+              <div class="funarpen-spinner-circle"></div>
+              <div class="funarpen-spinner-text">${message}</div>
+              <div class="funarpen-spinner-subtext">${subtext}</div>
+              <div class="funarpen-spinner-progress">
+                <div class="funarpen-spinner-progress-bar"></div>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+        } else {
+          overlay.querySelector('.funarpen-spinner-text').textContent = message;
+          overlay.querySelector('.funarpen-spinner-subtext').textContent = subtext;
+          overlay.style.display = 'flex';
+        }
+      };
+
+      // Função para esconder spinner
+      window.funarpenHideSpinner = function() {
+        const overlay = document.getElementById('funarpen-spinner-overlay');
+        if (overlay) overlay.style.display = 'none';
+      };
+
+      // Função para atualizar spinner
+      window.funarpenUpdateSpinner = function(message, subtext) {
+        const overlay = document.getElementById('funarpen-spinner-overlay');
+        if (overlay && overlay.style.display !== 'none') {
+          if (message) overlay.querySelector('.funarpen-spinner-text').textContent = message;
+          if (subtext) overlay.querySelector('.funarpen-spinner-subtext').textContent = subtext;
+        }
+      };
+
+      // enhance renderRow to show a quick details column if needed (keeps existing behavior)
+
+      // Simple toast helper (type: 'success'|'error'|'info')
+      function showToast(type, text, timeout = 4000) {
+        try {
+          if (!document) return;
+          let container = document.getElementById('funarpen-toast-container');
+          if (!container) {
+            container = document.createElement('div');
+            container.id = 'funarpen-toast-container';
+            Object.assign(container.style, { position: 'fixed', right: '12px', bottom: '12px', zIndex: 10000, display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' });
+            document.body.appendChild(container);
+          }
+
+          const el = document.createElement('div');
+          el.className = 'funarpen-toast ' + type;
+          el.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12);font-size:13px;max-width:360px;cursor:default;';
+
+          const icon = document.createElement('span');
+          icon.innerHTML = type === 'success' ? '✔' : (type === 'error' ? '✖' : 'ℹ');
+          icon.style.marginRight = '6px';
+          icon.style.fontSize = '14px';
+          el.appendChild(icon);
+
+          const span = document.createElement('div');
+          span.style.flex = '1';
+          span.textContent = text;
+          el.appendChild(span);
+
+          const close = document.createElement('button');
+          close.innerHTML = '×';
+          close.style.cssText = 'border:none;background:transparent;color:rgba(255,255,255,0.95);font-size:16px;cursor:pointer;margin-left:8px;padding:0';
+          close.onclick = function(){ try{ el.remove(); }catch(e){} };
+          el.appendChild(close);
+
+          if (type === 'success') el.style.background = '#28a745';
+          else if (type === 'error') el.style.background = '#d9534f';
+          else el.style.background = '#007bff';
+
+          // newest on top
+          container.prepend(el);
+
+          // limit visible to 4
+          while (container.children.length > 4) container.removeChild(container.lastChild);
+
+          // auto dismiss with fade
+          setTimeout(function(){ try{ el.style.transition = 'opacity 300ms, transform 300ms'; el.style.opacity = '0'; el.style.transform = 'translateY(6px)'; setTimeout(function(){ try{ el.remove(); }catch(e){} },300); }catch(e){} }, timeout);
+        } catch (e) { console.warn('showToast failed', e); }
+      }
+
+      // (render foi movido para AppRenderer acima)
+      
+    </script>
+  </body>
+  </html>
