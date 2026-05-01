@@ -7,12 +7,13 @@ Instruções rápidas:
 - Inclusão: adicione a tag `<script src="/html/assets/sprGraficoEstoque.js"></script>` no template do `Notas` (por exemplo no footer ou dentro do `Menu`), ou carregue-o via loader já presente.
 - Chamada: o script auto-invoca `window.sprGraficoEstoque()` após o carregamento da página. Também é possível chamar manualmente `window.sprGraficoEstoque()`.
 - Endpoints esperados (o script tenta caminhos relativos e prefixos):
-  - `/maker/api/funarpen/selos/cards/estoque` — retorna JSON com `estoque` (map tipo->qtd) ou um object direto.
-  - `/maker/api/funarpen/selos/cards/tipoLimites` — retorna `tipoLimites` (map tipo->limite) opcional.
-  - `/certificado/status` ou `/funarpen/certificado/status` — retorna status do certificado com campos `valid`, `notAfter`, `daysToExpire`, `matchesDoc`, `matchesName`, `message`.
+  - `/maker/api/notas/selos/cards/estoque` — retorna JSON com `estoque` (map tipo->qtd) ou um object direto.
+  - `/maker/api/notas/selos/cards/tipoLimites` — retorna `tipoLimites` (map tipo->limite) opcional.
+  - `/certificado/status` ou `/notas/certificado/status` — retorna status do certificado com campos `valid`, `notAfter`, `daysToExpire`, `matchesDoc`, `matchesName`, `message`.
 
 Observações:
-- O script é resiliente a 404s: tenta prefixos `''`, `/webrun5`, `/funarpen` ao buscar os endpoints.
+
+- O script é resiliente a 404s: tenta prefixos `''`, `/webrun5`, `/notas` ao buscar os endpoints.
 - Estilos são injetados pelo próprio script. Ajustes visuais podem ser feitos via CSS adicional no projeto Notas.
 - Se o elemento `#Menu` não existir, o script tenta posicionar-se em áreas alternativas; se precisar de posicionamento específico, altere o `ensureContainer()` no arquivo.
 
@@ -27,5 +28,6 @@ Testes locais sugeridos:
 ```
 
 Se preferir, eu posso:
+
 - ajustar a inclusão automática na página `Menu` do `Notas`;
 - ou executar um teste de integração (se me autorizar a rodar comandos e reiniciar o serviço local).

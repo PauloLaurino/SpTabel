@@ -38,6 +38,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 public class SeloJsonSanitizerNotas {
     private static final ObjectMapper M = new ObjectMapper();
@@ -119,6 +124,7 @@ public class SeloJsonSanitizerNotas {
                 if (tipoAto == 408) tipoAto = 459;
                 seloObj.put("codigoTipoAto", tipoAto);
             }
+            LOGGER.info("[SeloJsonSanitizerNotas] converterV10ParaV11: seloDigital=" + (obj.has("seloDigital") ? obj.get("seloDigital").asText() : "") + ", tipoAto=" + tipoAto + ", dadosExtrasLen=" + (dadosExtras == null ? 0 : dadosExtras.length()));
 
             seloObj.put("tipoEmissaoAto", obj.has("tipoEmissaoAto") ? obj.get("tipoEmissaoAto").asInt() : 1);
             if (obj.has("idap")) seloObj.set("idap", obj.get("idap"));
@@ -180,6 +186,7 @@ public class SeloJsonSanitizerNotas {
             raw = raw.replace("|codoficio|", "0")
                      .replace("|ambiente|", "prod")
                      .replace("|codigoEmpresa|", "1")
+                     .replace("|documentoResponsavel|", "0")
                      .replace("|dataato|", "")
                      .replace("|numapo1|", "0")
                      .replace("|numser|", "0")
@@ -189,8 +196,11 @@ public class SeloJsonSanitizerNotas {
                      .replace(", }", "}")
                      .replace(",}", "}");
 
-            // Aspas em qualquer literal que não pareça JSON válido
-            String limpo = raw.replaceAll(":\\s*([^\\\"\\d\\-\\{\\[\\stf\\n][^,}\\n]*)([\\s,}\\n])", ": \"$1\"$2");
+            // Aspas em qualquer literal que não pareça JSON válido (placeholders sem aspas)
+            String limpo = raw.replaceAll(":\\s*\\|([^\\|]+)\\|", ": \"$1\"");
+            
+            // Aspas em literais genéricos
+            limpo = limpo.replaceAll(":\\s*([^\\\"\\d\\-\\{\\[\\stf\\n][^,}\\n]*)([\\s,}\\n])", ": \"$1\"$2");
             
             Gson gson = new GsonBuilder().setLenient().create();
             Object obj = null;
@@ -810,6 +820,7 @@ public class SeloJsonSanitizerNotas {
      * Enabled aggressive exception aggregation
      */
     public static boolean sanitizarESalvar(String seloDigital, boolean forceRevalidate) {
+        LOGGER.info("[SeloJsonSanitizerNotas] Iniciando sanitização do selo: " + seloDigital + ", forceRevalidate=" + forceRevalidate);
         Connection conn = null;
         try {
             String registro;
@@ -854,8 +865,9 @@ public class SeloJsonSanitizerNotas {
                         }
                     }
                 }
+                LOGGER.info("[SeloJsonSanitizerNotas] Dados lidos: selo=" + seloDigital + ", jsonAtualLen=" + (jsonAtual == null ? 0 : jsonAtual.length()) + ", json12Len=" + (json12Atual == null ? 0 : json12Atual.length()) + ", dtVersaoFunarpen=" + dtVersaoFunarpen + ", registro=" + registro);
                 if (jsonAtual == null || jsonAtual.isEmpty()) {
-                    LOGGER.warning("[SeloJsonSanitizerNotas] JSON n\u00e3o encontrado para selo: " + seloDigital);
+                    LOGGER.warning("[SeloJsonSanitizerNotas] JSON não encontrado para selo: " + seloDigital);
                     boolean ps = false;
                     return ps;
                 }
@@ -931,16 +943,22 @@ public class SeloJsonSanitizerNotas {
             dadosComplementares.put("CODTABEL_PAR", codtabelPar);
             dadosComplementares.put("REGISTRO", registro);
             String jsonSanitizado = SeloJsonSanitizerNotas.sanitizarComDados(jsonAtual, dadosComplementares, dtVersaoFunarpen);
+            LOGGER.info("[SeloJsonSanitizerNotas] JSON sanitizado gerado para selo " + seloDigital + " com tamanho " + (jsonSanitizado == null ? 0 : jsonSanitizado.length()));
+            if (jsonSanitizado == null || jsonSanitizado.isEmpty()) {
+                LOGGER.warning("[SeloJsonSanitizerNotas] JSON sanitizado está vazio para selo: " + seloDigital);
+            }
             String sqlUpdate = "UPDATE selados SET JSON12 = ? WHERE SELO = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlUpdate);){
                 ps.setString(1, jsonSanitizado);
                 ps.setString(2, seloDigital);
                 int rows = ps.executeUpdate();
+                if (!conn.getAutoCommit()) conn.commit();
                 if (rows > 0) {
-                    LOGGER.info("[SeloJsonSanitizerNotas] JSON12 salvo com sucesso para selo: " + seloDigital);
+                    LOGGER.info("[SeloJsonSanitizerNotas] JSON12 salvo com sucesso para selo: " + seloDigital + " (rows=" + rows + ")");
                     boolean bl = true;
                     return bl;
                 }
+                LOGGER.warning("[SeloJsonSanitizerNotas] Nenhuma linha atualizada para selo: " + seloDigital + " (rows=" + rows + ")");
             }
             boolean bl = false;
             return bl;
@@ -974,11 +992,13 @@ public class SeloJsonSanitizerNotas {
         if (raw.startsWith("\"") && raw.endsWith("\"") && raw.length() > 2) {
             raw = raw.substring(1, raw.length() - 1).replace("\\\"", "\"");
         }
+        LOGGER.info("[SeloJsonSanitizerNotas] sanitizarComDados: entrada rawLen=" + raw.length() + ", startsWith={" + raw.substring(0, Math.min(20, raw.length())) + "}");
         
         // --- DETECÇÃO DE MODELO E NORMALIZAÇÃO ---
         // Se começa com wrapper mas tem lixo no final ou é flat, normalizamos
         boolean isV10 = raw.contains("\"numeroTipoAto\"") || raw.contains("\"ListaVerbas\"");
         boolean hasSelo = raw.contains("\"selo\":");
+        LOGGER.info("[SeloJsonSanitizerNotas] sanitizarComDados: isV10=" + isV10 + ", hasSelo=" + hasSelo);
         
         String jsonSanitizado;
         if (isV10 && !hasSelo) {
@@ -989,8 +1009,10 @@ public class SeloJsonSanitizerNotas {
             if (fragmentos.isEmpty()) throw new Exception("Não foi possível extrair JSON válido");
             
             String principal = fragmentos.get(0);
+            LOGGER.info("[SeloJsonSanitizerNotas] splitRootObjects retornou " + fragmentos.size() + " fragmentos para entrada V10");
             JsonNode root = lerJsonLeniente(principal);
             if (root == null || !root.isObject()) {
+                LOGGER.severe("[SeloJsonSanitizerNotas] Falha ao parsear objeto principal do fragmento V10");
                 throw new Exception("Não foi possível parsear objeto principal");
             }
             ObjectNode obj = (ObjectNode) root;
@@ -1137,24 +1159,86 @@ public class SeloJsonSanitizerNotas {
      * Enabled unnecessary exception pruning
      * Enabled aggressive exception aggregation
      */
-    private static String[] buscarSolicitanteFinRecCab(String idap, Connection conn) {
-        if (idap == null) return null;
-        if (idap.length() < 20) {
-            return null;
-        }
-        String numRec = idap.substring(10, 20);
-        String sql = "SELECT nomecli_rec, cpfcli_rec FROM fin_reccab WHERE num_rec = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql);){
+    private static Map<String, Double> buscarVerbasFinRecCab(String idap, Connection conn) {
+        HashMap<String, Double> verbas = new HashMap<String, Double>();
+        if (idap == null || idap.length() < 20) return verbas;
+        
+        String numRecRaw = idap.substring(10, 20);
+        String numRec = numRecRaw.replaceAll("[^0-9]", ""); // Remove 'N' e outros lixos
+        
+        // 1. Tentar buscar na fin_reccab (Header)
+        String sql = "SELECT valemol_rec, valfunrejus_rec, valiss_rec, valfundep_rec, valfunarpen_rec, valdistrib_rec FROM fin_reccab WHERE num_rec = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, numRec);
-            try (ResultSet rs = ps.executeQuery();){
-                if (!rs.next()) return null;
-                String nome = rs.getString("nomecli_rec");
-                String cpf = rs.getString("cpfcli_rec");
-                String[] stringArray = new String[]{nome, cpf};
-                return stringArray;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    verbas.put("emolumentos", rs.getDouble("valemol_rec"));
+                    verbas.put("funrejus", rs.getDouble("valfunrejus_rec"));
+                    verbas.put("iss", rs.getDouble("valiss_rec"));
+                    verbas.put("fundep", rs.getDouble("valfundep_rec"));
+                    verbas.put("funarpen", rs.getDouble("valfunarpen_rec"));
+                    verbas.put("distribuidor", rs.getDouble("valdistrib_rec"));
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warning("[SeloJsonSanitizerNotas] Verbas nao encontradas em fin_reccab, tentando tabela ato...");
+        }
+
+        // 2. Fallback: Buscar na tabela ato (onde as taxas estao detalhadas em algumas configuracoes)
+        if (verbas.isEmpty() || verbas.getOrDefault("funarpen", 0.0) == 0.0) {
+            String sqlAto = "SELECT VLR_ATO, ISS_ATO, FRJ_ATO, FADEP_ATO, VLR_SELO_ATO, NUM_REC_ATO FROM ato WHERE PROTOC_LIVRO_ATO = ? OR NUM_REC_ATO = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlAto)) {
+                ps.setString(1, numRec);
+                ps.setString(2, numRec);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        double vlrAto = rs.getDouble("VLR_ATO");
+                        double iss = rs.getDouble("ISS_ATO");
+                        double frj = rs.getDouble("FRJ_ATO");
+                        double fadep = rs.getDouble("FADEP_ATO");
+                        double funarpen = rs.getDouble("VLR_SELO_ATO");
+                        int numRecAto = rs.getInt("NUM_REC_ATO");
+
+                        if (vlrAto == 0.0 && numRecAto > 0) {
+                            // Tentar pegar o valor total do recibo e subtrair as taxas
+                            String sqlRec = "SELECT valor_rec FROM fin_reccab WHERE num_rec = ?";
+                            try (PreparedStatement psRec = conn.prepareStatement(sqlRec)) {
+                                psRec.setInt(1, numRecAto);
+                                try (ResultSet rsRec = psRec.executeQuery()) {
+                                    if (rsRec.next()) {
+                                        double totalRec = rsRec.getDouble("valor_rec");
+                                        vlrAto = totalRec - (iss + frj + fadep + funarpen);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (verbas.getOrDefault("emolumentos", 0.0) == 0.0) verbas.put("emolumentos", vlrAto);
+                        if (verbas.getOrDefault("iss", 0.0) == 0.0) verbas.put("iss", iss);
+                        if (verbas.getOrDefault("funrejus", 0.0) == 0.0) verbas.put("funrejus", frj);
+                        if (verbas.getOrDefault("fundep", 0.0) == 0.0) verbas.put("fundep", fadep);
+                        if (verbas.getOrDefault("funarpen", 0.0) == 0.0) verbas.put("funarpen", funarpen);
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.warning("[SeloJsonSanitizerNotas] Erro ao buscar verbas em ato: " + e.getMessage());
             }
         }
-        catch (SQLException e) {
+        return verbas;
+    }
+
+    private static String[] buscarSolicitanteFinRecCab(String idap, Connection conn) {
+        if (idap == null || idap.length() < 20) return null;
+        String numRec = idap.substring(10, 20);
+        String sql = "SELECT nomecli_rec, cpfcli_rec FROM fin_reccab WHERE num_rec = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, numRec);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new String[]{rs.getString("nomecli_rec"), rs.getString("cpfcli_rec")};
+                }
+            }
+        } catch (SQLException e) {
             LOGGER.warning("[SeloJsonSanitizerNotas] Erro ao buscar solicitante em fin_reccab: " + e.getMessage());
         }
         return null;
@@ -1218,6 +1302,23 @@ public class SeloJsonSanitizerNotas {
             // --- 2. Normalização de Verbas (Pre-processamento) ---
             if (seloObj.has("verbas") && seloObj.get("verbas").isObject()) {
                 ObjectNode v = (ObjectNode)seloObj.get("verbas");
+                
+                // Verificar se verbas estão zeradas para buscar no banco
+                double total = v.get("emolumentos").asDouble() + v.get("funrejus").asDouble() + v.get("funarpen").asDouble();
+                if (total == 0.0) {
+                    try (Connection conn = ConnectionFactory.getConnection()) {
+                        String idap = seloObj.has("idap") ? seloObj.get("idap").asText() : null;
+                        Map<String, Double> dbVerbas = buscarVerbasFinRecCab(idap, conn);
+                        if (!dbVerbas.isEmpty()) {
+                            for (Map.Entry<String, Double> entry : dbVerbas.entrySet()) {
+                                v.put(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warning("Erro ao recuperar verbas do banco: " + e.getMessage());
+                    }
+                }
+
                 String[] camposVerbas = {"emolumentos", "funrejus", "iss", "fundep", "funarpen", "distribuidor", "vrcExt", "valorAdicional"};
                 for (String c : camposVerbas) {
                     if (v.has(c) && v.get(c).isNumber()) {
@@ -1276,7 +1377,8 @@ public class SeloJsonSanitizerNotas {
                         processarTipo458(seloObj, obj);
                         break;
                     default:
-                        corrigirIdapNotas(seloObj);
+                        // IDAP não deve ser alterado conforme regra do usuário
+                        break;
                 }
             }
 
@@ -1308,41 +1410,14 @@ public class SeloJsonSanitizerNotas {
     }
 
     private static void corrigirIdapNotas(ObjectNode seloObj) {
-        if (!seloObj.has("idap")) {
-            return;
-        }
-        String idapAtual = seloObj.get("idap").asText();
-        if (idapAtual == null || idapAtual.length() == 40 && idapAtual.contains("N")) {
-            return;
-        }
-        try {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 12; ++i) {
-                sb.append("0");
-            }
-            String prot = idapAtual.replaceAll("[^0-9]", "");
-            if (prot.length() > 8) {
-                prot = prot.substring(prot.length() - 8);
-            }
-            while (prot.length() < 8) {
-                prot = "0" + prot;
-            }
-            sb.append(prot).append("N");
-            while (sb.length() < 31) {
-                sb.append("0");
-            }
-            while (sb.length() < 40) {
-                sb.append("0");
-            }
-            seloObj.put("idap", sb.toString());
-        }
-        catch (Exception exception) {
-            // empty catch block
-        }
+        // Desativado: IDAP nao pode ser alterado.
     }
 
     private static void processarTipo430(ObjectNode seloObj, ObjectNode rootObj) {
         try {
+            String selo = seloObj.has("seloDigital") ? seloObj.get("seloDigital").asText() : "";
+            String idap = seloObj.has("idap") ? seloObj.get("idap").asText() : "";
+            LOGGER.info("[SeloJsonSanitizerNotas] processarTipo430: selo=" + selo + ", idap=" + idap + ", poolPresent=" + seloObj.has("_pool_propriedades"));
             ObjectNode pool = seloObj.has("_pool_propriedades") ? (ObjectNode) seloObj.get("_pool_propriedades") : M.createObjectNode();
             
             // Prioridade 1: Dados do Pool (Dados extras ou V10 mapeado)
@@ -1352,10 +1427,10 @@ public class SeloJsonSanitizerNotas {
             
             // Prioridade 2: Fallback parse IDAP
             if (livro == null || folha == null) {
-                String idap = seloObj.has("idap") ? seloObj.get("idap").asText() : "";
-                if (idap.length() >= 24) {
-                    livro = idap.substring(12, 20).replaceFirst("^0+(?=\\d)", "");
-                    folha = idap.substring(20, 24).replaceFirst("^0+(?=\\d)", "");
+                String idapFallback = seloObj.has("idap") ? seloObj.get("idap").asText() : "";
+                if (idapFallback.length() >= 24) {
+                    livro = idapFallback.substring(12, 20).replaceFirst("^0+(?=\\d)", "");
+                    folha = idapFallback.substring(20, 24).replaceFirst("^0+(?=\\d)", "");
                 }
             }
 
@@ -1607,6 +1682,7 @@ public class SeloJsonSanitizerNotas {
         try {
             conn = ConnectionFactory.getConnection();
             String selo = seloObj.has("seloDigital") ? seloObj.get("seloDigital").asText() : "";
+            LOGGER.info("[SeloJsonSanitizerNotas] processarTipo452: selo=" + selo + ", docPar=" + docPar);
             Map<String, Object> dadosAto = SeloJsonSanitizerNotas.buscarDadosAtoPorSelo(selo, conn);
             List<Map<String, Object>> partes = SeloJsonSanitizerNotas.buscarPartesNot1(selo, conn);
             ObjectNode prop = M.createObjectNode();
@@ -2204,14 +2280,21 @@ public class SeloJsonSanitizerNotas {
     }
 
     public static String sanitizar(String jsonString) throws Exception {
-        JsonNode root = M.readTree(jsonString);
-        root = SeloJsonSanitizerNotas.corrigirDatasNoJson(root);
-        root = SeloJsonSanitizerNotas.corrigirPlaceholders(root);
-        root = SeloJsonSanitizerNotas.corrigirErrosDigitacao(root);
-        root = SeloJsonSanitizerNotas.converterListaVerbasParaVerbas(root);
-        root = SeloJsonSanitizerNotas.converterListaPropriedades(root);
-        root = SeloJsonSanitizerNotas.corrigirSeloRetificado(root);
-        return M.writeValueAsString((Object)root);
+        if (jsonString == null || jsonString.isEmpty()) return jsonString;
+        
+        // Se já está no formato V11 (Wrapper), não precisa converter de novo
+        if (jsonString.contains("\"ambiente\"") && jsonString.contains("\"selo\"")) {
+            return jsonString;
+        }
+
+        // Parâmetros padrão para o Wrapper caso venha de fonte externa
+        Map<String, Object> params = new HashMap<>();
+        params.put("AMBIENTE_PAR", "prod");
+        params.put("DOC_PAR", "0");
+        params.put("CODIGO_PAR", "1");
+        params.put("CODTABEL_PAR", "181122");
+
+        return converterV10ParaV11(jsonString, params);
     }
 
     private static JsonNode corrigirPlaceholders(JsonNode root) {
@@ -2278,70 +2361,167 @@ public class SeloJsonSanitizerNotas {
 
     public static void main(String[] args) {
         System.out.println("===========================================");
-        System.out.println("  SeloJsonSanitizerNotas - Sanitiza\u00e7\u00e3o de Selos");
+        System.out.println("  SeloJsonSanitizerNotas - Batch Process");
         System.out.println("===========================================");
-        System.out.println("");
+        
+        String dataInicio = args.length > 0 ? args[0] : null;
+        String dataFim = args.length > 1 ? args[1] : null;
+        String seloEspecifico = null;
+        if (dataInicio != null && dataInicio.startsWith("selo:")) {
+            seloEspecifico = dataInicio.substring(5);
+        }
+
+        boolean apenasEnviar = args.length > 2 && "sendOnly".equalsIgnoreCase(args[2]);
+        boolean apenasSanitizar = args.length > 2 && "sanitizeOnly".equalsIgnoreCase(args[2]);
+        
         try {
-            String dtVersao = null;
-            if (args.length > 0) {
-                dtVersao = args[0];
-            }
-            System.out.println("[1/3] Buscando selos pendentes...");
-            List<String> selosPendentes = SeloJsonSanitizerNotas.buscarSelosPendentes(dtVersao);
-            if (selosPendentes.isEmpty()) {
-                System.out.println("Nenhum selo pendente encontrado para a versao " + dtVersao);
+            if (seloEspecifico != null) {
+                System.out.println("FORCANDO SANITIZACAO DO SELO: " + seloEspecifico);
+                if (sanitizarESalvar(seloEspecifico, true)) {
+                    System.out.println("Selo re-sanitizado com sucesso!");
+                } else {
+                    System.out.println("Falha ao re-sanitizar selo.");
+                }
                 return;
             }
-            System.out.println("   Total de selos pendentes: " + selosPendentes.size());
-            System.out.println("");
-            System.out.println("[2/3] Processando selos...");
-            int sucessos = 0;
-            int erros = 0;
-            for (int i = 0; i < selosPendentes.size(); ++i) {
-                String sello = selosPendentes.get(i);
-                System.out.print("   Processando " + (i + 1) + "/" + selosPendentes.size() + ": " + sello + " ... ");
-                boolean resultado = SeloJsonSanitizerNotas.sanitizarESalvar(sello);
-                if (resultado) {
-                    System.out.println("OK");
-                    ++sucessos;
-                    continue;
+            if (!apenasEnviar) {
+                System.out.println("\n[1/2] SANITIZACAO EM LOTE");
+                System.out.println("-------------------------------------------");
+                List<String> selosPendentes = buscarSelosPendentes(dataInicio, dataFim);
+                System.out.println("Total encontrados: " + selosPendentes.size());
+                
+                int sucessos = 0;
+                for (int i = 0; i < selosPendentes.size(); i++) {
+                    String s = selosPendentes.get(i);
+                    System.out.print("\rProcessando " + (i + 1) + "/" + selosPendentes.size() + "... ");
+                    if (sanitizarESalvar(s, true)) sucessos++;
                 }
-                System.out.println("ERRO");
-                ++erros;
+                System.out.println("\nConcluido! Sucessos: " + sucessos);
             }
-            System.out.println("");
-            System.out.println("[3/3] Resumo:");
-            System.out.println("   OK: " + sucessos);
-            System.out.println("   Erros: " + erros);
-            System.out.println("   Total: " + selosPendentes.size());
-            System.out.println("");
-            if (erros > 0) {
-                System.out.println("Alguns selos nao puderam ser sanitizados. Verifique os logs.");
+
+            if (!apenasSanitizar) {
+                System.out.println("\n[2/2] ENVIO EM LOTE (FUNARPEN)");
+                System.out.println("-------------------------------------------");
+                transmitirLote(dataInicio, dataFim, 500); // Processa ate 500 por vez
             } else {
-                System.out.println("Sanitizacao concluida com sucesso!");
+                System.out.println("\n[PULADO] Envio em lote ignorado por solicitacao de auditoria.");
             }
-        }
-        catch (Exception e) {
-            System.err.println("Erro durante a sanitizacao: " + e.getMessage());
+            
+        } catch (Exception e) {
+            System.err.println("Erro: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    public static void transmitirLote(String dataInicio, String dataFim, int limit) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        Gson gson = new Gson();
+        
+        try {
+            conn = ConnectionFactory.getConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT s.SELO, s.JSON12 FROM selados s ");
+            sql.append("WHERE s.JSON12 IS NOT NULL AND s.JSON12 != '' ");
+            sql.append("AND (s.STATUS IS NULL OR s.STATUS = 'ERRO' OR s.STATUS = '0' OR s.STATUS = '') ");
+            
+            if (dataInicio != null) sql.append("AND s.DATAENVIO >= ? ");
+            if (dataFim != null) sql.append("AND s.DATAENVIO <= ? ");
+            sql.append("ORDER BY s.DATAENVIO ASC LIMIT ?");
+            
+            ps = conn.prepareStatement(sql.toString());
+            int idx = 1;
+            if (dataInicio != null) ps.setString(idx++, dataInicio);
+            if (dataFim != null) ps.setString(idx++, dataFim);
+            ps.setInt(idx++, limit);
+            
+            rs = ps.executeQuery();
+            JsonArray lote = new JsonArray();
+            List<String> selosDigitais = new ArrayList<>();
+            
+            while (rs.next()) {
+                String json12 = rs.getString("JSON12");
+                String selo = rs.getString("SELO");
+                try {
+                    lote.add(gson.fromJson(json12, JsonElement.class));
+                    selosDigitais.add(selo);
+                } catch (Exception e) {
+                    System.err.println("Erro JSON selo " + selo + ": " + e.getMessage());
+                }
+            }
+            
+            if (lote.size() == 0) {
+                System.out.println("Nenhum selo pronto para envio no periodo.");
+                return;
+            }
+            
+            System.out.println("Enviando lote de " + lote.size() + " selos...");
+            String url = "http://100.102.13.23:8059/funarpen/maker/api/funarpen/selos/recepcao/lote";
+            
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(java.time.Duration.ofSeconds(10))
+                    .build();
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(lote)))
+                    .build();
+            
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("Resposta API (" + response.statusCode() + "): " + response.body());
+            
+            if (response.statusCode() == 200) {
+                com.google.gson.JsonObject respJson = gson.fromJson(response.body(), com.google.gson.JsonObject.class);
+                if (respJson.has("protocolo")) {
+                    String protocolo = respJson.get("protocolo").getAsString();
+                    System.out.println("Lote aceito! Protocolo: " + protocolo);
+                    
+                    ps.close();
+                    ps = conn.prepareStatement("UPDATE selados SET STATUS = 'SUCESSO', PROTOCOLO = ? WHERE SELO = ?");
+                    for (String s : selosDigitais) {
+                        ps.setString(1, protocolo);
+                        ps.setString(2, s);
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                    System.out.println("Banco de dados atualizado.");
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Erro na transmissao: " + e.getMessage());
+        } finally {
+            try { if (rs != null) rs.close(); if (ps != null) ps.close(); if (conn != null) conn.close(); } catch(Exception e) {}
         }
     }
 
     /*
      * WARNING - Removed try catching itself - possible behaviour change.
      */
-    private static List<String> buscarSelosPendentes(String dtVersao) {
+    private static List<String> buscarSelosPendentes(String dataInicio, String dataFim) {
         ArrayList<String> selos = new ArrayList<String>();
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
             conn = ConnectionFactory.getConnection();
-            String sql = dtVersao != null && !dtVersao.isEmpty() ? "SELECT DISTINCT s.selo_sel FROM selos s INNER JOIN selados sel ON sel.SELO = s.selo_sel INNER JOIN parametros p ON p.CODIGO_PAR = 1 WHERE sel.DATAENVIO >= p.DTVERSAO_FUNARPEN AND (sel.STATUS IS NULL OR sel.STATUS != 'SUCESSO') ORDER BY sel.DATAENVIO" : "SELECT DISTINCT s.selo_sel FROM selos s INNER JOIN selados sel ON sel.SELO = s.selo_sel INNER JOIN parametros p ON p.CODIGO_PAR = 1 WHERE sel.DATAENVIO >= p.DTVERSAO_FUNARPEN AND (sel.STATUS IS NULL OR sel.STATUS != 'SUCESSO') ORDER BY sel.DATAENVIO";
-            ps = conn.prepareStatement(sql);
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT DISTINCT s.SELO FROM selados s ");
+            sql.append("WHERE (s.STATUS IS NULL OR s.STATUS != 'SUCESSO' OR s.STATUS = '' OR s.STATUS = 'ERRO') ");
+            if (dataInicio != null && !dataInicio.isEmpty()) sql.append("AND s.DATAENVIO >= ? ");
+            if (dataFim != null && !dataFim.isEmpty()) sql.append("AND s.DATAENVIO <= ? ");
+            sql.append("ORDER BY s.DATAENVIO");
+            
+            ps = conn.prepareStatement(sql.toString());
+            int idx = 1;
+            if (dataInicio != null && !dataInicio.isEmpty()) ps.setString(idx++, dataInicio);
+            if (dataFim != null && !dataFim.isEmpty()) ps.setString(idx++, dataFim);
+            
             rs = ps.executeQuery();
             while (rs.next()) {
-                selos.add(rs.getString("selo_sel"));
+                selos.add(rs.getString("SELO"));
             }
         }
         catch (Exception e) {

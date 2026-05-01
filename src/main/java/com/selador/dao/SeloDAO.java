@@ -5,6 +5,7 @@ import com.selador.exception.DatabaseException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.logging.Logger;
+import java.sql.*;
 
 /**
  * DAO para operações na tabela selos
@@ -20,20 +21,22 @@ public class SeloDAO extends BaseDAO {
         "SELECT selo_sel, tiposelo_sel, valorselo_sel " +
         "FROM " + TABLE_NAME + " " +
         "WHERE tipo_sel = '0000' " +
+        "AND (dataselo_sel IS NULL) " +
         "AND tiposelo_sel = ? " +
-        "AND (chave1_sel IS NULL OR chave1_sel = '') " +
+        "AND (cancelado IS NULL OR cancelado != 'S') " +
         "ORDER BY selo_sel ASC " +
         "LIMIT 1 " +
         "FOR UPDATE";  // Lock para evitar concorrência
     
     private static final String SQL_CONTAR_DISPONIVEIS = 
-        "SELECT tiposelo_sel, COUNT(*) as total " +
-        "FROM " + TABLE_NAME + " " +
-        "WHERE tipo_sel = '0000' " +
-        "AND dataselo_sel IS NULL " +  // ← ADICIONAR ESTA CONDIÇÃO
-        "AND tiposelo_sel IN ('0001', '0003', '0004', '0009', '0010') " +  // ← FILTRAR APENAS OS TIPOS RELEVANTES
-        "GROUP BY tiposelo_sel " +
-        "ORDER BY tiposelo_sel";
+        "SELECT COALESCE(st.sigle, s.tiposelo_sel) as tiposelo_label, COUNT(*) as total " +
+        "FROM selos s " +
+        "LEFT JOIN selo_tipo st ON s.tiposelo_sel = st.tipo " +
+        "WHERE s.tipo_sel = '0000' " +
+        "AND (s.dataselo_sel IS NULL) " +
+        "AND (s.cancelado IS NULL OR s.cancelado != 'S') " +
+        "GROUP BY s.tiposelo_sel, st.sigle " +
+        "ORDER BY s.tiposelo_sel";
     
     private static final String SQL_ATUALIZAR_SELO_USADO = 
         "UPDATE " + TABLE_NAME + " SET " +
@@ -87,35 +90,7 @@ public class SeloDAO extends BaseDAO {
         return mapToSelo(row);
     }
     
-    /**
-     * Conta selos disponíveis por tipo
-     */
-    public Map<String, Integer> contarDisponiveis() throws DatabaseException {
-        List<Map<String, Object>> resultados = executeQuery(SQL_CONTAR_DISPONIVEIS);
-        
-        Map<String, Integer> contagem = new HashMap<>();
-        
-        // Inicializar todos os tipos principais com 0
-        contagem.put("0001", 0); // TP1
-        contagem.put("0003", 0); // TPD
-        contagem.put("0004", 0); // TPI
-        contagem.put("0009", 0); // TP3
-        contagem.put("0010", 0); // TP4
-        
-        // Preencher com valores reais do banco
-        for (Map<String, Object> row : resultados) {
-            String tipoSelo = (String) row.get("tiposelo_sel");
-            Long total = (Long) row.get("total");
-            
-            if (contagem.containsKey(tipoSelo)) {
-                contagem.put(tipoSelo, total.intValue());
-            }
-        }
-        
-        logger.info("Totalizadores de selos disponíveis: " + contagem);
-        return contagem;
-    }
-    
+
     /**
      * Marca um selo como utilizado
      */
@@ -183,8 +158,10 @@ public class SeloDAO extends BaseDAO {
         List<Map<String, Object>> resultados = executeQuery(SQL_VERIFICAR_UTILIZADO, numeroSelo);
         
         if (!resultados.isEmpty()) {
-            Long total = (Long) resultados.get(0).get("total");
-            return total > 0;
+            Object totalObj = resultados.get(0).get("total");
+            if (totalObj instanceof Number) {
+                return ((Number) totalObj).longValue() > 0;
+            }
         }
         
         return false;
@@ -205,14 +182,11 @@ public class SeloDAO extends BaseDAO {
         List<TransactionOperation> operations = new ArrayList<>();
         
         for (int i = 0; i < quantidade; i++) {
-            // Usar a mesma query SQL_BUSCAR_DISPONIVEL
             operations.add(new TransactionOperation(SQL_BUSCAR_DISPONIVEL, tipoSelo));
         }
         
-        // Executar transação para buscar os selos
         executeTransaction(operations);
         
-        // Agora buscar os selos reservados
         for (TransactionOperation op : operations) {
             List<Map<String, Object>> resultados = executeQuery(op.getSql(), op.getParams());
             if (!resultados.isEmpty()) {
@@ -278,29 +252,23 @@ public class SeloDAO extends BaseDAO {
         try {
             Selo selo = new Selo();
             
-            // Campos básicos que provavelmente existem
             selo.setNumeroSelo(getString(row, "selo_sel"));
             selo.setTipo(getString(row, "tipo_sel"));
             
-            // Valor - converter Double para BigDecimal
             Double valorDouble = getDouble(row, "valorselo_sel");
             if (valorDouble != null) {
                 selo.setValor(BigDecimal.valueOf(valorDouble));
             }
             
-            // Chaves de relacionamento
             selo.setChave1(getString(row, "chave1_sel"));
             selo.setChave2(getString(row, "chave2_sel"));
             
-            // Data do selo
             selo.setDataSelo(convertToUtilDate(row, "dataselo_sel"));
             
-            // Dados do contribuinte
             selo.setNome(getString(row, "nome"));
             selo.setCpfCnpj(getString(row, "cpfcnpj"));
             selo.setProtocolo(getString(row, "protocolo"));
             
-            // ID do apontamento
             selo.setIdap(getString(row, "IDAP"));
             
             return selo;
@@ -329,7 +297,6 @@ public class SeloDAO extends BaseDAO {
             return new java.util.Date(((java.sql.Timestamp) value).getTime());
         } else if (value instanceof String) {
             try {
-                // Tentar parsear string de data
                 return java.sql.Date.valueOf((String) value);
             } catch (Exception e) {
                 return null;
@@ -339,7 +306,6 @@ public class SeloDAO extends BaseDAO {
         return null;
     }
     
-    // Métodos auxiliares para conversão segura
     private String getString(Map<String, Object> row, String key) {
         Object value = row.get(key);
         return value != null ? value.toString().trim() : "";
@@ -347,15 +313,35 @@ public class SeloDAO extends BaseDAO {
     
     private Double getDouble(Map<String, Object> row, String key) {
         Object value = row.get(key);
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
-        } else if (value != null) {
-            try {
-                return Double.parseDouble(value.toString());
-            } catch (NumberFormatException e) {
-                return null;
-            }
+        if (value == null) return null;
+        if (value instanceof Number) return ((Number) value).doubleValue();
+        try {
+            return Double.parseDouble(value.toString());
+        } catch (Exception e) {
+            return null;
         }
-        return null;
+    }
+    
+    public Map<String, Integer> contarDisponiveis() throws com.selador.exception.DatabaseException {
+        Map<String, Integer> resultado = new LinkedHashMap<>();
+        System.out.println("SeloDAO: Executando contarDisponiveis...");
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL_CONTAR_DISPONIVEIS);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                String label = rs.getString("tiposelo_label");
+                int total = rs.getInt("total");
+                resultado.put(label, total);
+                System.out.println("SeloDAO: Found " + label + " = " + total);
+            }
+            if (resultado.isEmpty()) {
+                System.out.println("SeloDAO: Nenhum registro encontrado para a query de estoque.");
+            }
+        } catch (SQLException e) {
+            System.err.println("SeloDAO: Erro ao contar disponíveis: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return resultado;
     }
 }

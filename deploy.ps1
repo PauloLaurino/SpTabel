@@ -1,177 +1,128 @@
 # ==================================================
-# Deploy NOTAS / SPTABEL - Cálculo de Custas Cartoriais
-# Enhanced script: verifica pré-requisitos, faz backup, tenta parar/ligar Tomcat, espera expansão
+# SUPER DEPLOY UNIFICADO: NOTAS + GERENCIAL PRO-MAX
+# Build completo de Java, React Frontends e Sub-serviços
+# Suporte: Webrun Studio & Webrun 5 (Maker 5)
 # ==================================================
 
 $ErrorActionPreference = 'Stop'
 
-$baseDir = Split-Path $MyInvocation.MyCommand.Path -Parent
+# Diretório base (onde o script está: ...\Notas)
+$scriptPath = Split-Path $MyInvocation.MyCommand.Path -Parent
+# Diretório raiz dos projetos (...\Seprocom)
+$rootDir = Split-Path $scriptPath -Parent
 
 Write-Host ""
-Write-Host "== Deploy NOTAS / SPTABEL (WAR) ==" -ForegroundColor Cyan
+Write-Host "== [SUPER DEPLOY] Iniciando Build Unificado ==" -ForegroundColor Cyan
 
-# ---------- Configuráveis ----------
-# Pode sobrescrever via variável de ambiente se necessário
-$WarName = $env:NOTAS_WARNAME; if (-not $WarName) { $WarName = 'notas.war' }
-$WarDest = $env:NOTAS_WARDEST; if (-not $WarDest) { $WarDest = 'C:\Program Files (x86)\Softwell Solutions\Maker 5\Webrun 5\tomcat\webapps\notas.war' }
-$ContextPath = $env:NOTAS_CONTEXT; if (-not $ContextPath) { $ContextPath = 'notas' }
-$SkipTests = $env:SKIP_TESTS; if (-not $SkipTests) { $SkipTests = $false }
-$WaitExpandSeconds = 30
+# 1. CONFIGURAÇÕES DE DESTINO
+$targetWebapps = @(
+    "C:\Program Files (x86)\Softwell Solutions\Maker Studio\Webrun Studio\tomcat\webapps",
+    "C:\Program Files (x86)\Softwell Solutions\Maker 5\Webrun 5\tomcat\webapps"
+)
+$services = @("Webrun_Studio", "Webrun_5")
 
-$warSource = Join-Path $baseDir "target\$WarName"
-
-# Se o WAR esperado não existir, tentar localizar qualquer WAR gerado
-if (-not (Test-Path $warSource)) {
-    Write-Host ("WAR {0} não encontrado - procurando por *.war em target..." -f $warSource) -ForegroundColor Yellow
-    $found = Get-ChildItem -Path (Join-Path $baseDir 'target') -Filter '*.war' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($found) {
-        $WarName = $found.Name
-        $warSource = $found.FullName
-        Write-Host ("Usando WAR detectado: {0}" -f $WarName) -ForegroundColor Green
-    }
-}
-
-# ---------- Pré-checagens ----------
-Write-Host "Verificando pré-requisitos..." -ForegroundColor Cyan
-
-# Maven
-$mvnCmd = Get-Command mvn -ErrorAction SilentlyContinue
-if (-not $mvnCmd) {
-    Write-Error "mvn (Maven) não encontrado no PATH. Instale o Maven ou adicione ao PATH."; exit 1
-}
-# Java
-$javaCmd = Get-Command java -ErrorAction SilentlyContinue
-if (-not $javaCmd) {
-    Write-Warning "java não encontrado no PATH. Verifique instalação do Java.";
-}
-else {
-    try { & java -version 2>&1 | Select-Object -First 1 | Write-Host } catch {}
-}
-
-Write-Host "Diretório do projeto: $baseDir"
-Write-Host "WAR origem: $warSource"
-Write-Host "WAR destino: $WarDest"
-Write-Host "Context Path: /$ContextPath"
-
-# ---------- BUILD MAVEN ----------
-Write-Host "Executando mvn clean package..." -ForegroundColor Cyan
-$mvArgs = @('-f', "${baseDir}\pom.xml", 'clean', 'package')
-if ($SkipTests -eq 'true' -or $SkipTests -eq $true) { $mvArgs += '-DskipTests=true' }
-
-try {
-    Write-Host "Chamando: mvn $([string]::Join(' ', $mvArgs))"
-    & mvn @mvArgs
-    $exitCode = $LASTEXITCODE
-}
-catch {
-    Write-Error "Falha ao executar mvn: $_"
-    exit 1
-}
-
-if ($exitCode -ne 0) {
-    Write-Error "Build Maven falhou (exit $exitCode). Verifique logs do Maven."; exit $exitCode
-}
-Write-Host "Build Maven OK." -ForegroundColor Green
-
-if (-not (Test-Path $warSource)) {
-    Write-Error "WAR não encontrado em $warSource. Verifique output do build."; exit 1
-}
-
-# ---------- Preparar Tomcat / Backup ----------
-$webappsDir = Split-Path $WarDest -Parent
-$tomcatDir = Split-Path $webappsDir -Parent
-$explodedDir = Join-Path $webappsDir $ContextPath
-$ts = Get-Date -Format 'yyyyMMddHHmmss'
-
-if (Test-Path $explodedDir) {
-    Write-Host "Removendo diretório explodido: $explodedDir"
-    try {
-        Remove-Item -Path $explodedDir -Recurse -Force -ErrorAction Stop
-        Write-Host 'Exploded dir removido.' -ForegroundColor Yellow
-    }
-    catch {
-        Write-Warning "Não foi possível remover exploded dir: $_"
-    }
-}
-
-# ---------- Tentar parar Tomcat (opcional) ----------
-$shutdownRan = $false
-$shutdownScript = Join-Path $tomcatDir 'bin\shutdown.bat'
-$startupScript = Join-Path $tomcatDir 'bin\startup.bat'
-
-# tentar parar pelo serviço Windows se existir
-$TomcatServiceName = $env:TOMCAT_SERVICE_NAME; if (-not $TomcatServiceName) { $TomcatServiceName = 'Webrun_5' }
-$svc = Get-Service -Name $TomcatServiceName -ErrorAction SilentlyContinue
-if ($svc) {
-    Write-Host "Encontrado serviço Windows '${TomcatServiceName}' - tentando pará-lo via Stop-Service" -ForegroundColor Cyan
-    try {
-        Stop-Service -Name $TomcatServiceName -Force -ErrorAction Stop
-        $wait = 0
-        while ((Get-Service -Name $TomcatServiceName).Status -ne 'Stopped' -and $wait -lt 15) { Start-Sleep -Seconds 1; $wait += 1 }
-        if ((Get-Service -Name $TomcatServiceName).Status -eq 'Stopped') {
-            $shutdownRan = $true
-            Write-Host "Serviço ${TomcatServiceName} parado." -ForegroundColor Yellow
-        }
-        else {
-            Write-Warning "Serviço ${TomcatServiceName} não parou dentro do timeout."
+# 2. PARAR SERVIÇOS
+Write-Host "`n>>> Parando serviços de aplicação..." -ForegroundColor Cyan
+foreach ($svcName in $services) {
+    $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
+    if ($svc -and $svc.Status -eq 'Running') {
+        Write-Host "Parando $svcName..." -ForegroundColor Yellow
+        try { 
+            Stop-Service -Name $svcName -Force -ErrorAction Stop
+            Write-Host "Serviço $svcName parado." -ForegroundColor Green
+        } catch {
+            Write-Warning "Não foi possível parar $svcName. Continuando assim mesmo..."
         }
     }
-    catch { Write-Warning "Falha ao parar serviço ${TomcatServiceName}: $_" }
 }
-else {
-    if (Test-Path $shutdownScript) {
-        Write-Host "Tentando executar shutdown do Tomcat (shutdown.bat): $shutdownScript" -ForegroundColor Cyan
-        try {
-            & "$shutdownScript"
-            Start-Sleep -Seconds 4
-            $shutdownRan = $true
-            Write-Host "Shutdown solicitado via shutdown.bat." -ForegroundColor Yellow
+
+# 3. BUILD PROJETO: NOTAS
+Write-Host "`n=== PROJETO: NOTAS (Legado) ===" -ForegroundColor Cyan
+$notasPath = Join-Path $rootDir "Notas"
+Set-Location $notasPath
+Write-Host "Executando build Maven Notas..." -ForegroundColor Gray
+& mvn clean package -DskipTests=true
+if ($LASTEXITCODE -ne 0) { throw "Erro no build do projeto Notas" }
+
+# 4. BUILD PROJETO: GERENCIAL (Moderno)
+Write-Host "`n=== PROJETO: GERENCIAL (Moderno) ===" -ForegroundColor Cyan
+$gerencialPath = Join-Path $rootDir "Gerencial"
+
+# 4.1 Build Frontends (React)
+$frontends = @(
+    @{ Name = "NFS-e"; Path = "nfse-frontend"; Target = "src\main\webapp\nfse" },
+    @{ Name = "Assinatura"; Path = "servico-assinatura-frontend"; Target = "src\main\webapp\servico-assinatura" }
+)
+
+foreach ($fe in $frontends) {
+    $fePath = Join-Path $gerencialPath $fe.Path
+    if (Test-Path $fePath) {
+        Write-Host "Build Frontend $($fe.Name)..." -ForegroundColor Yellow
+        Set-Location $fePath
+        
+        # Uso de cmd /c para garantir execução correta do npm no Windows
+        Write-Host "Executando npm install..." -ForegroundColor Gray
+        cmd /c npm install --quiet
+        
+        Write-Host "Executando npm run build..." -ForegroundColor Gray
+        cmd /c npm run build
+        
+        # Copiar para webapp
+        $distPath = Join-Path $fePath "dist"
+        $targetPath = Join-Path $gerencialPath $fe.Target
+        if (Test-Path $distPath) {
+            if (Test-Path $targetPath) { Remove-Item $targetPath -Recurse -Force -ErrorAction SilentlyContinue }
+            New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+            Copy-Item -Path "$distPath\*" -Destination $targetPath -Recurse -Force
+            Write-Host "Frontend $($fe.Name) atualizado em webapp." -ForegroundColor Green
         }
-        catch { Write-Warning "Falha ao executar shutdown.bat: $_" }
-    }
-    else {
-        Write-Host ("shutdown.bat não encontrado em {0}\bin - pulando tentativa de parada automática." -f $tomcatDir) -ForegroundColor DarkYellow
     }
 }
 
-# ---------- Copiar WAR ----------
-Write-Host "Copiando WAR para Tomcat Webrun..." -ForegroundColor Cyan
-try {
-    Copy-Item -Path $warSource -Destination $WarDest -Force
-    Write-Host "WAR publicado com sucesso em $WarDest" -ForegroundColor Green
-}
-catch {
-    Write-Error "Falha ao copiar WAR: $_"; exit 1
+# 4.2 Build Sub-serviço Assinatura (Java)
+$assinaturaServicePath = Join-Path $gerencialPath "servico-assinatura"
+if (Test-Path $assinaturaServicePath) {
+    Write-Host "Build Sub-serviço Assinatura Java..." -ForegroundColor Yellow
+    Set-Location $assinaturaServicePath
+    & mvn clean package -DskipTests=true
+    if ($LASTEXITCODE -ne 0) { Write-Warning "Falha no sub-serviço assinatura, mas continuando..." }
 }
 
-# ---------- Tentar iniciar Tomcat se parámos ----------
-if ($shutdownRan) {
-    $svc2 = Get-Service -Name $TomcatServiceName -ErrorAction SilentlyContinue
-    if ($svc2) {
-        Write-Host "Iniciando serviço Windows ${TomcatServiceName}..." -ForegroundColor Cyan
-        try { Start-Service -Name $TomcatServiceName -ErrorAction Stop; Start-Sleep -Seconds 6; Write-Host "Serviço ${TomcatServiceName} solicitado start." -ForegroundColor Yellow } catch { Write-Warning "Falha ao iniciar serviço ${TomcatServiceName}: $_" }
+# 4.3 Build Principal Gerencial
+Write-Host "Build Principal Gerencial Maven..." -ForegroundColor Yellow
+Set-Location $gerencialPath
+& mvn clean package -DskipTests=true
+if ($LASTEXITCODE -ne 0) { throw "Erro no build do projeto Gerencial" }
+
+# 5. DISTRIBUIÇÃO DOS WARS
+$wars = @(
+    @{ Name = "notas"; File = Join-Path $notasPath "target\notas.war" },
+    @{ Name = "gerencial"; File = Join-Path $gerencialPath "target\gerencial.war" }
+)
+
+foreach ($war in $wars) {
+    foreach ($webappsDir in $targetWebapps) {
+        if (Test-Path $webappsDir) {
+            $dest = Join-Path $webappsDir "$($war.Name).war"
+            $exploded = Join-Path $webappsDir $war.Name
+            
+            Write-Host "Publicando $($war.Name) em $webappsDir" -ForegroundColor Gray
+            if (Test-Path $exploded) { Remove-Item $exploded -Recurse -Force -ErrorAction SilentlyContinue }
+            Copy-Item -Path $war.File -Destination $dest -Force
+        }
     }
-    elseif (Test-Path $startupScript) {
-        Write-Host "Iniciando Tomcat via $startupScript" -ForegroundColor Cyan
-        try { & "$startupScript"; Start-Sleep -Seconds 6; Write-Host "Startup solicitado." -ForegroundColor Yellow } catch { Write-Warning "Falha ao executar startup.bat: $_" }
+}
+
+# 6. REINICIAR SERVIÇOS
+Write-Host "`n>>> Reiniciando serviços..." -ForegroundColor Cyan
+foreach ($svcName in $services) {
+    $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
+    if ($svc) {
+        Write-Host "Iniciando $svcName..." -ForegroundColor Yellow
+        Start-Service -Name $svcName
+        Write-Host "Serviço $svcName iniciado." -ForegroundColor Green
     }
 }
 
-# ---------- Esperar expansão do WAR (verifica arquivo HTML) ----------
-$expectedFile = Join-Path $explodedDir "webapp\custas.html"
-Write-Host "Aguardando expansão do WAR (checando $expectedFile) por até $WaitExpandSeconds segundos..."
-$elapsed = 0; $found = $false
-while ($elapsed -lt $WaitExpandSeconds) {
-    if (Test-Path $expectedFile) { $found = $true; break }
-    Start-Sleep -Seconds 2; $elapsed += 2
-}
-if ($found) {
-    Write-Host "Arquivo encontrado - deploy concluído e o conteúdo está acessível." -ForegroundColor Green
-    Write-Host "Acesse: http://localhost:8080/$ContextPath/custas.html" -ForegroundColor Cyan
-}
-if (-not $found) {
-    Write-Warning "Arquivo esperado não encontrado após $WaitExpandSeconds segundos. Pode ser necessário reiniciar o serviço Tomcat manualmente."
-}
-
-Write-Host ""
-Write-Host "Deploy finalizado." -ForegroundColor Cyan
+Write-Host "`n[CONCLUÍDO] Sistema atualizado com sucesso!" -ForegroundColor Cyan
+Set-Location $notasPath

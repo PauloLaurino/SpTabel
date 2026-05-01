@@ -2,3 +2,7 @@ target/
 .DS_Store
 *.war
 .log
+*.bak
+*.JSON12
+*.json
+*.txt

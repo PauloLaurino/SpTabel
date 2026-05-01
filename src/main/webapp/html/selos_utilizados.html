@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script>
+        (function() {
+            // Garante que o console capture erros de carregamento de modulos
+            window.addEventListener('error', function(e) {
+                if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+                    console.error('SelosUtilizados: Erro ao carregar recurso:', e.target.src || e.target.href);
+                }
+            }, true);
+            
+            // Corrige o path se estiver rodando dentro do Webrun Studio
+            var path = window.location.pathname;
+            var ctxSearch = path.split('/html/')[0];
+            var blacklist = ['webrunstudio', 'maker', 'designer', 'gerencial'];
+            var isBlacklisted = false;
+            for (var i = 0; i < blacklist.length; i++) {
+                if (ctxSearch.toLowerCase().indexOf(blacklist[i]) !== -1) { isBlacklisted = true; break; }
+            }
+            if (isBlacklisted || !ctxSearch || ctxSearch === '/') ctxSearch = '/sptabel';
+            
+            var base = ctxSearch + '/html/';
+            var b = document.createElement('base');
+            b.href = window.location.origin + base;
+            document.head.appendChild(b);
+            console.log('SelosUtilizados: Base URL ajustada para:', b.href);
+
+            // Captura o sistema (contexto) da URL atual
+            var urlParams = new URLSearchParams(window.location.search);
+            var currentSys = urlParams.get('sys');
+
+            // Define helper API para o bundle React
+            window.api = function(path) {
+                var origin = window.location.origin;
+                // Detecta o contexto atual
+                var pathParts = window.location.pathname.split('/');
+                var currentCtx = pathParts.length > 1 ? pathParts[1] : '';
+                var blacklist = ['webrunstudio', 'maker', 'designer', 'gerencial', 'html'];
+                var ctx = '/sptabel/';
+                if (currentCtx && blacklist.indexOf(currentCtx.toLowerCase()) === -1) {
+                    ctx = '/' + currentCtx + '/';
+                }
+                
+                var p = (path || '').startsWith('/') ? path.substring(1) : path;
+                var url = origin + ctx + p;
+                url = url.replace(/([^:]\/)\/+?/g, '$1');
+
+                // Propaga o parâmetro sys para o backend se estiver presente
+                if (currentSys) {
+                    url += (url.indexOf('?') === -1 ? '?' : '&') + 'sys=' + currentSys;
+                }
+
+                return url;
+            };
+
+            // Define globais esperadas pelo bundle
+            window.isHomologation = false;
+            window.codigoEmpresaParam = "1";
+            window.usuarioParam = "SISTEMA";
+            window.SELOS = [];
+
+            // Tenta ler parâmetros da URL para maior fidelidade
+            try {
+                var params = new URLSearchParams(window.location.search);
+                if (params.has('ambiente_par')) window.isHomologation = params.get('ambiente_par') !== 'PROD';
+                if (params.has('codigo_par')) window.codigoEmpresaParam = params.get('codigo_par');
+                if (params.has('usuario_par')) window.usuarioParam = params.get('usuario_par');
+            } catch(e) {}
+            
+            console.log('SelosUtilizados: API Helper e Globais inicializados');
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selos Utilizados - Integração Funarpen</title>
+    <!-- BUILD: 6 -->
+    <meta name="build" content="6">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1337ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101322",
+                    },
+                    fontFamily: {
+                        sans: ["Public Sans", "sans-serif"],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        html, body {
+            height: 100%;
+            background-color: #f6f6f8;
+        }
+        #root {
+            min-height: 100%;
+        }
+    </style>
+    <link rel="stylesheet" href="assets/selos-utilizados/index.css">
+    <script>
+    (function(){
+        function fitParentFrame() {
+            try {
+                if (window.parent && window.parent !== window) {
+                    var pdoc = window.parent.document;
+                    var moldura = pdoc.getElementById('Moldura');
+                    if (!moldura) {
+                        var iframes = pdoc.getElementsByTagName('iframe');
+                        for (var i = 0; i < iframes.length; i++) {
+                            if (iframes[i].contentWindow === window) {
+                                moldura = iframes[i].parentElement;
+                                break;
+                            }
+                        }
+                    }
+                    if (moldura) {
+                        // Calcula altura disponível: viewport do pai menos offset do Moldura
+                        var vph = window.parent.innerHeight ||
+                                  window.parent.document.documentElement.clientHeight || 600;
+                        var offsetTop = 0;
+                        try { offsetTop = moldura.getBoundingClientRect().top; } catch(e) {}
+                        var h = Math.max(vph - offsetTop - 2, 300);
+                        moldura.style.setProperty('height', h + 'px', 'important');
+                        moldura.style.setProperty('min-height', h + 'px', 'important');
+                        moldura.style.setProperty('overflow', 'hidden', 'important');
+                    }
+                }
+            } catch(e) {}
+        }
+        fitParentFrame();
+        try { window.parent.addEventListener('resize', fitParentFrame); } catch(e) {}
+        window.addEventListener('load', fitParentFrame);
+        window.addEventListener('resize', fitParentFrame);
+
+        // MutationObserver: resiste se o Maker reescrever o estilo da Moldura
+        try {
+            if (window.parent && window.parent !== window && window.MutationObserver) {
+                var pdoc2 = window.parent.document;
+                var moldura2 = pdoc2.getElementById('Moldura');
+                if (moldura2) {
+                    var _mo = new window.MutationObserver(function(mutations) {
+                        for (var i = 0; i < mutations.length; i++) {
+                            if (mutations[i].type === 'attributes' && mutations[i].attributeName === 'style') {
+                                fitParentFrame();
+                                break;
+                            }
+                        }
+                    });
+                    _mo.observe(moldura2, { attributes: true, attributeFilter: ['style'] });
+                }
+            }
+        } catch(e) {}
+    })();
+    </script>
+
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4"
+  }
+}
+</script>
+    <script type="module">
+        (function(){
+            function norm(u){ return (u || '').replace(/([^:]\/)\/+?/g, '$1'); }
+            var origin = window.location.origin || '';
+            var ctx = '';
+            try {
+                var segs = (window.location.pathname || '').split('/').filter(Boolean);
+                if (segs.length > 0 && !segs[0].endsWith('.do')) ctx = '/' + segs[0];
+            } catch(e) {}
+
+            function installPreloadRemap(entryUrl){
+                if (window.__selosPreloadPatched) return;
+                var entry = String(entryUrl || '');
+                var baseDir = entry;
+                if (/\/assets\/index\.js(?:\?.*)?$/i.test(entry)) {
+                    baseDir = entry.replace(/\/assets\/index\.js(?:\?.*)?$/i, '/');
+                } else {
+                    baseDir = entry.replace(/index\.js(?:\?.*)?$/i, '');
+                }
+                window.__selosPreloadPatched = true;
+                window.__selosBundleDir = baseDir;
+
+                window.addEventListener('vite:preloadError', function(ev){
+                    try { if (ev && typeof ev.preventDefault === 'function') ev.preventDefault(); } catch(e) {}
+                });
+
+                var head = document.head;
+                if (!head || !head.appendChild) return;
+                var appendChild = head.appendChild.bind(head);
+                head.appendChild = function(node){
+                    try {
+                        if (node && node.tagName === 'LINK') {
+                            var rel = (node.rel || '').toLowerCase();
+                            var href = (typeof node.getAttribute === 'function' && node.getAttribute('href')) || node.href || '';
+                            if ((rel === 'modulepreload' || rel === 'stylesheet') && /^\/assets\//.test(href)) {
+                                node.href = baseDir + href.replace(/^\//, '');
+                            }
+                        }
+                    } catch (e) {}
+                    return appendChild(node);
+                };
+            }
+
+            var entry = "./assets/selos-utilizados/index.js";
+            var VER = "?v=20260414";
+            
+            console.log('SelosUtilizados: Carregando bundle via', entry);
+            installPreloadRemap(entry + VER);
+            import(entry + VER).catch(function(e){ 
+                console.error('SelosUtilizados: Falha no import relativo. Tentando fallback...', e);
+                // Fallback absoluto se o relativo falhar em algum contexto estranho
+                var pathPartsFallback = window.location.pathname.split('/');
+                var ctxFallback = '/sptabel';
+                var blacklist = ['webrunstudio', 'maker', 'designer', 'gerencial'];
+                if (pathPartsFallback.length > 1 && blacklist.indexOf(pathPartsFallback[1].toLowerCase()) === -1) {
+                    ctxFallback = '/' + pathPartsFallback[1];
+                }
+                var abs = window.location.origin + ctxFallback + "/html/assets/selos-utilizados/index.js";
+                import(abs + VER).catch(function(e2){ console.error('SelosUtilizados: Falha total.', e2); });
+            });
+        })();
+    </script>
+</head>
+<body class="antialiased">
+    <div id="root"></div>
+
+<script>
+    (function(){
+        function ensure(){
+            try{
+                if(typeof window.sprGraficoEstoque === 'function'){ window.sprGraficoEstoque(); return; }
+                try{ if(window.parent && window.parent !== window && typeof window.parent.sprGraficoEstoque === 'function'){ window.parent.sprGraficoEstoque(); return; } }catch(e){}
+                if(!document.querySelector('script[data-spr-loader]')){
+                    var s = document.createElement('script');
+                    var origin = window.location.origin || '';
+                    var ctxFinal = ctx || '/sptabel';
+                    var candidates = [
+                        (origin + ctxFinal + '/html/assets/sprGraficoEstoque.js?v=20260415B').replace(/([^:]\/)\/+?/g, '$1'),
+                        (origin + '/sptabel/html/assets/sprGraficoEstoque.js?v=20260415B').replace(/([^:]\/)\/+?/g, '$1'),
+                        (origin + '/html/assets/sprGraficoEstoque.js?v=20260415B').replace(/([^:]\/)\/+?/g, '$1')
+                    ];
+                    var idx = 0;
+                    function tryLoad(){
+                        if (idx >= candidates.length) return;
+                        s.src = candidates[idx++];
+                        s.onerror = tryLoad;
+                    }
+                    s.setAttribute('data-spr-loader','1');
+                    s.onload = function(){ try{ if(typeof window.sprGraficoEstoque === 'function') window.sprGraficoEstoque(); }catch(e){} };
+                    document.head.appendChild(s);
+                    tryLoad();
+                }
+            }catch(e){}
+        }
+        ensure();
+        var attempts = 0;
+        var iv = setInterval(function(){ attempts++; try{ if(typeof window.sprGraficoEstoque === 'function'){ window.sprGraficoEstoque(); clearInterval(iv); return; } if(window.parent && window.parent !== window && typeof window.parent.sprGraficoEstoque === 'function'){ window.parent.sprGraficoEstoque(); clearInterval(iv); return; } }catch(e){} if(attempts>20) clearInterval(iv); }, 500);
+    })();
+</script>
+
+</body>
+</html>

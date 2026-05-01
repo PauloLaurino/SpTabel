@@ -154,6 +154,22 @@
         <url-pattern>/maker/api/funarpen/selos/*</url-pattern>
     </servlet-mapping>
     
+    <servlet-mapping>
+        <servlet-name>FunarpenSelosServlet</servlet-name>
+        <url-pattern>/maker/api/notas/selos/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- Mapeamento para o monitor do Webrun -->
+    <servlet-mapping>
+        <servlet-name>FunarpenSelosServlet</servlet-name>
+        <url-pattern>/maker/api/funarpen/monitor</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>FunarpenSelosServlet</servlet-name>
+        <url-pattern>/maker/api/notas/monitor</url-pattern>
+    </servlet-mapping>
+    
     <!-- Servlet de Funarpen Parametros -->
     <servlet>
         <servlet-name>FunarpenParametrosServlet</servlet-name>
@@ -166,7 +182,35 @@
         <url-pattern>/maker/api/funarpen/parametros</url-pattern>
     </servlet-mapping>
     
-    <!-- Welcome files (IMPORTANTE: adicionar selador.html) -->
+    <servlet-mapping>
+        <servlet-name>FunarpenParametrosServlet</servlet-name>
+        <url-pattern>/maker/api/notas/parametros</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Alias sem /funarpen/ para compatibilidade com React selos_utilizados -->
+    <servlet-mapping>
+        <servlet-name>FunarpenParametrosServlet</servlet-name>
+        <url-pattern>/maker/api/parametros</url-pattern>
+    </servlet-mapping>
+
+    <!-- Servlet de Certificado Digital -->
+    <servlet>
+        <servlet-name>FunarpenCertificadoServlet</servlet-name>
+        <servlet-class>com.selador.web.servlets.FunarpenCertificadoServlet</servlet-class>
+        <load-on-startup>12</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>FunarpenCertificadoServlet</servlet-name>
+        <url-pattern>/maker/api/funarpen/certificado</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>FunarpenCertificadoServlet</servlet-name>
+        <url-pattern>/maker/api/notas/certificado</url-pattern>
+    </servlet-mapping>
+
+    <!-- Welcome files -->
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
         <welcome-file>views/selador.html</welcome-file>
@@ -213,20 +257,4 @@
         <extension>js</extension>
         <mime-type>application/javascript;charset=UTF-8</mime-type>
     </mime-mapping>
-    
-    <mime-mapping>
-        <extension>png</extension>
-        <mime-type>image/png</mime-type>
-    </mime-mapping>
-    
-    <mime-mapping>
-        <extension>jpg</extension>
-        <mime-type>image/jpeg</mime-type>
-    </mime-mapping>
-    
-    <mime-mapping>
-        <extension>ico</extension>
-        <mime-type>image/x-icon</mime-type>
-    </mime-mapping>
-    
 </web-app>

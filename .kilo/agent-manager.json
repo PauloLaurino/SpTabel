@@ -1,4 +1,17 @@
 {
-  "worktrees": {},
-  "sessions": {}
+  "worktrees": {
+    "wt-1776112100981-1": {
+      "branch": "skillful-honeydew",
+      "path": "c:\\Desenvolvimento\\Seprocom\\Notas\\.kilo\\worktrees\\skillful-honeydew",
+      "parentBranch": "master",
+      "createdAt": "2026-04-13T20:28:20.981Z",
+      "remote": "origin"
+    }
+  },
+  "sessions": {
+    "ses_27771a890ffedSGyJTfGPxkzW6": {
+      "worktreeId": "wt-1776112100981-1",
+      "createdAt": "2026-04-13T20:35:23.313Z"
+    }
+  }
 }

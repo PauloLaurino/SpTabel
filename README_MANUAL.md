@@ -3,7 +3,7 @@
 Este documento detalha o avanço na automação da sanitização e transmissão dos selos do período **20/02/2026 a 27/03/2026**.
 
 ## 🛠️ Tecnologias e Infraestrutura
-- **Servidor FUNARPEN**: `100.102.13.23:8049`
+- **Servidor FUNARPEN**: `100.75.153.127:8049`
 - **Banco de Dados**: `sptabel` (Produção)
 - **Motor de Sanitização**: Google Gson (Leniente) com Limpeza Radical de Strings.
 - **Autenticação**: Protocolo seguro via `ConnectionFactory` e Token JWT.
@@ -279,7 +279,7 @@ Após a sanitização (Passo 1), os dados estarão na coluna `JSON12` da tabela 
 
 **Comando cURL para Envio Massivo:**
 ```bash
-curl -X POST "http://100.102.13.23:8059/notas/maker/api/funarpen/selos/recepcao/lote?dataInicio=2026-03-19&dataFim=2026-03-27&limit=50"
+curl -X POST "http://100.75.153.127:8059/notas/maker/api/funarpen/selos/recepcao/lote?dataInicio=2026-03-19&dataFim=2026-03-27&limit=50"
 ```
 
 ---
@@ -288,7 +288,7 @@ curl -X POST "http://100.102.13.23:8059/notas/maker/api/funarpen/selos/recepcao/
 1.  **Sanitização Imbatível**: Trocamos o Jackson pelo **GSON**. Isso permitiu processar registros que continham truncamentos (`...`) ou placeholders sem aspas (`codoficio`).
 2.  **Limpeza Radical**: Implementamos a remoção automática de pipes (`|`) e quebras de linha que causavam erros de recepção na API do FUNARPEN.
 3.  **ConnectionFactory Seguro**: Integrado com o `DbUtil` oficial. Se o arquivo estiver criptografado, ele resolve via Jasypt; se falhar, utiliza as credenciais de produção (root/k15720) como fallback seguro para garantir a operação.
-4.  **Atualização de Status**: O sistema agora atualiza `STATUS_FUNARPEN = '1'` e grava o `PROTOCOLO` retornado pelo servidor `100.102.13.23`.
+4.  **Atualização de Status**: O sistema agora atualiza `STATUS_FUNARPEN = '1'` e grava o `PROTOCOLO` retornado pelo servidor `100.75.153.127`.
 5.  **Verbas Corrigidas**: Valores sem decimal são automaticamente convertidos (ex: 36 → 0.36).
 6.  **CODTABEL_PAR**: Corrigido `codigoOficio` usando o campo `CODTABEL_PAR` da tabela `parametros`.
 7.  **Processamento por Tipo**: Implementado processamento específicos para 29 tipos de ato (401-459).

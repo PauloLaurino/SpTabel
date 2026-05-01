@@ -41,7 +41,7 @@ public class FunarpenConsultaUtil {
     
     // URLs da API Funarpen
     private static final String URL_API_BASE = "http://100.102.13.23:8059";
-    private static final String URL_PROTOCOLO = "/funarpen/maker/api/funarpen/selos/protocolo";
+    private static final String URL_PROTOCOLO = "/notas/maker/api/notas/selos/protocolo";
     private static final String URL_CONSULTA_PUBLICA = "https://consulta.funarpen.com.br/selo";
     
     // Configurações de retry

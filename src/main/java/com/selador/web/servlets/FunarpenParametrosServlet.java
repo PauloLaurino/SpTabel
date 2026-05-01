@@ -59,44 +59,25 @@ public class FunarpenParametrosServlet extends HttpServlet {
                     if (rs.next()) {
                         parametros.put("codigoPar", rs.getInt("CODIGO_PAR"));
                         parametros.put("docPar", rs.getString("DOC_PAR"));
-                        parametros.put("nomeTabeliao", rs.getString("NOME_TABELIAO"));
-                        parametros.put("codigoTabeliao", rs.getString("CODIGO_TABELIAO"));
-                        parametros.put("codigoCartorio", rs.getString("CODIGO_CARTORIO"));
-                        parametros.put("nomeCartorio", rs.getString("NOME_CARTORIO"));
-                        parametros.put("cnpjCartorio", rs.getString("CNPJ_CARTORIO"));
-                        parametros.put("inscricaoEstadual", rs.getString("INSCRICAO_ESTADUAL"));
-                        parametros.put("enderecoCartorio", rs.getString("ENDERECO_CARTORIO"));
-                        parametros.put("telefoneCartorio", rs.getString("TELEFONE_CARTORIO"));
-                        parametros.put("emailCartorio", rs.getString("EMAIL_CARTORIO"));
-                        parametros.put("ativa", rs.getString("ATIVA"));
+                        parametros.put("nomeTabelionato", rs.getString("NOME_TABELIONATO_PAR"));
+                        parametros.put("titular", rs.getString("TITULAR_PAR"));
+                        parametros.put("tabeliao", rs.getString("TABELIAO_PAR"));
+                        parametros.put("codigoOficio", rs.getString("CODTABEL_PAR"));
+                        parametros.put("naturezas", rs.getString("SELOS_PAR"));
+                        parametros.put("ambiente", rs.getString("AMBIENTE_PAR"));
+                        parametros.put("contexto", rs.getString("CONTEXTO_PAR"));
                         parametros.put("dtVersaoFunarpen", rs.getString("DTVERSAO_FUNARPEN"));
-                        parametros.put("obsFunarpen", rs.getString("OBS_FUNARPEN"));
                         
-                        // Impostos - Reforma Tributária
-                        // ISS (já existe)
+                        // ISS
                         parametros.put("issPar", rs.getObject("ISS_PAR") != null ? rs.getDouble("ISS_PAR") : 0.05);
-                        // CBS (Contribuição sobre Bens e Serviços)
-                        parametros.put("cbsPar", rs.getObject("CBS_PAR") != null ? rs.getDouble("CBS_PAR") : 0.10);
-                        // IBS (Imposto sobre Bens e Serviços)
-                        parametros.put("ibsPar", rs.getObject("IBS_PAR") != null ? rs.getDouble("IBS_PAR") : 0.10);
-                        // PIS
-                        parametros.put("pisPar", rs.getObject("PIS_PAR") != null ? rs.getDouble("PIS_PAR") : 0.0165);
-                        // COFINS
-                        parametros.put("cofinsPar", rs.getObject("COFINS_PAR") != null ? rs.getDouble("COFINS_PAR") : 0.076);
-                        // CSLL
-                        parametros.put("csllPar", rs.getObject("CSLL_PAR") != null ? rs.getDouble("CSLL_PAR") : 0.09);
-                        // IRPJ
-                        parametros.put("irpjPar", rs.getObject("IRPJ_PAR") != null ? rs.getDouble("IRPJ_PAR") : 0.15);
-                        // IRPJ Adicional
-                        parametros.put("irpjAdicPar", rs.getObject("IRPJ_ADIC_PAR") != null ? rs.getDouble("IRPJ_ADIC_PAR") : 0.025);
-                        // CPP (Contribuição Patronal)
-                        parametros.put("cppPar", rs.getObject("CPP_PAR") != null ? rs.getDouble("CPP_PAR") : 0.12);
                         
-                        // Fase da Reforma Tributária
-                        parametros.put("faseReformaPar", rs.getString("FASE_REFORMA_PAR") != null ? rs.getString("FASE_REFORMA_PAR") : "NAO_INICIADA");
-                        parametros.put("cbsAtivoPar", rs.getObject("CBS_ATIVO_PAR") != null ? rs.getBoolean("CBS_ATIVO_PAR") : false);
-                        parametros.put("ibsAtivoPar", rs.getObject("IBS_ATIVO_PAR") != null ? rs.getBoolean("IBS_ATIVO_PAR") : false);
-                        parametros.put("cppAtivoPar", rs.getObject("CPP_ATIVO_PAR") != null ? rs.getBoolean("CPP_ATIVO_PAR") : false);
+                        // Campos de compatibilidade para o React
+                        Map<String, Object> selosPar = new HashMap<>();
+                        selosPar.put("naturezas", rs.getString("SELOS_PAR"));
+                        parametros.put("SELOS_PAR", selosPar);
+                        
+                        // Usuário padrão
+                        parametros.put("usuario", rs.getString("USUARIO_PAR"));
                     }
                 }
             } catch (SQLException e) {

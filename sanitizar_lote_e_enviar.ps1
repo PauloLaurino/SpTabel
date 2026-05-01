@@ -2,13 +2,13 @@
 # Processa selos do período 2026-03-01 até 2026-03-20 com STATUS != 'SUCESSO'
 
 param(
-    [string]$DBHost = "100.102.13.23",
+    [string]$DBHost = "100.75.153.127",
     [string]$DBPort = "3306",
     [string]$DBName = "sptabel",
     [string]$DBUser = "root",
     [string]$DBPass = "k15720",
-    [string]$DataInicio = "2026-02-20",
-    [string]$DataFim = "2026-03-27",
+    [string]$DataInicio = "2026-03-04",
+    [string]$DataFim = "2026-03-04",
     [string]$Url = "https://v11plus.funarpen.com.br/selos/recepcao"
 )
 

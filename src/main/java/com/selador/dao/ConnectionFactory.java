@@ -18,7 +18,7 @@ public class ConnectionFactory {
     private static boolean usePool = true;
     
     // Configurações padrão de PRODUÇÃO - sptabel
-    private static final String DEFAULT_DB_URL = "jdbc:mysql://100.102.13.23:3306/sptabel?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+    private static final String DEFAULT_DB_URL = "jdbc:mariadb://localhost:3306/sptabel?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
     private static final String DEFAULT_DB_USER = "root";
     private static final String DEFAULT_DB_PASSWORD = "k15720";
     
@@ -63,8 +63,8 @@ public class ConnectionFactory {
      */
     private static void tryAlternativeConnection() {
         String[] alternativeUrls = {
-            "jdbc:mariadb://localhost:3306/spprot",
             "jdbc:mysql://localhost:3306/spprot",
+            "jdbc:mysql://127.0.0.1:3306/spprot",
         };
         
         String[] users = {"root", ""};
@@ -119,19 +119,20 @@ public class ConnectionFactory {
      */
     private static void initDataSource() {
         try {
-            // Registrar driver manualmente (importante!)
+            // Registrar driver (MariaDB ou MySQL)
             try {
-                Class.forName("org.mariadb.jdbc.Driver");
-                logger.info("✅ Driver MariaDB registrado com sucesso");
-            } catch (ClassNotFoundException e) {
-                try {
+                String url = getProperty("db.url", DEFAULT_DB_URL);
+                if (url.startsWith("jdbc:mariadb:")) {
+                    Class.forName("org.mariadb.jdbc.Driver");
+                    logger.info("✅ Driver MariaDB registrado com sucesso");
+                } else {
                     Class.forName("com.mysql.cj.jdbc.Driver");
                     logger.info("✅ Driver MySQL registrado com sucesso");
-                } catch (ClassNotFoundException e2) {
-                    logger.severe("❌ Nenhum driver JDBC encontrado!");
-                    usePool = false;
-                    return;
                 }
+            } catch (ClassNotFoundException e) {
+                logger.severe("❌ Driver de banco de dados não encontrado!");
+                usePool = false;
+                return;
             }
             
             String poolEnabled = getProperty("db.pool.enabled", "true");
@@ -153,6 +154,8 @@ public class ConnectionFactory {
                 logger.info("   URL: " + url);
                 logger.info("   Usuário: " + user);
                 logger.info("   Pool habilitado: " + usePool);
+                logger.info("   Propriedade db.url do sistema: " + System.getProperty("db.url"));
+                logger.info("   Propriedade db.username do sistema: " + System.getProperty("db.username"));
                 
                 // Configurações do pool
                 config.setMaximumPoolSize(Integer.parseInt(
@@ -231,20 +234,10 @@ public class ConnectionFactory {
     }
     
     /**
-     * Obtém uma conexão (FORÇA sptabel)
+     * Obtém uma conexão (Utiliza o padrão DbUtil da aplicação)
      */
     public static Connection getConnection() throws SQLException {
-        // FORÇAR database sptabel (Notas) - não usar DbUtil que pode apontar para spprot
-        String url = "jdbc:mysql://100.102.13.23:3306/sptabel?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
-        String user = "root";
-        String pass = "k15720";
-        
-        try {
-            return DriverManager.getConnection(url, user, pass);
-        } catch (SQLException e) {
-            logger.warning("🔍 Conexão direta falhou: " + e.getMessage());
-            throw e;
-        }
+        return com.monitor.funarpen.util.DbUtil.getConnection();
     }
     
     /**

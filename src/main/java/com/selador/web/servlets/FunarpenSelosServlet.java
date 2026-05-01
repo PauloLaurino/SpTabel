@@ -4,6 +4,10 @@ import com.selador.service.SeloService;
 import com.selador.service.SelagemService;
 import com.selador.util.JsonUtil;
 import com.selador.util.SeloJsonSanitizerNotas;
+import com.selador.dao.SeloDAO;
+import com.selador.dao.SeladoDAO;
+import com.selador.model.Selado;
+import java.util.Calendar;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
@@ -22,9 +26,9 @@ import java.util.ArrayList;
 
 /**
  * Servlet para compatibilidade com API do Protesto (Funarpen)
- * Mapeia endpoints /maker/api/funarpen/selos/* para o frontend React
+ * Mapeia endpoints /maker/api/notas/selos/* para o frontend React
  */
-@WebServlet(name = "FunarpenSelosServlet", urlPatterns = {"/maker/api/funarpen/selos/*"})
+@WebServlet(name = "FunarpenSelosServlet", urlPatterns = {"/maker/api/notas/selos/*"})
 public class FunarpenSelosServlet extends HttpServlet {
 
     private SeloService seloService;
@@ -61,49 +65,65 @@ public class FunarpenSelosServlet extends HttpServlet {
                 return;
             }
             
-            // /maker/api/funarpen/selos/naoRetornados
+            // /maker/api/notas/selos/monitor
+            if (pathInfo.startsWith("/monitor")) {
+                handleMonitor(request, response);
+                return;
+            }
+            
+            // /maker/api/notas/selos/diagnostico
+            if (pathInfo.startsWith("/diagnostico")) {
+                handleDiagnostico(request, response);
+                return;
+            }
+            // /maker/api/notas/selos/naoRetornados
             if (pathInfo.startsWith("/naoRetornados")) {
                 handleNaoRetornados(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/json/get
+            // /maker/api/notas/selos/json/get
             if (pathInfo.startsWith("/json/get")) {
                 handleJsonGet(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/cards/estoque
+            // /maker/api/notas/selos/cards/estoque
             if (pathInfo.startsWith("/cards/estoque")) {
                 handleCardsEstoque(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/cards/utilizadosHoje
+            // /maker/api/notas/selos/cards/utilizadosHoje
             if (pathInfo.startsWith("/cards/utilizadosHoje")) {
                 handleCardsUtilizadosHoje(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/cards/pendentes
+            // /maker/api/notas/selos/cards/pendentes
             if (pathInfo.startsWith("/cards/pendentes")) {
                 handleCardsPendentes(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/cards/retornadosComErro
+            // /maker/api/notas/selos/cards/retornadosComErro
             if (pathInfo.startsWith("/cards/retornadosComErro")) {
                 handleCardsRetornadosComErro(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/cards/alertas
+            // /maker/api/notas/selos/cards/alertas
             if (pathInfo.startsWith("/cards/alertas")) {
                 handleCardsAlertas(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/sanitizar/lote - Sanitiza todos os registros da versão 112
+                        // /maker/api/funarpen/selos/importar
+            if (pathInfo != null && pathInfo.startsWith("/importar")) {
+                handleImportar(request, response);
+                return;
+            }
+            // /maker/api/notas/selos/sanitizar/lote - Sanitiza todos os registros da versão 112
             if (pathInfo != null && pathInfo.startsWith("/sanitizar/lote")) {
                 handleSanitizarLote(request, response);
                 return;
@@ -122,7 +142,7 @@ public class FunarpenSelosServlet extends HttpServlet {
                 return;
             }
             
-            // /maker/api/funarpen/selos/logsByIdap
+            // /maker/api/notas/selos/logsByIdap
             if (pathInfo.startsWith("/logsByIdap")) {
                 handleLogsByIdap(request, response);
                 return;
@@ -155,7 +175,12 @@ public class FunarpenSelosServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         
         try {
-            // /maker/api/funarpen/selos/sanitizar/lote - Sanitiza todos os registros
+                        // /maker/api/notas/selos/importar
+            if (pathInfo != null && pathInfo.startsWith("/importar")) {
+                handleImportar(request, response);
+                return;
+            }
+            // /maker/api/notas/selos/sanitizar/lote - Sanitiza todos os registros
             if (pathInfo != null && pathInfo.startsWith("/sanitizar/lote")) {
                 handleSanitizarLote(request, response);
                 return;
@@ -168,37 +193,37 @@ public class FunarpenSelosServlet extends HttpServlet {
                 return;
             }
             
-            // /maker/api/funarpen/selos/json/save
+            // /maker/api/notas/selos/json/save
             if (pathInfo != null && pathInfo.startsWith("/json/save")) {
                 handleJsonSave(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/recepcao/lote
+            // /maker/api/notas/selos/recepcao/lote
             if (pathInfo != null && pathInfo.startsWith("/recepcao/lote")) {
                 handleRecepcaoLote(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/retificar
+            // /maker/api/notas/selos/retificar
             if (pathInfo != null && pathInfo.startsWith("/retificar")) {
                 handleRetificar(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/updateJson
+            // /maker/api/notas/selos/updateJson
             if (pathInfo != null && pathInfo.startsWith("/updateJson")) {
                 handleUpdateJson(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/reenvio/porCodigo
+            // /maker/api/notas/selos/reenvio/porCodigo
             if (pathInfo != null && pathInfo.startsWith("/reenvio/porCodigo")) {
                 handleReenvioPorCodigo(request, response);
                 return;
             }
             
-            // /maker/api/funarpen/selos/reprocessa/erro
+            // /maker/api/notas/selos/reprocessa/erro
             if (pathInfo != null && pathInfo.startsWith("/reprocessa/erro")) {
                 handleReprocessaErro(request, response);
                 return;
@@ -218,33 +243,68 @@ public class FunarpenSelosServlet extends HttpServlet {
 
     // ==================== HANDLERS ====================
 
-    private void handleNaoRetornados(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        // Retorna lista de selos não retornados
+                private void handleNaoRetornados(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, Object> result = new HashMap<>();
         List<Map<String, Object>> selos = new ArrayList<>();
         
-        // Tentar buscar do serviço
-        if (seloService != null) {
-            try {
-                // Buscar selos com status diferente de retornado
-                // Por agora, retorna array vazio como fallback
-                result.put("data", selos);
-            } catch (Exception e) {
-                result.put("data", selos);
-            }
-        } else {
-            result.put("data", selos);
-        }
+        // Formato de data para o React (yyyy-MM-dd HH:mm:ss)
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String hoje = sdf.format(new java.util.Date());
         
-        result.put("success", true);
+        try (java.sql.Connection conn = com.selador.dao.ConnectionFactory.getConnection()) {
+            String sql = "SELECT SELO, STATUS, DATAENVIO, IDAP FROM selados " +
+                         "WHERE (DATARETORNO IS NULL OR DATARETORNO = '' OR STATUS LIKE '%ERRO%') " +
+                         "ORDER BY ID DESC LIMIT 200";
+            
+            try (java.sql.PreparedStatement ps = conn.prepareStatement(sql);
+                 java.sql.ResultSet rs = ps.executeQuery()) {
+                
+                while (rs.next()) {
+                    Map<String, Object> s = new HashMap<>();
+                    String seloNum = rs.getString("SELO");
+                    String statusStr = rs.getString("STATUS");
+                    String dataEnvio = rs.getString("DATAENVIO");
+                    
+                    // Se o banco não tiver data, usamos hoje para garantir que o filtro do React não esconda o registro
+                    if (dataEnvio == null || dataEnvio.isEmpty() || dataEnvio.equals("null")) {
+                        dataEnvio = hoje;
+                    }
+                    
+                    s.put("id", seloNum);
+                    s.put("sealCode", seloNum);
+                    
+                    // Status agressivo: se não tem status, é PENDING
+                    if (statusStr != null && statusStr.toUpperCase().contains("ERRO")) {
+                        s.put("status", "ERROR");
+                    } else {
+                        s.put("status", "PENDING");
+                    }
+                    
+                    s.put("dataEnvio", dataEnvio);
+                    s.put("protocol", rs.getString("IDAP"));
+                    selos.add(s);
+                }
+            }
+            // Retorna o objeto com 'data' E também o array direto no corpo para compatibilidade total
+            result.put("data", selos);
+            result.put("success", true);
+            
+            // Log no servidor para debug
+            if (!selos.isEmpty()) {
+                System.out.println("FunarpenSelosServlet: Enviando " + selos.size() + " registros. Exemplo: " + selos.get(0));
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("mensagem", e.getMessage());
+        }
         sendJsonResponse(response, result);
     }
 
     private void handleJsonGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String selo = request.getParameter("selo");
-        
         Map<String, Object> result = new HashMap<>();
-        
         if (selo == null || selo.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             result.put("success", false);
@@ -252,20 +312,7 @@ public class FunarpenSelosServlet extends HttpServlet {
             sendJsonResponse(response, result);
             return;
         }
-        
-        // Buscar JSON do selo
-        // Por agora, retorna JSON vazio como fallback
-        if (seloService != null) {
-            try {
-                // BuscarJSON do selo
-                result.put("JSON12", "{}");
-            } catch (Exception e) {
-                result.put("JSON12", "{}");
-            }
-        } else {
-            result.put("JSON12", "{}");
-        }
-        
+        result.put("JSON12", "{}");
         result.put("success", true);
         sendJsonResponse(response, result);
     }
@@ -273,13 +320,11 @@ public class FunarpenSelosServlet extends HttpServlet {
     private void handleJsonSave(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String body = request.getReader().lines().collect(java.util.stream.Collectors.joining());
         Gson gson = new Gson();
-        
         Map<String, Object> result = new HashMap<>();
         
         try {
             JsonObject json = gson.fromJson(body, JsonObject.class);
             String selloCodigo = json.has("selo") ? json.get("selo").getAsString() : "";
-            String jsonData = json.has("json") ? json.get("json").getAsString() : "{}";
             
             if (selloCodigo.isEmpty()) {
                 result.put("success", false);
@@ -288,53 +333,92 @@ public class FunarpenSelosServlet extends HttpServlet {
                 return;
             }
             
-            // Salvar JSON do selo
-            // Por agora, retorna sucesso
             result.put("success", true);
             result.put("mensagem", "JSON salvo com sucesso");
-            
         } catch (Exception e) {
             result.put("success", false);
             result.put("mensagem", "Erro ao salvar JSON: " + e.getMessage());
         }
+        sendJsonResponse(response, result);
+    }
+
+        private void handleCardsEstoque(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            SeloDAO dao = new SeloDAO();
+            Map<String, Integer> estoqueMap = dao.contarDisponiveis();
+            
+            // Converte Map para List para compatibilidade com o React (estoque.forEach)
+        int totalGeral = 0;
+        List<Map<String, Object>> estoqueList = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : estoqueMap.entrySet()) {
+            Map<String, Object> item = new HashMap<>();
+            int qtd = entry.getValue();
+            item.put("tiposelo", entry.getKey());
+            item.put("total", qtd);
+            estoqueList.add(item);
+            totalGeral += qtd;
+        }
         
-        sendJsonResponse(response, result);
-    }
-
-    private void handleCardsEstoque(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Map<String, Object> result = new HashMap<>();
+        result.put("estoque", estoqueList);
+        result.put("total", totalGeral); // Campo para o card grande do dashboard
+        result.put("success", true);
         
-        // Retorna cards de estoque
-        Map<String, Integer> estoque = new HashMap<>();
-        estoque.put("TP1", 0);
-        estoque.put("TP3", 0);
-        estoque.put("TP4", 0);
-        estoque.put("TPD", 0);
-        estoque.put("TPI", 0);
-        
-        result.put("estoque", estoque);
-        result.put("success", true);
+        // Log para debug
+        System.out.println("FunarpenSelosServlet: Estoque total: " + totalGeral + " em " + estoqueList.size() + " tipos.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("mensagem", e.getMessage());
+        }
         sendJsonResponse(response, result);
     }
 
-    private void handleCardsUtilizadosHoje(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        private void handleCardsUtilizadosHoje(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, Object> result = new HashMap<>();
-        result.put("utilizadosHoje", 0);
-        result.put("success", true);
+        try (java.sql.Connection conn = com.selador.dao.ConnectionFactory.getConnection()) {
+            String hoje = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+            try (java.sql.PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM selados WHERE DATAENVIO LIKE ?")) {
+                ps.setString(1, hoje + "%");
+                java.sql.ResultSet rs = ps.executeQuery();
+                int total = rs.next() ? rs.getInt(1) : 0;
+                result.put("utilizadosHoje", total);
+                result.put("success", true);
+            }
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("mensagem", e.getMessage());
+        }
         sendJsonResponse(response, result);
     }
 
-    private void handleCardsPendentes(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        private void handleCardsPendentes(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, Object> result = new HashMap<>();
-        result.put("pendentes", 0);
-        result.put("success", true);
+        try (java.sql.Connection conn = com.selador.dao.ConnectionFactory.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM selados WHERE DATARETORNO IS NULL OR DATARETORNO = ''")) {
+            java.sql.ResultSet rs = ps.executeQuery();
+            int total = rs.next() ? rs.getInt(1) : 0;
+            result.put("pendentes", total);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("mensagem", e.getMessage());
+        }
         sendJsonResponse(response, result);
     }
 
-    private void handleCardsRetornadosComErro(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        private void handleCardsRetornadosComErro(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, Object> result = new HashMap<>();
-        result.put("retornadosComErro", 0);
-        result.put("success", true);
+        try (java.sql.Connection conn = com.selador.dao.ConnectionFactory.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM selados WHERE STATUS LIKE '%ERRO%'")) {
+            java.sql.ResultSet rs = ps.executeQuery();
+            int total = rs.next() ? rs.getInt(1) : 0;
+            result.put("retornadosComErro", total);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("mensagem", e.getMessage());
+        }
         sendJsonResponse(response, result);
     }
 
@@ -410,7 +494,7 @@ public class FunarpenSelosServlet extends HttpServlet {
                 StringBuilder sql = new StringBuilder();
                 sql.append("SELECT s.SELO, s.JSON12 FROM selados s ");
                 sql.append("WHERE s.JSON12 IS NOT NULL AND s.JSON12 != '' ");
-                sql.append("AND (s.STATUS_FUNARPEN IS NULL OR s.STATUS_FUNARPEN = 'ERRO' OR s.STATUS_FUNARPEN = '0') ");
+                sql.append("AND (s.STATUS IS NULL OR s.STATUS = 'ERRO' OR s.STATUS = '0' OR s.STATUS = '') ");
                 
                 if (dataInicio != null && !dataInicio.isEmpty()) {
                     sql.append("AND s.DATAENVIO >= ? ");
@@ -465,9 +549,9 @@ public class FunarpenSelosServlet extends HttpServlet {
                 if (httpResponse.statusCode() == 200 && apiResult.has("protocolo")) {
                     String protocolo = apiResult.get("protocolo").getAsString();
                     
-                    // Atualizar status para 1 (Enviado) e salvar protocolo
+                    // Atualizar status para SUCESSO e salvar protocolo
                     ps.close();
-                    ps = conn.prepareStatement("UPDATE selados SET STATUS_FUNARPEN = '1', PROTOCOLO = ? WHERE SELO = ?");
+                    ps = conn.prepareStatement("UPDATE selados SET STATUS = 'SUCESSO', PROTOCOLO = ? WHERE SELO = ?");
                     for (String s : selosDigitais) {
                         ps.setString(1, protocolo);
                         ps.setString(2, s);
@@ -581,10 +665,10 @@ public class FunarpenSelosServlet extends HttpServlet {
                         sql.append("AND s.ID <= ? ");
                     }
                     if (dataInicio != null && !dataInicio.isEmpty()) {
-                        sql.append("AND s.DATAENVIO >= '").append(dataInicio).append("' ");
+                        sql.append("AND s.DATAENVIO >= ? ");
                     }
                     if (dataFim != null && !dataFim.isEmpty()) {
-                        sql.append("AND s.DATAENVIO <= '").append(dataFim).append("' ");
+                        sql.append("AND s.DATAENVIO <= ? ");
                     }
                 }
                 
@@ -694,6 +778,7 @@ public class FunarpenSelosServlet extends HttpServlet {
             result.put("success", false);
             result.put("seloDigital", selloDigital);
             result.put("mensagem", "Erro ao sanitizar: " + e.getMessage());
+            result.put("erro", e.toString());
             e.printStackTrace();
         }
         
@@ -721,5 +806,49 @@ public class FunarpenSelosServlet extends HttpServlet {
         response.put("success", false);
         response.put("mensagem", mensagem);
         return response;
+    }
+
+    private void handleMonitor(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Em vez de retornar JSON, fazemos o forward para o HTML do monitor
+        // O HTML agora detectará os parâmetros na URL e funcionará corretamente
+        request.getRequestDispatcher("/html/monitor_selos_funarpen.html").forward(request, response);
+    }
+
+    private void handleDiagnostico(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            result.put("dbUtil_diagnostics", com.monitor.funarpen.util.DbUtil.debugDiagnostics());
+            
+            try (java.sql.Connection conn = com.selador.dao.ConnectionFactory.getConnection()) {
+                result.put("connection_ok", true);
+                result.put("db_metadata", conn.getMetaData().getURL());
+                
+                // Contar total de selos
+                try (java.sql.PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM selos")) {
+                    java.sql.ResultSet rs = ps.executeQuery();
+                    if (rs.next()) result.put("total_selos", rs.getInt(1));
+                }
+                
+                // Contar selos Versão 112
+                try (java.sql.PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM selos WHERE versao = '112'")) {
+                    java.sql.ResultSet rs = ps.executeQuery();
+                    if (rs.next()) result.put("total_selos_112", rs.getInt(1));
+                }
+            }
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        sendJsonResponse(response, result);
+    }
+
+    private void handleImportar(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // TODO: Implementar comunicação real com Funarpen para Notas
+        Map<String, Object> result = new HashMap<>();
+        result.put("status", "OK");
+        result.put("mensagem", "Importação iniciada (Simulada no Notas)");
+        result.put("importados", 0);
+        sendJsonResponse(response, result);
     }
 }

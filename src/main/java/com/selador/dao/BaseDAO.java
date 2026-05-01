@@ -14,32 +14,10 @@ public abstract class BaseDAO {
     
     private static final Logger logger = Logger.getLogger(BaseDAO.class.getName());
     
-    // Configurações do banco
-    protected static final String DB_URL = System.getProperty("db.url", "jdbc:mysql://localhost:3306/spprot");
-    protected static final String DB_USER = System.getProperty("db.username", "root");
-    protected static final String DB_PASSWORD = System.getProperty("db.password", "k15720");
-    protected static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
-    
-    // Pool de conexões simples
-    private static Connection connection;
-    
-    static {
-        try {
-            Class.forName(DB_DRIVER);
-            logger.info("Driver MySQL carregado com sucesso");
-        } catch (ClassNotFoundException e) {
-            logger.severe("Falha ao carregar driver MySQL: " + e.getMessage());
-        }
-    }
-    
     /**
      * Obtém uma conexão com o banco de dados
      */
     protected Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-            logger.fine("Nova conexão criada com o banco");
-        }
         return ConnectionFactory.getConnection(); 
     }
     

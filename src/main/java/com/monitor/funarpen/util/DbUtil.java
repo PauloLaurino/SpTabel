@@ -21,29 +21,67 @@ public class DbUtil {
     private static final String PROTESTO_CONFIG_PATH = BASE_PATH + "/protesto/db.properties";
     private static final String DEFAULT_CONFIG_PATH = BASE_PATH + "/db.properties";
     private static final String DEFAULT_MASTER_KEY_PATH = BASE_PATH + "/master.key";
-    private static final String DEFAULT_DB_URL = "jdbc:mysql://localhost:3306/sptabel?serverTimezone=UTC&useSSL=false";
+    private static final String DEFAULT_DB_URL = "jdbc:mariadb://localhost:3306/sptabel?serverTimezone=UTC&useSSL=false";
+    private static final String DEFAULT_DB_USER = "root";
+    private static final String DEFAULT_DB_PASS = "k15720";
 
     public static Connection getConnection() throws SQLException {
         Properties p = loadProperties();
 
-        String url = firstNonNull(p.getProperty("DB_URL"), System.getenv("DB_URL"));
+        // Priorizar Propriedades do Sistema (Injetadas via -D no Java)
+        String url = System.getProperty("db.url");
+        if (url == null || url.isEmpty()) {
+            url = firstNonNull(p.getProperty("DB_URL"), System.getenv("DB_URL"));
+        }
         if (url == null) {
             url = DEFAULT_DB_URL;
         }
-        String user = firstNonNull(p.getProperty("DB_USER"), System.getenv("DB_USER"));
-        String pass = firstNonNull(p.getProperty("DB_PASS"), System.getenv("DB_PASS"));
+
+        String user = System.getProperty("db.username");
+        if (user == null || user.isEmpty()) {
+            user = firstNonNull(p.getProperty("DB_USER"), System.getenv("DB_USER"));
+        }
+        if (user == null) {
+            user = DEFAULT_DB_USER;
+        }
+
+        String pass = System.getProperty("db.password");
+        if (pass == null || pass.isEmpty()) {
+            pass = firstNonNull(p.getProperty("DB_PASS"), System.getenv("DB_PASS"));
+        }
+        if (pass == null) {
+            pass = DEFAULT_DB_PASS;
+        }
+
+        System.out.println("DbUtil: Tentando conexão com URL: " + url + " | Usuário: " + user);
 
         if (url == null || user == null) {
             throw new SQLException("DB_URL or DB_USER not defined in configuration");
         }
 
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("JDBC Driver com.mysql.cj.jdbc.Driver not found on classpath", e);
+            if (url.startsWith("jdbc:mariadb:")) {
+                Class.forName("org.mariadb.jdbc.Driver");
+                // Forçar registro manual para garantir em ClassLoaders complexos
+                java.sql.Driver driver = (java.sql.Driver) Class.forName("org.mariadb.jdbc.Driver").newInstance();
+                try { DriverManager.registerDriver(driver); } catch (Exception e) {}
+            } else {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                java.sql.Driver driver = (java.sql.Driver) Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+                try { DriverManager.registerDriver(driver); } catch (Exception e) {}
+            }
+        } catch (Exception e) {
+            System.err.println("DbUtil: Erro ao registrar driver JDBC: " + e.getMessage());
         }
 
-        return DriverManager.getConnection(url, user, pass == null ? "" : pass);
+        try {
+            Connection conn = DriverManager.getConnection(url, user, pass);
+            System.out.println("DbUtil: Conexão estabelecida com sucesso!");
+            return conn;
+        } catch (SQLException e) {
+            System.err.println("DbUtil: ERRO ao conectar (" + url + "): " + e.getMessage());
+            throw e;
+        }
     }
 
     private static Properties loadProperties() {

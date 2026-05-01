@@ -75,7 +75,8 @@ public class SeladoDAO extends BaseDAO {
             selado.getDataRetorno(),   // DATARETORNO
             selado.getRetorno(),       // RETORNO
             selado.getUsuario(),       // USUARIO
-            selado.getStatus()         // STATUS
+            selado.getStatus(),        // STATUS
+            selado.getJson()           // JSON
         );
     }
     
